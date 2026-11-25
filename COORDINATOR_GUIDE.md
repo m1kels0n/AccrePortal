@@ -19,8 +19,9 @@ Keep the coordinator PIN within the coordinator team. Never give it to accredito
 
 **Easiest way: from the website**
 
-1. In the list on the left, click the indicator you want (for example **S.1**).
-2. Tap **＋ Add files ↗**. That indicator's Google Drive folder opens in a new tab.
+1. In the list on the left, find the indicator you want (for example **S.1**), or the subfolder inside it
+   (for example **S.5 › S.5.1. Technical skills**).
+2. Tap the **＋** at the right end of that row. That exact Google Drive folder opens in a new tab.
    Make sure you are signed in to Google with the account Ariel gave access to.
 3. Drag your files into the folder, or click **New → File upload**. Wait until Drive says the upload is complete.
 4. Go back to the website tab and tap **↻ Check now**. Your files appear within a few seconds.

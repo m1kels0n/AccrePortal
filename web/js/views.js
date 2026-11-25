@@ -241,7 +241,7 @@ function renderTree(state, prog, area, route) {
             <span class="tn-code tn-${esc(ind.type || 'x')}">${esc(ind.code)}</span>
             <span class="tn-text">${esc(ind.text || ind.code)}</span>
             ${staff && !n ? '<span class="tn-missing" title="No documents yet">●</span>' : `<span class="tn-count">${n}</span>`}
-          </a></summary>
+          </a>${staff ? addToDrive(ind.folderId, ind.code) : ''}</summary>
           ${files ? `<ul>${files}</ul>` : '<p class="tn-none">No documents yet</p>'}
         </details></li>`;
     }).join('');
@@ -259,6 +259,13 @@ function renderTree(state, prog, area, route) {
       </details></li>`;
   }).join('');
   return params ? `<ul class="tree-root">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
+}
+
+/** Staff "＋" on a tree row: opens that exact Drive folder in a new tab to drop files into. */
+function addToDrive(folderId, name) {
+  if (!folderId) return '';
+  return `<a class="tn-add" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener"
+       title="Add files to “${esc(name)}”: opens this folder in Google Drive" aria-label="Add files to ${esc(name)} (opens Google Drive)">＋</a>`;
 }
 
 /** Separator the backend puts between nested subfolder names in `file.subfolder`. */
@@ -301,9 +308,7 @@ function renderFolder(node, key, fileLink, isActive, isOpen, staff) {
     const fk = `${key}/~${name}`;
     const ids = folderFileIds(child);
     const inner = renderFolder(child, fk, fileLink, isActive, isOpen, staff);
-    const add = staff && child.id
-      ? `<a class="tn-add" href="https://drive.google.com/drive/folders/${esc(child.id)}" target="_blank" rel="noopener"
-           title="Add files to “${esc(name)}”: opens this folder in Google Drive" aria-label="Add files to ${esc(name)} (opens Google Drive)">＋</a>` : '';
+    const add = staff ? addToDrive(child.id, name) : '';
     return `<li class="tn-folder ${ids.length ? '' : 'empty'}">
       <details data-node="${esc(fk)}" ${isOpen(fk, ids.some(isActive)) ? 'open' : ''}>
         <summary><span class="tn-link" title="${esc(name)}">
@@ -326,15 +331,9 @@ function renderContent(state, prog, snap, area, route) {
 /** Coordinator/admin tools above the tree (they used to live on the folder pages). */
 function treeStaffTools(prog, snap, area, route) {
   if (!isStaff()) return '';
-  const param = route.param ? findParam(area, route.param) : null;
-  const ind = param && route.ind ? findIndicator(param, route.ind) : null;
-  const target = ind || param || area;
-  const label = ind ? ind.code : param ? paramLabel(param) : areaLabel(area);
-  const add = target.folderId
-    ? `<a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(target.folderId)}" target="_blank" rel="noopener"
-         title="Opens the ${esc(label)} folder in Google Drive. Drag your files into it.">＋ Add files to ${esc(label)} ↗</a>` : '';
+  // Adding files is done with the ＋ on each indicator and subfolder row in the tree.
   return `<div class="tree-staff">
-    <div class="btn-row">${add}
+    <div class="btn-row">
       <button type="button" class="btn btn-sm" data-action="check-now" data-prog="${esc(prog.code)}"
         title="Rescan Google Drive now, right after uploading">↻ Check now</button>
     </div>
