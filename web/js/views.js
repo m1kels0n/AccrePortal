@@ -231,7 +231,7 @@ function renderTree(state, prog, area, route) {
             title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
           <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
       };
-      const files = renderFolder(subfolderTree(ind.files), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen);
+      const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen);
       const indActive = onI && !route.fileId;
       const n = ind.files.length;
       return `<li class="tn-ind ${n ? '' : 'empty'}">
@@ -264,17 +264,22 @@ function renderTree(state, prog, area, route) {
 /** Separator the backend puts between nested subfolder names in `file.subfolder`. */
 const SUB_SEP = ' › ';
 
-/** Group an indicator's files by their Drive subfolder path: { files, folders: Map<name, node> }. */
-function subfolderTree(files) {
+/**
+ * Group an indicator's files by their Drive subfolder path: { files, folders: Map<name, node> }.
+ * `subfolders` (every subfolder path, from the backend) adds the folders that have no files yet.
+ */
+function subfolderTree(files, subfolders = []) {
   const root = { files: [], folders: new Map() };
-  for (const f of files) {
+  const walk = (path) => {
     let node = root;
-    for (const name of f.subfolder ? f.subfolder.split(SUB_SEP) : []) {
+    for (const name of path ? path.split(SUB_SEP) : []) {
       if (!node.folders.has(name)) node.folders.set(name, { files: [], folders: new Map() });
       node = node.folders.get(name);
     }
-    node.files.push(f);
-  }
+    return node;
+  };
+  subfolders.forEach(walk);
+  for (const f of files) walk(f.subfolder).files.push(f);
   return root;
 }
 
@@ -291,14 +296,15 @@ function renderFolder(node, key, fileLink, isActive, isOpen) {
     const child = node.folders.get(name);
     const fk = `${key}/~${name}`;
     const ids = folderFileIds(child);
-    return `<li class="tn-folder">
+    const inner = renderFolder(child, fk, fileLink, isActive, isOpen);
+    return `<li class="tn-folder ${ids.length ? '' : 'empty'}">
       <details data-node="${esc(fk)}" ${isOpen(fk, ids.some(isActive)) ? 'open' : ''}>
         <summary><span class="tn-link" title="${esc(name)}">
           <span class="tn-folder-icon" aria-hidden="true">📁</span>
           <span class="tn-text">${esc(name)}</span>
           <span class="tn-count">${ids.length}</span>
         </span></summary>
-        <ul>${renderFolder(child, fk, fileLink, isActive, isOpen)}</ul>
+        ${inner ? `<ul>${inner}</ul>` : '<p class="tn-none">No documents yet</p>'}
       </details></li>`;
   }).join('');
   return folders + node.files.map(fileLink).join('');

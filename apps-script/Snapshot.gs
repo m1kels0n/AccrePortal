@@ -94,6 +94,7 @@ function scan_(source, t0) {
   var indRows = rowsOf('indicator');
   var indSet = toSet_(indRows.map(function (r) { return r.folderId; }));
   var filesByInd = {};
+  var subsByInd = {};   // indicator folderId -> every subfolder path inside it, empty ones too
   // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself) }
   var level = {};
   Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '' }; });
@@ -106,7 +107,9 @@ function scan_(source, t0) {
       if (f.mimeType !== FOLDER_MIME) {
         (filesByInd[parent.ind] = filesByInd[parent.ind] || []).push(toFile_(f, parent.label || undefined));
       } else if (depth < MAX_SUB_DEPTH) {
-        next[f.id] = { ind: parent.ind, label: parent.label ? parent.label + ' › ' + f.name : f.name };
+        var label = parent.label ? parent.label + ' › ' + f.name : f.name;
+        next[f.id] = { ind: parent.ind, label: label };
+        (subsByInd[parent.ind] = subsByInd[parent.ind] || []).push(label);
       } else {
         issues.push({ type: 'deepFile', path: st.byId[parent.ind].path + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
       }
@@ -119,7 +122,7 @@ function scan_(source, t0) {
   if (!lock.tryLock(30000)) throw new Error('Could not get the lock to save the snapshot.');
   try {
     var kw = readKeywords_();
-    var snap = assemble_(cfg, st, loose, filesByInd, kw);
+    var snap = assemble_(cfg, st, loose, filesByInd, kw, subsByInd);
     var issuesDoc = { generatedAt: snap.generatedAt, items: issues };
     var changed = saveSnapshot_(cfg, snap, issuesDoc);
     if (changed) log_('snapshot', source, snap.stats.files + ' files, ' + issues.length + ' issues, ' + (Date.now() - t0) + ' ms');
@@ -129,7 +132,8 @@ function scan_(source, t0) {
   }
 }
 
-function assemble_(cfg, st, loose, filesByInd, kw) {
+function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
+  subsByInd = subsByInd || {};
   var bySort = function (a, b) { return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0; };
   var group = function (level, key) {
     var m = {};
@@ -163,7 +167,10 @@ function assemble_(cfg, st, loose, filesByInd, kw) {
             stats.files += files.length;
             if (files.length) stats.indicatorsWithFiles++;
             var t = i.code.match(/^([SIO])\.\d/);
-            return { code: i.code, type: t ? t[1] : null, text: i.text, folderId: i.folderId, files: files };
+            var out = { code: i.code, type: t ? t[1] : null, text: i.text, folderId: i.folderId, files: files };
+            // Sorted so the snapshot hash doesn't change just because Drive listed folders in another order.
+            if (subsByInd[i.folderId]) out.subfolders = subsByInd[i.folderId].slice().sort();
+            return out;
           }),
         };
       }),

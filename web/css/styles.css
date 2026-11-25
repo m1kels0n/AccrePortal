@@ -248,6 +248,7 @@ body.is-workspace .site-footer { display: none; }
 .tn-file { padding-left: 20px; }
 .tn-folder-icon { flex-shrink: 0; font-size: .8rem; line-height: 1.3; }
 .tn-folder > details > summary .tn-text { color: var(--ink-2); }
+.tn-folder.empty > details > summary .tn-text, .tn-folder.empty .tn-folder-icon { color: var(--muted); opacity: .7; }
 .tn-none { margin: 2px 0 4px 36px; font-size: .78rem; color: var(--muted); font-style: italic; }
 .kind-xs { width: 28px; height: 18px; border-radius: 4px; font-size: .55rem; margin-top: 1px; }
 .tree-backdrop { display: none; }

@@ -127,6 +127,7 @@ function viewerArea_(a) {
               if (f.subfolder) o.subfolder = f.subfolder;
               return o;
             }),
+            subfolders: i.subfolders || [],
           };
         }),
       };
