@@ -196,8 +196,9 @@ export function renderWorkspace(state, route, searchHtml) {
         <div class="tree-tools">
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
+          ${checkNowButton(prog)}
         </div>
-        ${treeStaffTools(prog, snap, area, route)}
+        ${treeStaffTools(area)}
       </div>
       <div class="tree-scroll" id="treeScroll">
         <nav class="tree" id="tree">${renderTree(state, prog, area, route)}</nav>
@@ -328,16 +329,18 @@ function renderContent(state, prog, snap, area, route) {
   return `<p class="viewer-empty">Select a document to view it</p>`;
 }
 
-/** Coordinator/admin tools above the tree (they used to live on the folder pages). */
-function treeStaffTools(prog, snap, area, route) {
+/** Coordinator/admin: rescan Drive now. Sits on the same row as Expand/Collapse all. */
+function checkNowButton(prog) {
   if (!isStaff()) return '';
-  // Adding files is done with the ＋ on each indicator and subfolder row in the tree.
+  return `<button type="button" class="btn btn-sm tree-check" data-action="check-now" data-prog="${esc(prog.code)}"
+        title="Rescan Google Drive now, right after uploading">↻ Check now</button>`;
+}
+
+/** Coordinator/admin status and warnings under the tree tools.
+ *  Adding files is done with the ＋ on each indicator and subfolder row in the tree. */
+function treeStaffTools(area) {
+  if (!isStaff()) return '';
   return `<div class="tree-staff">
-    <div class="btn-row">
-      <button type="button" class="btn btn-sm" data-action="check-now" data-prog="${esc(prog.code)}"
-        title="Rescan Google Drive now, right after uploading">↻ Check now</button>
-    </div>
-    <span class="muted small">Last checked ${esc(fmtDate(snap.generatedAt, true))}</span>
     <span class="form-status" id="chk-status" aria-live="polite"></span>
     ${looseWarning(area)}
   </div>`;
