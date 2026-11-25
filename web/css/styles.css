@@ -262,6 +262,10 @@ body.is-workspace .site-footer { display: none; }
 .content-pane.has-viewer { display: flex; flex-direction: column; overflow: hidden; padding: 4px 6px 6px; }
 .content-pane.has-viewer .viewer { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .content-pane > :first-child { margin-top: 0; }
+.content-pane.is-empty { display: flex; align-items: center; justify-content: center; }
+.viewer-empty { margin: 0; color: var(--muted); font-size: 1rem; text-align: center; }
+.tree-staff { display: grid; gap: 4px; }
+.tree-staff .btn-row { margin: 0; }
 
 /* File lists */
 .file-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }

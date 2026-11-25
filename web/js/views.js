@@ -4,8 +4,8 @@ import { esc, highlight, fileKind, fmtSize, fmtDate, plural, normalize } from '.
 import { href } from './router.js';
 import { isStaff, lastPlace } from './api.js';
 import {
-  getProgram, findArea, findParam, findIndicator, countFiles, progress, TYPE_LABELS,
-  indicatorsByType, areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
+  getProgram, findArea, findParam, findIndicator, countFiles, progress,
+  areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -105,15 +105,6 @@ function looseSection(files) {
   </section>`;
 }
 
-function checkNowRow(progCode, snap) {
-  return `<div class="btn-row">
-    <button type="button" class="btn btn-sm" data-action="check-now" data-prog="${esc(progCode)}"
-      title="Rescan Google Drive now, right after uploading">↻ Check now</button>
-    <span class="muted small">Last checked ${esc(fmtDate(snap.generatedAt, true))}</span>
-    <span class="form-status" id="chk-status" aria-live="polite"></span>
-  </div>`;
-}
-
 // ── Login ───────────────────────────────────────────────────
 export function renderLogin() {
   return `<div class="login-wrap">
@@ -209,6 +200,7 @@ export function renderWorkspace(state, route, searchHtml) {
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
         </div>
+        ${treeStaffTools(prog, snap, area, route)}
       </div>
       <div class="tree-scroll" id="treeScroll">
         <nav class="tree" id="tree">${renderTree(state, prog, area, route)}</nav>
@@ -220,7 +212,7 @@ export function renderWorkspace(state, route, searchHtml) {
             title="Show the list of files" aria-label="Show the list of files">
       <span class="rail-icon" aria-hidden="true">☰</span><span class="rail-text">Show files</span>
     </button>
-    <section class="content-pane ${viewer ? 'has-viewer' : ''}" id="contentPane">${content}</section>
+    <section class="content-pane ${viewer ? 'has-viewer' : ''} ${!viewer && !searchHtml ? 'is-empty' : ''}" id="contentPane">${content}</section>
   </div>`;
   return { html, workspace: true };
 }
@@ -301,85 +293,30 @@ export function treeFilterResults(progCode, area, tokens) {
     <ul class="tree-flat">${fileItems}${indItems}</ul>`;
 }
 
+/** The viewer pane stays empty until a document is picked; selecting a folder only opens it in the tree. */
 function renderContent(state, prog, snap, area, route) {
   if (route.fileId) return renderViewer(state, prog, snap, area, route);
+  return `<p class="viewer-empty">Select a document to view it</p>`;
+}
+
+/** Coordinator/admin tools above the tree (they used to live on the folder pages). */
+function treeStaffTools(prog, snap, area, route) {
+  if (!isStaff()) return '';
   const param = route.param ? findParam(area, route.param) : null;
-  if (route.param && !param) return notFound(hrefFor(prog.code, area));
-  const ind = route.ind ? findIndicator(param, route.ind) : null;
-  if (route.ind && !ind) return notFound(hrefFor(prog.code, area, param));
-  if (ind) return renderIndicator(prog, snap, area, param, ind);
-  if (param) return renderParameter(prog, snap, area, param);
-  return renderAreaHome(prog, snap, area);
-}
-
-function contentCrumbs(prog, snap, area, param, ind) {
-  const items = [
-    { label: programName(prog, snap), href: href([prog.code]) },
-    { label: areaLabel(area), href: hrefFor(prog.code, area) },
-  ];
-  if (param) items.push({ label: paramLabel(param), href: hrefFor(prog.code, area, param) });
-  if (ind) items.push({ label: ind.code, href: hrefFor(prog.code, area, param, ind) });
-  return crumbs(items);
-}
-
-function renderAreaHome(prog, snap, area) {
-  const staff = isStaff();
-  const rows = area.parameters.map((param) => `<li><a class="row" href="${hrefFor(prog.code, area, param)}">
-      ${codeBadge(param.code, 'param')}
-      <span class="row-main"><span class="row-title">${esc(param.name || paramLabel(param))}</span>
-        <span class="row-sub">${esc(paramLabel(param))} · ${docCountLabel(countFiles(param))}</span></span>
-      ${staff ? progressBadge(progress(param), true) : ''}
-      <span class="chev" aria-hidden="true">›</span></a></li>`).join('');
-  const loose = [...(area.looseFiles || []), ...area.parameters.flatMap((p) => p.looseFiles || [])];
-  return contentCrumbs(prog, snap, area) +
-    pageHead(esc(areaLabel(area)), area.name,
-      (staff ? `<div class="head-progress">${progressBadge(progress(area))}</div>${checkNowRow(prog.code, snap)}` : '')) +
-    `<p class="hint">Choose a document from the list <span class="hint-wide">on the left</span><span class="hint-narrow">under <strong>☰ Files</strong></span>, or a parameter below.</p>` +
-    looseSection(loose) +
-    `<ul class="rows">${rows || '<li class="muted">No parameters found.</li>'}</ul>`;
-}
-
-function renderParameter(prog, snap, area, param) {
-  const staff = isStaff();
-  const groups = indicatorsByType(param).map((g) => `
-    <section class="ind-group">
-      <h3 class="group-title">${esc(g.label)}${g.key !== 'other' ? ` <span class="muted">(${esc(g.key)})</span>` : ''}</h3>
-      <ul class="rows">${g.items.map((ind) => {
-        const n = ind.files.length;
-        return `<li><a class="row ind-row" href="${hrefFor(prog.code, area, param, ind)}">
-          ${codeBadge(ind.code, ind.type)}
-          <span class="row-main"><span class="row-title ind-text">${esc(ind.text || ind.code)}</span>
-            <span class="row-sub ${n ? '' : 'none'}">${docCountLabel(n)}</span></span>
-          ${staff ? `<span class="tick ${n ? 'yes' : 'no'}" title="${n ? 'Has documents' : 'No documents yet'}">${n ? '✓' : '–'}</span>` : ''}
-          <span class="chev" aria-hidden="true">›</span></a></li>`;
-      }).join('')}</ul>
-    </section>`).join('');
-  return contentCrumbs(prog, snap, area, param) +
-    pageHead(`${esc(areaLabel(area))} · ${esc(paramLabel(param))}`, param.name,
-      staff ? `<div class="head-progress">${progressBadge(progress(param))}</div>` : '') +
-    looseSection(param.looseFiles) +
-    (groups || '<p class="muted">No indicators found.</p>');
-}
-
-function renderIndicator(prog, snap, area, param, ind) {
-  const staff = isStaff();
-  const files = ind.files.map((f) => fileRow(prog.code, f, hrefFor(prog.code, area, param, ind, f.id), staff)).join('');
-  const actions = staff ? `<div class="btn-row">
-      ${ind.folderId ? `<a class="btn btn-sm ${ind.files.length ? '' : 'btn-primary'}" href="https://drive.google.com/drive/folders/${esc(ind.folderId)}"
-          target="_blank" rel="noopener" title="Opens the ${esc(ind.code)} folder in Google Drive. Drag your files into it.">＋ Add files ↗</a>` : ''}
+  const ind = param && route.ind ? findIndicator(param, route.ind) : null;
+  const target = ind || param || area;
+  const label = ind ? ind.code : param ? paramLabel(param) : areaLabel(area);
+  const add = target.folderId
+    ? `<a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(target.folderId)}" target="_blank" rel="noopener"
+         title="Opens the ${esc(label)} folder in Google Drive. Drag your files into it.">＋ Add files to ${esc(label)} ↗</a>` : '';
+  return `<div class="tree-staff">
+    <div class="btn-row">${add}
       <button type="button" class="btn btn-sm" data-action="check-now" data-prog="${esc(prog.code)}"
         title="Rescan Google Drive now, right after uploading">↻ Check now</button>
-      <span class="form-status" id="chk-status" aria-live="polite"></span>
     </div>
-    <p class="muted small">After uploading in Drive, tap <strong>Check now</strong> to see the files here right away (otherwise they appear within about 5 minutes).</p>` : '';
-  return contentCrumbs(prog, snap, area, param, ind) +
-    `<header class="page-head ind-head">
-      <div class="eyebrow">${esc(paramLabel(param))} · ${codeBadge(ind.code, ind.type)} ${ind.type && TYPE_LABELS[ind.type] ? esc(TYPE_LABELS[ind.type]) : ''}</div>
-      <h2 class="page-title ind-title">${esc(ind.text || ind.code)}</h2>
-      <p class="muted">${docCountLabel(ind.files.length)}</p>
-      ${actions}
-    </header>` +
-    (files ? `<ul class="file-list">${files}</ul>` : `<div class="card empty"><p>No documents yet.</p></div>`);
+    <span class="muted small">Last checked ${esc(fmtDate(snap.generatedAt, true))}</span>
+    <span class="form-status" id="chk-status" aria-live="polite"></span>
+  </div>`;
 }
 
 function renderViewer(state, prog, snap, area, route) {
