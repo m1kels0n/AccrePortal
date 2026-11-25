@@ -224,13 +224,14 @@ function renderTree(state, prog, area, route) {
     const inds = param.indicators.map((ind) => {
       const ik = nodeKey(prog.code, area.code, param.code, ind.code);
       const onI = onP && route.ind === ind.code;
-      const files = ind.files.map((f) => {
+      const fileLink = (f) => {
         const active = onI && route.fileId === f.id;
         const kind = fileKind(f.mimeType);
         return `<li><a class="tn-link tn-file ${active ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind, f.id)}"
             title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
           <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
-      }).join('');
+      };
+      const files = renderFolder(subfolderTree(ind.files), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen);
       const indActive = onI && !route.fileId;
       const n = ind.files.length;
       return `<li class="tn-ind ${n ? '' : 'empty'}">
@@ -258,6 +259,49 @@ function renderTree(state, prog, area, route) {
       </details></li>`;
   }).join('');
   return params ? `<ul class="tree-root">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
+}
+
+/** Separator the backend puts between nested subfolder names in `file.subfolder`. */
+const SUB_SEP = ' › ';
+
+/** Group an indicator's files by their Drive subfolder path: { files, folders: Map<name, node> }. */
+function subfolderTree(files) {
+  const root = { files: [], folders: new Map() };
+  for (const f of files) {
+    let node = root;
+    for (const name of f.subfolder ? f.subfolder.split(SUB_SEP) : []) {
+      if (!node.folders.has(name)) node.folders.set(name, { files: [], folders: new Map() });
+      node = node.folders.get(name);
+    }
+    node.files.push(f);
+  }
+  return root;
+}
+
+function folderFileIds(node, out = []) {
+  node.files.forEach((f) => out.push(f.id));
+  node.folders.forEach((child) => folderFileIds(child, out));
+  return out;
+}
+
+/** Subfolders first (natural order, like Drive), then the files directly in this folder. */
+function renderFolder(node, key, fileLink, isActive, isOpen) {
+  const names = [...node.folders.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  const folders = names.map((name) => {
+    const child = node.folders.get(name);
+    const fk = `${key}/~${name}`;
+    const ids = folderFileIds(child);
+    return `<li class="tn-folder">
+      <details data-node="${esc(fk)}" ${isOpen(fk, ids.some(isActive)) ? 'open' : ''}>
+        <summary><span class="tn-link" title="${esc(name)}">
+          <span class="tn-folder-icon" aria-hidden="true">📁</span>
+          <span class="tn-text">${esc(name)}</span>
+          <span class="tn-count">${ids.length}</span>
+        </span></summary>
+        <ul>${renderFolder(child, fk, fileLink, isActive, isOpen)}</ul>
+      </details></li>`;
+  }).join('');
+  return folders + node.files.map(fileLink).join('');
 }
 
 /** The viewer pane stays empty until a document is picked; selecting a folder only opens it in the tree. */

@@ -378,6 +378,11 @@ window.addEventListener('hashchange', () => {
   if (r.prog && r.area && r.param) {
     state.closedNodes.delete(V.nodeKey(r.prog, r.area, r.param));
     if (r.ind) state.closedNodes.delete(V.nodeKey(r.prog, r.area, r.param, r.ind));
+    // Subfolders inside the indicator too, so the picked document is visible in the tree.
+    if (r.ind && r.fileId) {
+      const sub = V.nodeKey(r.prog, r.area, r.param, r.ind) + '/~';
+      [...state.closedNodes].forEach((k) => { if (k.startsWith(sub)) state.closedNodes.delete(k); });
+    }
   }
   if (r.fileId) {
     state.treeOpen = false; // close the drawer on phones once a document is picked
