@@ -1,0 +1,12 @@
+# Old copy of the project
+_backup_before_ux_update/
+
+# Apps Script local config
+.clasp.json
+.clasprc.json
+
+# OS / editor junk
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/

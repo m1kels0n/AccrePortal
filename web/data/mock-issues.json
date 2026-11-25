@@ -1,0 +1,42 @@
+{
+ "p1": {
+  "generatedAt": "2026-11-25T09:40:38.892Z",
+  "items": [
+   {
+    "type": "misplaced",
+    "path": "Area I > Parameter A",
+    "fileId": "f_000iyMockFileId",
+    "name": "scan001.pdf"
+   },
+   {
+    "type": "misplaced",
+    "path": "Area II",
+    "fileId": "f_000izMockFileId",
+    "name": "Faculty files to sort.docx"
+   },
+   {
+    "type": "badFolderName",
+    "path": "Area III > Parameter A",
+    "folderId": "MOCKFOLDER1",
+    "name": "misc documents"
+   },
+   {
+    "type": "missingFolder",
+    "path": "Area IV > Parameter C > O.1",
+    "folderId": "MOCKFOLDER2",
+    "reason": "trashed"
+   },
+   {
+    "type": "newFolder",
+    "path": "Area V > Parameter A",
+    "folderId": "MOCKFOLDER3",
+    "name": "S.4 - Research agenda",
+    "hint": "Run Rebuild structure"
+   }
+  ]
+ },
+ "p2": {
+  "generatedAt": "2026-11-25T09:40:38.892Z",
+  "items": []
+ }
+}

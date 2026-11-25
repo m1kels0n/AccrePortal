@@ -1,0 +1,4892 @@
+{
+ "schema": 1,
+ "mock": true,
+ "program": {
+  "code": "p2",
+  "name": "Program 2",
+  "rootFolderUrl": "https://drive.google.com/drive/folders/MOCK_ROOT_p2"
+ },
+ "generatedAt": "2026-11-25T09:40:38.892Z",
+ "hash": "mock-p2-194",
+ "stats": {
+  "areas": 10,
+  "indicators": 292,
+  "indicatorsWithFiles": 99,
+  "files": 194
+ },
+ "areas": [
+  {
+   "code": "I",
+   "name": "Vision, Mission, Goals and Objectives",
+   "folderId": "area_000j2MockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Statement of Vision, Mission, Goals and Objectives",
+     "folderId": "param_000j3MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "The institution has a clearly stated vision and mission.",
+       "folderId": "ind_000j4MockFileId",
+       "files": [
+        {
+         "id": "f_000ygMockFileId",
+         "name": "Board Resolution No. 45, s. 2023 - Approving the Revised VMGO.pdf",
+         "mimeType": "application/pdf",
+         "size": 3872032,
+         "modified": "2026-11-08T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "approval"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college/academic unit has clearly stated goals.",
+       "folderId": "ind_000j7MockFileId",
+       "files": [
+        {
+         "id": "f_000j6MockFileId",
+         "name": "Attendance Sheet - Area I.pdf",
+         "mimeType": "application/pdf",
+         "size": 352281,
+         "modified": "2026-11-10T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000j5MockFileId",
+         "name": "scan0001 - Area I.pdf",
+         "mimeType": "application/pdf",
+         "size": 751037,
+         "modified": "2026-11-22T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "The program has clearly stated objectives.",
+       "folderId": "ind_000j8MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The vision, mission, goals and objectives are reflected in the curriculum and instruction.",
+       "folderId": "ind_000j9MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "The vision, mission, goals and objectives are well known to and accepted by stakeholders.",
+       "folderId": "ind_000jaMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Dissemination and Acceptability",
+     "folderId": "param_000jbMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on dissemination and acceptability.",
+       "folderId": "ind_000jcMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing dissemination and acceptability.",
+       "folderId": "ind_000jfMockFileId",
+       "files": [
+        {
+         "id": "f_000jeMockFileId",
+         "name": "Board Resolution No. 74, s. 2024 - Area I.pdf",
+         "mimeType": "application/pdf",
+         "size": 7602667,
+         "modified": "2026-11-20T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000jdMockFileId",
+         "name": "Orientation Presentation - Area I",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-20T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on dissemination and acceptability is implemented and communicated to stakeholders.",
+       "folderId": "ind_000jiMockFileId",
+       "files": [
+        {
+         "id": "f_000jgMockFileId",
+         "name": "Attendance Sheet - Area I.pdf",
+         "mimeType": "application/pdf",
+         "size": 2896001,
+         "modified": "2026-11-19T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000jhMockFileId",
+         "name": "Photo Documentation - Area I.jpg",
+         "mimeType": "image/jpeg",
+         "size": 2765027,
+         "modified": "2026-11-10T07:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of dissemination and acceptability are evident, documented, and used for improvement.",
+       "folderId": "ind_000jjMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "II",
+   "name": "Faculty",
+   "folderId": "area_000jkMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Academic Qualifications and Professional Experience",
+     "folderId": "param_000jlMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "The faculty members possess the appropriate graduate degrees (master’s or doctorate) related to the courses they teach.",
+       "folderId": "ind_000jmMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The faculty members have relevant teaching experience and professional or industry exposure.",
+       "folderId": "ind_000jnMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.10",
+       "type": "S",
+       "text": "Adequate resources are allocated for academic qualifications and professional experience.",
+       "folderId": "ind_000joMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The faculty profile is updated every semester and kept on file.",
+       "folderId": "ind_000jpMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "The faculty qualifications meet or exceed the CHED minimum requirements.",
+       "folderId": "ind_000jqMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Recruitment, Selection and Orientation",
+     "folderId": "param_000jrMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on recruitment, selection and orientation.",
+       "folderId": "ind_000jtMockFileId",
+       "files": [
+        {
+         "id": "f_000jsMockFileId",
+         "name": "Certificate of Participation - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 796827,
+         "modified": "2026-11-11T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing recruitment, selection and orientation.",
+       "folderId": "ind_000jvMockFileId",
+       "files": [
+        {
+         "id": "f_000juMockFileId",
+         "name": "Action Plan 2025-2026 - Area II.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 4403892,
+         "modified": "2026-11-06T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for recruitment, selection and orientation.",
+       "folderId": "ind_000jwMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on recruitment, selection and orientation is implemented and communicated to stakeholders.",
+       "folderId": "ind_000jxMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to recruitment, selection and orientation are kept and updated regularly.",
+       "folderId": "ind_000jzMockFileId",
+       "files": [
+        {
+         "id": "f_000jyMockFileId",
+         "name": "Certificate of Participation - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 3968844,
+         "modified": "2026-11-19T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of recruitment, selection and orientation are evident, documented, and used for improvement.",
+       "folderId": "ind_000k0MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Faculty Adequacy and Loading",
+     "folderId": "param_000k1MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on faculty adequacy and loading.",
+       "folderId": "ind_000k3MockFileId",
+       "files": [
+        {
+         "id": "f_000k2MockFileId",
+         "name": "Action Plan 2025-2026 - Area II.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 6264037,
+         "modified": "2026-11-22T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing faculty adequacy and loading.",
+       "folderId": "ind_000k7MockFileId",
+       "files": [
+        {
+         "id": "f_000k4MockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area II",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-09T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000k6MockFileId",
+         "name": "Monitoring and Evaluation Tool - Area II.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 4538930,
+         "modified": "2026-11-06T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "M&E",
+          "monitoring"
+         ]
+        },
+        {
+         "id": "f_000k5MockFileId",
+         "name": "Summary Matrix - Area II",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-14T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for faculty adequacy and loading.",
+       "folderId": "ind_000k8MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on faculty adequacy and loading is implemented and communicated to stakeholders.",
+       "folderId": "ind_000k9MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of faculty adequacy and loading are evident, documented, and used for improvement.",
+       "folderId": "ind_000kaMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Rank and Tenure",
+     "folderId": "param_000kbMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on rank and tenure.",
+       "folderId": "ind_000kcMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing rank and tenure.",
+       "folderId": "ind_000kdMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on rank and tenure is implemented and communicated to stakeholders.",
+       "folderId": "ind_000keMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of rank and tenure are evident, documented, and used for improvement.",
+       "folderId": "ind_000kfMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Faculty Development",
+     "folderId": "param_000kgMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on faculty development.",
+       "folderId": "ind_000khMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing faculty development.",
+       "folderId": "ind_000kiMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for faculty development.",
+       "folderId": "ind_000kjMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on faculty development is implemented and communicated to stakeholders.",
+       "folderId": "ind_000knMockFileId",
+       "files": [
+        {
+         "id": "f_000kmMockFileId",
+         "name": "Certificate of Participation - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 6210776,
+         "modified": "2026-11-06T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000kkMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area II.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 523978,
+         "modified": "2026-11-09T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "M&E",
+          "monitoring"
+         ]
+        },
+        {
+         "id": "f_000klMockFileId",
+         "name": "Survey Results and Analysis - Area II",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-07T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to faculty development are kept and updated regularly.",
+       "folderId": "ind_000koMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of faculty development are evident, documented, and used for improvement.",
+       "folderId": "ind_000kqMockFileId",
+       "files": [
+        {
+         "id": "f_000kpMockFileId",
+         "name": "Survey Results and Analysis - Area II",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-07T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "survey",
+          "results"
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "F",
+     "name": "Professional Performance and Scholarly Works",
+     "folderId": "param_000krMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on professional performance and scholarly works.",
+       "folderId": "ind_000ksMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing professional performance and scholarly works.",
+       "folderId": "ind_000ktMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for professional performance and scholarly works.",
+       "folderId": "ind_000kuMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on professional performance and scholarly works is implemented and communicated to stakeholders.",
+       "folderId": "ind_000kvMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of professional performance and scholarly works are evident, documented, and used for improvement.",
+       "folderId": "ind_000kwMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "G",
+     "name": "Salaries, Fringe Benefits and Incentives",
+     "folderId": "param_000kxMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on salaries, fringe benefits and incentives.",
+       "folderId": "ind_000l0MockFileId",
+       "files": [
+        {
+         "id": "f_000kzMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area II.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 1496928,
+         "modified": "2026-11-19T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000kyMockFileId",
+         "name": "Survey Results and Analysis - Area II",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-15T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing salaries, fringe benefits and incentives.",
+       "folderId": "ind_000l2MockFileId",
+       "files": [
+        {
+         "id": "f_000l1MockFileId",
+         "name": "Memorandum Order No. 15, s. 2025 - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 194737,
+         "modified": "2026-11-14T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on salaries, fringe benefits and incentives is implemented and communicated to stakeholders.",
+       "folderId": "ind_000l3MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of salaries, fringe benefits and incentives are evident, documented, and used for improvement.",
+       "folderId": "ind_000l4MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "H",
+     "name": "Professionalism",
+     "folderId": "param_000l5MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on professionalism.",
+       "folderId": "ind_000l7MockFileId",
+       "files": [
+        {
+         "id": "f_000l6MockFileId",
+         "name": "Attendance Sheet - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 1191612,
+         "modified": "2026-11-16T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing professionalism.",
+       "folderId": "ind_000lbMockFileId",
+       "files": [
+        {
+         "id": "f_000laMockFileId",
+         "name": "Attendance Sheet - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 8902255,
+         "modified": "2026-11-13T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000l9MockFileId",
+         "name": "Board Resolution No. 10, s. 2024 - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 8959129,
+         "modified": "2026-11-02T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        },
+        {
+         "id": "f_000l8MockFileId",
+         "name": "Minutes of the Faculty Meeting (January 2025) - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 6187735,
+         "modified": "2026-11-11T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for professionalism.",
+       "folderId": "ind_000lcMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on professionalism is implemented and communicated to stakeholders.",
+       "folderId": "ind_000leMockFileId",
+       "files": [
+        {
+         "id": "f_000ldMockFileId",
+         "name": "Action Plan 2025-2026 - Area II.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 6773235,
+         "modified": "2026-11-18T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to professionalism are kept and updated regularly.",
+       "folderId": "ind_000lgMockFileId",
+       "files": [
+        {
+         "id": "f_000lfMockFileId",
+         "name": "Memorandum Order No. 33, s. 2025 - Area II.pdf",
+         "mimeType": "application/pdf",
+         "size": 4946296,
+         "modified": "2026-11-21T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of professionalism are evident, documented, and used for improvement.",
+       "folderId": "ind_000lhMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "III",
+   "name": "Curriculum and Instruction",
+   "folderId": "area_000liMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Curriculum and Program of Studies",
+     "folderId": "param_000ljMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on curriculum and program of studies.",
+       "folderId": "ind_000lmMockFileId",
+       "files": [
+        {
+         "id": "f_000yiMockFileId",
+         "name": "CHED Memorandum Order (CMO) No. 79, s. 2017.pdf",
+         "mimeType": "application/pdf",
+         "size": 8594908,
+         "modified": "2026-11-14T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "CMO",
+          "CHED",
+          "PSG"
+         ]
+        },
+        {
+         "id": "f_000yhMockFileId",
+         "name": "Curriculum Map - Program 2",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-09T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "curriculum map",
+          "CMO"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing curriculum and program of studies.",
+       "folderId": "ind_000lnMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for curriculum and program of studies.",
+       "folderId": "ind_000loMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on curriculum and program of studies is implemented and communicated to stakeholders.",
+       "folderId": "ind_000lsMockFileId",
+       "files": [
+        {
+         "id": "f_000lqMockFileId",
+         "name": "Board Resolution No. 49, s. 2024 - Area III.pdf",
+         "mimeType": "application/pdf",
+         "size": 3158492,
+         "modified": "2026-11-02T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000lpMockFileId",
+         "name": "Minutes of the Faculty Meeting (January 2025) - Area III.pdf",
+         "mimeType": "application/pdf",
+         "size": 7723979,
+         "modified": "2026-11-01T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000lrMockFileId",
+         "name": "Summary Matrix - Area III",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-09T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to curriculum and program of studies are kept and updated regularly.",
+       "folderId": "ind_000ltMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of curriculum and program of studies are evident, documented, and used for improvement.",
+       "folderId": "ind_000luMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Instructional Processes, Methodologies and Learning Opportunities",
+     "folderId": "param_000lvMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on instructional processes, methodologies and learning opportunities.",
+       "folderId": "ind_000lyMockFileId",
+       "files": [
+        {
+         "id": "f_000lwMockFileId",
+         "name": "Photo Documentation - Area III.jpg",
+         "mimeType": "image/jpeg",
+         "size": 2931517,
+         "modified": "2026-11-05T02:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": [
+          "photos",
+          "documentation"
+         ]
+        },
+        {
+         "id": "f_000lxMockFileId",
+         "name": "Photo Documentation - Area III.jpg",
+         "mimeType": "image/jpeg",
+         "size": 8466842,
+         "modified": "2026-11-22T08:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing instructional processes, methodologies and learning opportunities.",
+       "folderId": "ind_000lzMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for instructional processes, methodologies and learning opportunities.",
+       "folderId": "ind_000m0MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on instructional processes, methodologies and learning opportunities is implemented and communicated to stakeholders.",
+       "folderId": "ind_000m2MockFileId",
+       "files": [
+        {
+         "id": "f_000m1MockFileId",
+         "name": "Orientation Presentation - Area III",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-05T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of instructional processes, methodologies and learning opportunities are evident, documented, and used for improvement.",
+       "folderId": "ind_000m3MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Assessment of Academic Performance",
+     "folderId": "param_000m4MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on assessment of academic performance.",
+       "folderId": "ind_000m5MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing assessment of academic performance.",
+       "folderId": "ind_000m6MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on assessment of academic performance is implemented and communicated to stakeholders.",
+       "folderId": "ind_000m7MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of assessment of academic performance are evident, documented, and used for improvement.",
+       "folderId": "ind_000m9MockFileId",
+       "files": [
+        {
+         "id": "f_000m8MockFileId",
+         "name": "Survey Results and Analysis - Area III",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-06T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Management of Learning",
+     "folderId": "param_000maMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on management of learning.",
+       "folderId": "ind_000meMockFileId",
+       "files": [
+        {
+         "id": "f_000mcMockFileId",
+         "name": "Attendance Sheet - Area III.pdf",
+         "mimeType": "application/pdf",
+         "size": 8914298,
+         "modified": "2026-11-13T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000mbMockFileId",
+         "name": "scan0001 - Area III.pdf",
+         "mimeType": "application/pdf",
+         "size": 8018145,
+         "modified": "2026-11-19T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000mdMockFileId",
+         "name": "Survey Results and Analysis - Area III",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-17T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing management of learning.",
+       "folderId": "ind_000mfMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for management of learning.",
+       "folderId": "ind_000mgMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on management of learning is implemented and communicated to stakeholders.",
+       "folderId": "ind_000mhMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to management of learning are kept and updated regularly.",
+       "folderId": "ind_000miMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of management of learning are evident, documented, and used for improvement.",
+       "folderId": "ind_000mjMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Graduation Requirements",
+     "folderId": "param_000mkMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on graduation requirements.",
+       "folderId": "ind_000mmMockFileId",
+       "files": [
+        {
+         "id": "f_000mlMockFileId",
+         "name": "scan0001 - Area III.pdf",
+         "mimeType": "application/pdf",
+         "size": 6051576,
+         "modified": "2026-11-04T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing graduation requirements.",
+       "folderId": "ind_000mnMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for graduation requirements.",
+       "folderId": "ind_000moMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on graduation requirements is implemented and communicated to stakeholders.",
+       "folderId": "ind_000msMockFileId",
+       "files": [
+        {
+         "id": "f_000mqMockFileId",
+         "name": "Action Plan 2025-2026 - Area III.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 1498988,
+         "modified": "2026-11-14T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000mpMockFileId",
+         "name": "Photo Documentation - Area III.jpg",
+         "mimeType": "image/jpeg",
+         "size": 3317320,
+         "modified": "2026-11-02T06:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": [
+          "photos",
+          "documentation"
+         ]
+        },
+        {
+         "id": "f_000mrMockFileId",
+         "name": "Summary Matrix - Area III",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-04T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of graduation requirements are evident, documented, and used for improvement.",
+       "folderId": "ind_000mtMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "F",
+     "name": "Administrative Support for Effective Instruction",
+     "folderId": "param_000muMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on administrative support for effective instruction.",
+       "folderId": "ind_000mvMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing administrative support for effective instruction.",
+       "folderId": "ind_000mwMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on administrative support for effective instruction is implemented and communicated to stakeholders.",
+       "folderId": "ind_000mxMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of administrative support for effective instruction are evident, documented, and used for improvement.",
+       "folderId": "ind_000myMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "IV",
+   "name": "Support to Students",
+   "folderId": "area_000mzMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Student Services Program",
+     "folderId": "param_000n0MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on student services program.",
+       "folderId": "ind_000n4MockFileId",
+       "files": [
+        {
+         "id": "f_000n1MockFileId",
+         "name": "Attendance Sheet - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 860932,
+         "modified": "2026-11-03T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000n2MockFileId",
+         "name": "Attendance Sheet - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 5487388,
+         "modified": "2026-11-02T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000n3MockFileId",
+         "name": "Attendance Sheet - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 7789538,
+         "modified": "2026-11-15T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing student services program.",
+       "folderId": "ind_000n5MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for student services program.",
+       "folderId": "ind_000n7MockFileId",
+       "files": [
+        {
+         "id": "f_000n6MockFileId",
+         "name": "Minutes of the Faculty Meeting (January 2025) - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 1070483,
+         "modified": "2026-11-14T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "minutes",
+          "meeting"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on student services program is implemented and communicated to stakeholders.",
+       "folderId": "ind_000nbMockFileId",
+       "files": [
+        {
+         "id": "f_000n9MockFileId",
+         "name": "Action Plan 2025-2026 - Area IV.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 4403944,
+         "modified": "2026-11-24T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000n8MockFileId",
+         "name": "Attendance Sheet - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 166897,
+         "modified": "2026-11-19T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000naMockFileId",
+         "name": "Certificate of Participation - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 7208633,
+         "modified": "2026-11-09T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of student services program are evident, documented, and used for improvement.",
+       "folderId": "ind_000ncMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Admission and Retention",
+     "folderId": "param_000ndMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on admission and retention.",
+       "folderId": "ind_000neMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing admission and retention.",
+       "folderId": "ind_000nfMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on admission and retention is implemented and communicated to stakeholders.",
+       "folderId": "ind_000nhMockFileId",
+       "files": [
+        {
+         "id": "f_000ngMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area IV",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-17T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "report",
+          "accomplishment"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of admission and retention are evident, documented, and used for improvement.",
+       "folderId": "ind_000niMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Guidance Program",
+     "folderId": "param_000njMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on guidance program.",
+       "folderId": "ind_000nkMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing guidance program.",
+       "folderId": "ind_000nlMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for guidance program.",
+       "folderId": "ind_000nmMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on guidance program is implemented and communicated to stakeholders.",
+       "folderId": "ind_000nqMockFileId",
+       "files": [
+        {
+         "id": "f_000npMockFileId",
+         "name": "Board Resolution No. 32, s. 2024 - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 8594612,
+         "modified": "2026-11-17T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        },
+        {
+         "id": "f_000noMockFileId",
+         "name": "Certificate of Participation - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 5013531,
+         "modified": "2026-11-22T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000nnMockFileId",
+         "name": "Summary Matrix - Area IV",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-19T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to guidance program are kept and updated regularly.",
+       "folderId": "ind_000ntMockFileId",
+       "files": [
+        {
+         "id": "f_000nrMockFileId",
+         "name": "Board Resolution No. 35, s. 2024 - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 1530349,
+         "modified": "2026-11-18T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        },
+        {
+         "id": "f_000nsMockFileId",
+         "name": "Certificate of Participation - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 6679517,
+         "modified": "2026-11-23T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of guidance program are evident, documented, and used for improvement.",
+       "folderId": "ind_000nuMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Other Student Services",
+     "folderId": "param_000nvMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on other student services.",
+       "folderId": "ind_000nwMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing other student services.",
+       "folderId": "ind_000nxMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for other student services.",
+       "folderId": "ind_000nyMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on other student services is implemented and communicated to stakeholders.",
+       "folderId": "ind_000nzMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of other student services are evident, documented, and used for improvement.",
+       "folderId": "ind_000o1MockFileId",
+       "files": [
+        {
+         "id": "f_000o0MockFileId",
+         "name": "Board Resolution No. 44, s. 2024 - Area IV.pdf",
+         "mimeType": "application/pdf",
+         "size": 8327810,
+         "modified": "2026-11-07T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Student Development Activities",
+     "folderId": "param_000o2MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on student development activities.",
+       "folderId": "ind_000o3MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing student development activities.",
+       "folderId": "ind_000o4MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on student development activities is implemented and communicated to stakeholders.",
+       "folderId": "ind_000o6MockFileId",
+       "files": [
+        {
+         "id": "f_000o5MockFileId",
+         "name": "Monitoring and Evaluation Tool - Area IV.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 3566133,
+         "modified": "2026-11-13T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of student development activities are evident, documented, and used for improvement.",
+       "folderId": "ind_000o7MockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "V",
+   "name": "Research",
+   "folderId": "area_000o8MockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Priorities and Relevance",
+     "folderId": "param_000o9MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on priorities and relevance.",
+       "folderId": "ind_000oaMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing priorities and relevance.",
+       "folderId": "ind_000odMockFileId",
+       "files": [
+        {
+         "id": "f_000ocMockFileId",
+         "name": "Certificate of Participation - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 2459704,
+         "modified": "2026-11-04T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000obMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 3710233,
+         "modified": "2026-11-18T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on priorities and relevance is implemented and communicated to stakeholders.",
+       "folderId": "ind_000oeMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of priorities and relevance are evident, documented, and used for improvement.",
+       "folderId": "ind_000ogMockFileId",
+       "files": [
+        {
+         "id": "f_000ofMockFileId",
+         "name": "Memorandum Order No. 16, s. 2025 - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 3093342,
+         "modified": "2026-11-17T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Funding and Other Resources",
+     "folderId": "param_000ohMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on funding and other resources.",
+       "folderId": "ind_000okMockFileId",
+       "files": [
+        {
+         "id": "f_000ojMockFileId",
+         "name": "Orientation Presentation - Area V",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-09T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        },
+        {
+         "id": "f_000oiMockFileId",
+         "name": "Photo Documentation - Area V.jpg",
+         "mimeType": "image/jpeg",
+         "size": 1447757,
+         "modified": "2026-11-10T03:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing funding and other resources.",
+       "folderId": "ind_000olMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for funding and other resources.",
+       "folderId": "ind_000omMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on funding and other resources is implemented and communicated to stakeholders.",
+       "folderId": "ind_000onMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to funding and other resources are kept and updated regularly.",
+       "folderId": "ind_000orMockFileId",
+       "files": [
+        {
+         "id": "f_000ooMockFileId",
+         "name": "Minutes of the Faculty Meeting (October 2025) - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 155176,
+         "modified": "2026-11-17T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000oqMockFileId",
+         "name": "Photo Documentation - Area V.jpg",
+         "mimeType": "image/jpeg",
+         "size": 8507704,
+         "modified": "2026-11-17T03:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        },
+        {
+         "id": "f_000opMockFileId",
+         "name": "Survey Results and Analysis - Area V",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-20T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of funding and other resources are evident, documented, and used for improvement.",
+       "folderId": "ind_000osMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Implementation, Monitoring, Evaluation and Utilization of Research Results",
+     "folderId": "param_000otMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on implementation, monitoring, evaluation and utilization of research results.",
+       "folderId": "ind_000ouMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing implementation, monitoring, evaluation and utilization of research results.",
+       "folderId": "ind_000owMockFileId",
+       "files": [
+        {
+         "id": "f_000ovMockFileId",
+         "name": "Board Resolution No. 46, s. 2024 - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 8433554,
+         "modified": "2026-11-08T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for implementation, monitoring, evaluation and utilization of research results.",
+       "folderId": "ind_000oxMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on implementation, monitoring, evaluation and utilization of research results is implemented and communicated to stakeholders.",
+       "folderId": "ind_000p0MockFileId",
+       "files": [
+        {
+         "id": "f_000ozMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area V",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-11T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "report",
+          "accomplishment"
+         ]
+        },
+        {
+         "id": "f_000oyMockFileId",
+         "name": "Certificate of Participation - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 2573934,
+         "modified": "2026-11-11T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of implementation, monitoring, evaluation and utilization of research results are evident, documented, and used for improvement.",
+       "folderId": "ind_000p2MockFileId",
+       "files": [
+        {
+         "id": "f_000p1MockFileId",
+         "name": "Orientation Presentation - Area V",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-10T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Publication and Dissemination",
+     "folderId": "param_000p3MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on publication and dissemination.",
+       "folderId": "ind_000p4MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing publication and dissemination.",
+       "folderId": "ind_000p5MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on publication and dissemination is implemented and communicated to stakeholders.",
+       "folderId": "ind_000p9MockFileId",
+       "files": [
+        {
+         "id": "f_000p7MockFileId",
+         "name": "Action Plan 2025-2026 - Area V.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 4250951,
+         "modified": "2026-11-03T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        },
+        {
+         "id": "f_000p8MockFileId",
+         "name": "Action Plan 2025-2026 - Area V.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 5580971,
+         "modified": "2026-11-12T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000p6MockFileId",
+         "name": "scan0001 - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 7715444,
+         "modified": "2026-11-10T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of publication and dissemination are evident, documented, and used for improvement.",
+       "folderId": "ind_000pbMockFileId",
+       "files": [
+        {
+         "id": "f_000paMockFileId",
+         "name": "Attendance Sheet - Area V.pdf",
+         "mimeType": "application/pdf",
+         "size": 4729358,
+         "modified": "2026-11-17T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "VI",
+   "name": "Extension and Community Involvement",
+   "folderId": "area_000pcMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Priorities and Relevance",
+     "folderId": "param_000pdMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on priorities and relevance.",
+       "folderId": "ind_000phMockFileId",
+       "files": [
+        {
+         "id": "f_000peMockFileId",
+         "name": "Memorandum Order No. 41, s. 2025 - Area VI.pdf",
+         "mimeType": "application/pdf",
+         "size": 6036506,
+         "modified": "2026-11-10T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000pgMockFileId",
+         "name": "Photo Documentation - Area VI.jpg",
+         "mimeType": "image/jpeg",
+         "size": 7453298,
+         "modified": "2026-11-10T04:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        },
+        {
+         "id": "f_000pfMockFileId",
+         "name": "Summary Matrix - Area VI",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-05T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing priorities and relevance.",
+       "folderId": "ind_000pkMockFileId",
+       "files": [
+        {
+         "id": "f_000piMockFileId",
+         "name": "Memorandum Order No. 61, s. 2025 - Area VI.pdf",
+         "mimeType": "application/pdf",
+         "size": 5754518,
+         "modified": "2026-11-09T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000pjMockFileId",
+         "name": "Summary Matrix - Area VI",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-21T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for priorities and relevance.",
+       "folderId": "ind_000plMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on priorities and relevance is implemented and communicated to stakeholders.",
+       "folderId": "ind_000pmMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to priorities and relevance are kept and updated regularly.",
+       "folderId": "ind_000pnMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of priorities and relevance are evident, documented, and used for improvement.",
+       "folderId": "ind_000poMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Planning, Implementation, Monitoring and Evaluation",
+     "folderId": "param_000ppMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on planning, implementation, monitoring and evaluation.",
+       "folderId": "ind_000pqMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing planning, implementation, monitoring and evaluation.",
+       "folderId": "ind_000prMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for planning, implementation, monitoring and evaluation.",
+       "folderId": "ind_000psMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on planning, implementation, monitoring and evaluation is implemented and communicated to stakeholders.",
+       "folderId": "ind_000puMockFileId",
+       "files": [
+        {
+         "id": "f_000ptMockFileId",
+         "name": "Orientation Presentation - Area VI",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-23T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of planning, implementation, monitoring and evaluation are evident, documented, and used for improvement.",
+       "folderId": "ind_000pvMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Funding and Other Resources",
+     "folderId": "param_000pwMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on funding and other resources.",
+       "folderId": "ind_000pxMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing funding and other resources.",
+       "folderId": "ind_000q1MockFileId",
+       "files": [
+        {
+         "id": "f_000q0MockFileId",
+         "name": "Minutes of the Faculty Meeting (August 2025) - Area VI.pdf",
+         "mimeType": "application/pdf",
+         "size": 7250036,
+         "modified": "2026-11-05T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "minutes",
+          "meeting"
+         ]
+        },
+        {
+         "id": "f_000pyMockFileId",
+         "name": "Minutes of the Faculty Meeting (October 2025) - Area VI.pdf",
+         "mimeType": "application/pdf",
+         "size": 6710392,
+         "modified": "2026-11-21T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000pzMockFileId",
+         "name": "Summary Matrix - Area VI",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-23T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on funding and other resources is implemented and communicated to stakeholders.",
+       "folderId": "ind_000q5MockFileId",
+       "files": [
+        {
+         "id": "f_000q3MockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VI",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-17T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "report",
+          "accomplishment"
+         ]
+        },
+        {
+         "id": "f_000q4MockFileId",
+         "name": "Summary Matrix - Area VI",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-20T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        },
+        {
+         "id": "f_000q2MockFileId",
+         "name": "Survey Results and Analysis - Area VI",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-22T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "survey",
+          "results"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of funding and other resources are evident, documented, and used for improvement.",
+       "folderId": "ind_000q7MockFileId",
+       "files": [
+        {
+         "id": "f_000q6MockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VI",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-05T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Community Involvement and Participation",
+     "folderId": "param_000q8MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on community involvement and participation.",
+       "folderId": "ind_000qcMockFileId",
+       "files": [
+        {
+         "id": "f_000qbMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VI",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-21T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "report",
+          "accomplishment"
+         ]
+        },
+        {
+         "id": "f_000qaMockFileId",
+         "name": "Attendance Sheet - Area VI.pdf",
+         "mimeType": "application/pdf",
+         "size": 8246841,
+         "modified": "2026-11-21T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000q9MockFileId",
+         "name": "Monitoring and Evaluation Tool - Area VI.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 4900845,
+         "modified": "2026-11-19T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "M&E",
+          "monitoring"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing community involvement and participation.",
+       "folderId": "ind_000qdMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for community involvement and participation.",
+       "folderId": "ind_000qeMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The community is involved in the planning and implementation of extension programs.",
+       "folderId": "ind_000qfMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to community involvement and participation are kept and updated regularly.",
+       "folderId": "ind_000qgMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of community involvement and participation are evident, documented, and used for improvement.",
+       "folderId": "ind_000qhMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "VII",
+   "name": "Library",
+   "folderId": "area_000qiMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Administration",
+     "folderId": "param_000qjMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on administration.",
+       "folderId": "ind_000qkMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing administration.",
+       "folderId": "ind_000qmMockFileId",
+       "files": [
+        {
+         "id": "f_000qlMockFileId",
+         "name": "Attendance Sheet - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 8083115,
+         "modified": "2026-11-04T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for administration.",
+       "folderId": "ind_000qpMockFileId",
+       "files": [
+        {
+         "id": "f_000qnMockFileId",
+         "name": "Photo Documentation - Area VII.jpg",
+         "mimeType": "image/jpeg",
+         "size": 1809932,
+         "modified": "2026-11-11T00:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": [
+          "photos",
+          "documentation"
+         ]
+        },
+        {
+         "id": "f_000qoMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 3382256,
+         "modified": "2026-11-01T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on administration is implemented and communicated to stakeholders.",
+       "folderId": "ind_000qtMockFileId",
+       "files": [
+        {
+         "id": "f_000qrMockFileId",
+         "name": "Certificate of Participation - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 823965,
+         "modified": "2026-11-22T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000qqMockFileId",
+         "name": "Memorandum Order No. 94, s. 2025 - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4564132,
+         "modified": "2026-11-09T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000qsMockFileId",
+         "name": "Minutes of the Faculty Meeting (August 2025) - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4191513,
+         "modified": "2026-11-18T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of administration are evident, documented, and used for improvement.",
+       "folderId": "ind_000quMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Administrative Support",
+     "folderId": "param_000qvMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on administrative support.",
+       "folderId": "ind_000qyMockFileId",
+       "files": [
+        {
+         "id": "f_000qwMockFileId",
+         "name": "Attendance Sheet - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 2331019,
+         "modified": "2026-11-10T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000qxMockFileId",
+         "name": "Orientation Presentation - Area VII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-19T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing administrative support.",
+       "folderId": "ind_000qzMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on administrative support is implemented and communicated to stakeholders.",
+       "folderId": "ind_000r0MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of administrative support are evident, documented, and used for improvement.",
+       "folderId": "ind_000r1MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Staff",
+     "folderId": "param_000r2MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on staff.",
+       "folderId": "ind_000r3MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing staff.",
+       "folderId": "ind_000r4MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for staff.",
+       "folderId": "ind_000r5MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on staff is implemented and communicated to stakeholders.",
+       "folderId": "ind_000r8MockFileId",
+       "files": [
+        {
+         "id": "f_000r6MockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VII",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-22T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "report",
+          "accomplishment"
+         ]
+        },
+        {
+         "id": "f_000r7MockFileId",
+         "name": "Photo Documentation - Area VII.jpg",
+         "mimeType": "image/jpeg",
+         "size": 2619418,
+         "modified": "2026-11-24T07:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to staff are kept and updated regularly.",
+       "folderId": "ind_000rbMockFileId",
+       "files": [
+        {
+         "id": "f_000raMockFileId",
+         "name": "scan0001 - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 1617545,
+         "modified": "2026-11-18T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000r9MockFileId",
+         "name": "Survey Results and Analysis - Area VII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-06T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "survey",
+          "results"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of staff are evident, documented, and used for improvement.",
+       "folderId": "ind_000rcMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Collection Development, Organization and Preservation",
+     "folderId": "param_000rdMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on collection development, organization and preservation.",
+       "folderId": "ind_000reMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing collection development, organization and preservation.",
+       "folderId": "ind_000rfMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for collection development, organization and preservation.",
+       "folderId": "ind_000rjMockFileId",
+       "files": [
+        {
+         "id": "f_000rgMockFileId",
+         "name": "Orientation Presentation - Area VII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-07T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        },
+        {
+         "id": "f_000rhMockFileId",
+         "name": "Summary Matrix - Area VII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-19T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        },
+        {
+         "id": "f_000riMockFileId",
+         "name": "Survey Results and Analysis - Area VII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-19T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "survey",
+          "results"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on collection development, organization and preservation is implemented and communicated to stakeholders.",
+       "folderId": "ind_000rmMockFileId",
+       "files": [
+        {
+         "id": "f_000rlMockFileId",
+         "name": "Attendance Sheet - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 2636351,
+         "modified": "2026-11-07T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000rkMockFileId",
+         "name": "Minutes of the Faculty Meeting (June 2025) - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 5437872,
+         "modified": "2026-11-11T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of collection development, organization and preservation are evident, documented, and used for improvement.",
+       "folderId": "ind_000rnMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Services and Utilization",
+     "folderId": "param_000roMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on services and utilization.",
+       "folderId": "ind_000rpMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing services and utilization.",
+       "folderId": "ind_000rqMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on services and utilization is implemented and communicated to stakeholders.",
+       "folderId": "ind_000rrMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of services and utilization are evident, documented, and used for improvement.",
+       "folderId": "ind_000rtMockFileId",
+       "files": [
+        {
+         "id": "f_000rsMockFileId",
+         "name": "Attendance Sheet - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 183343,
+         "modified": "2026-11-02T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "F",
+     "name": "Physical Set-up and Facilities",
+     "folderId": "param_000ruMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on physical set-up and facilities.",
+       "folderId": "ind_000ryMockFileId",
+       "files": [
+        {
+         "id": "f_000rvMockFileId",
+         "name": "Attendance Sheet - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 1235916,
+         "modified": "2026-11-01T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000rwMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4823693,
+         "modified": "2026-11-17T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        },
+        {
+         "id": "f_000rxMockFileId",
+         "name": "scan0001 - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 7283718,
+         "modified": "2026-11-21T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing physical set-up and facilities.",
+       "folderId": "ind_000rzMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for physical set-up and facilities.",
+       "folderId": "ind_000s0MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on physical set-up and facilities is implemented and communicated to stakeholders.",
+       "folderId": "ind_000s1MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to physical set-up and facilities are kept and updated regularly.",
+       "folderId": "ind_000s2MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of physical set-up and facilities are evident, documented, and used for improvement.",
+       "folderId": "ind_000s3MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "G",
+     "name": "Financial Support",
+     "folderId": "param_000s4MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on financial support.",
+       "folderId": "ind_000s5MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing financial support.",
+       "folderId": "ind_000s6MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for financial support.",
+       "folderId": "ind_000s7MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on financial support is implemented and communicated to stakeholders.",
+       "folderId": "ind_000s8MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of financial support are evident, documented, and used for improvement.",
+       "folderId": "ind_000s9MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "H",
+     "name": "Linkages",
+     "folderId": "param_000saMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on linkages.",
+       "folderId": "ind_000sbMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing linkages.",
+       "folderId": "ind_000scMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on linkages is implemented and communicated to stakeholders.",
+       "folderId": "ind_000sfMockFileId",
+       "files": [
+        {
+         "id": "f_000sdMockFileId",
+         "name": "Minutes of the Faculty Meeting (November 2025) - Area VII.pdf",
+         "mimeType": "application/pdf",
+         "size": 6174795,
+         "modified": "2026-11-22T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000seMockFileId",
+         "name": "Photo Documentation - Area VII.jpg",
+         "mimeType": "image/jpeg",
+         "size": 6024407,
+         "modified": "2026-11-15T02:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of linkages are evident, documented, and used for improvement.",
+       "folderId": "ind_000sgMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "VIII",
+   "name": "Physical Plant and Facilities",
+   "folderId": "area_000shMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Campus",
+     "folderId": "param_000siMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on campus.",
+       "folderId": "ind_000sjMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing campus.",
+       "folderId": "ind_000skMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on campus is implemented and communicated to stakeholders.",
+       "folderId": "ind_000slMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of campus are evident, documented, and used for improvement.",
+       "folderId": "ind_000smMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Buildings",
+     "folderId": "param_000snMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on buildings.",
+       "folderId": "ind_000soMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing buildings.",
+       "folderId": "ind_000ssMockFileId",
+       "files": [
+        {
+         "id": "f_000srMockFileId",
+         "name": "Attendance Sheet - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 6770946,
+         "modified": "2026-11-01T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000spMockFileId",
+         "name": "Memorandum Order No. 98, s. 2025 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 2161457,
+         "modified": "2026-11-22T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000sqMockFileId",
+         "name": "Summary Matrix - Area VIII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-13T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for buildings.",
+       "folderId": "ind_000stMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on buildings is implemented and communicated to stakeholders.",
+       "folderId": "ind_000swMockFileId",
+       "files": [
+        {
+         "id": "f_000svMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area VIII.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 4364995,
+         "modified": "2026-11-01T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "M&E",
+          "monitoring"
+         ]
+        },
+        {
+         "id": "f_000suMockFileId",
+         "name": "Photo Documentation - Area VIII.jpg",
+         "mimeType": "image/jpeg",
+         "size": 849537,
+         "modified": "2026-11-04T05:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to buildings are kept and updated regularly.",
+       "folderId": "ind_000sxMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of buildings are evident, documented, and used for improvement.",
+       "folderId": "ind_000szMockFileId",
+       "files": [
+        {
+         "id": "f_000syMockFileId",
+         "name": "Summary Matrix - Area VIII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-01T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Classrooms",
+     "folderId": "param_000t0MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on classrooms.",
+       "folderId": "ind_000t1MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing classrooms.",
+       "folderId": "ind_000t4MockFileId",
+       "files": [
+        {
+         "id": "f_000t2MockFileId",
+         "name": "Attendance Sheet - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 3767716,
+         "modified": "2026-11-14T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000t3MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 3817382,
+         "modified": "2026-11-13T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for classrooms.",
+       "folderId": "ind_000t8MockFileId",
+       "files": [
+        {
+         "id": "f_000t5MockFileId",
+         "name": "Memorandum Order No. 89, s. 2025 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 647099,
+         "modified": "2026-11-11T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000t6MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 5645244,
+         "modified": "2026-11-11T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        },
+        {
+         "id": "f_000t7MockFileId",
+         "name": "Summary Matrix - Area VIII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-05T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on classrooms is implemented and communicated to stakeholders.",
+       "folderId": "ind_000t9MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of classrooms are evident, documented, and used for improvement.",
+       "folderId": "ind_000tcMockFileId",
+       "files": [
+        {
+         "id": "f_000taMockFileId",
+         "name": "Memorandum Order No. 83, s. 2025 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 6222812,
+         "modified": "2026-11-09T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000tbMockFileId",
+         "name": "Orientation Presentation - Area VIII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-15T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Offices and Staff Rooms",
+     "folderId": "param_000tdMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on offices and staff rooms.",
+       "folderId": "ind_000thMockFileId",
+       "files": [
+        {
+         "id": "f_000teMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VIII",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-18T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000tfMockFileId",
+         "name": "Attendance Sheet - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 2942594,
+         "modified": "2026-11-09T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000tgMockFileId",
+         "name": "Orientation Presentation - Area VIII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-18T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing offices and staff rooms.",
+       "folderId": "ind_000tjMockFileId",
+       "files": [
+        {
+         "id": "f_000tiMockFileId",
+         "name": "Board Resolution No. 19, s. 2024 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 3046547,
+         "modified": "2026-11-04T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on offices and staff rooms is implemented and communicated to stakeholders.",
+       "folderId": "ind_000tnMockFileId",
+       "files": [
+        {
+         "id": "f_000tmMockFileId",
+         "name": "Memorandum Order No. 47, s. 2025 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 6570954,
+         "modified": "2026-11-18T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000tkMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4605826,
+         "modified": "2026-11-14T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        },
+        {
+         "id": "f_000tlMockFileId",
+         "name": "Summary Matrix - Area VIII",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-07T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of offices and staff rooms are evident, documented, and used for improvement.",
+       "folderId": "ind_000toMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Assembly, Athletic and Other Facilities",
+     "folderId": "param_000tpMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on assembly, athletic and other facilities.",
+       "folderId": "ind_000tqMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing assembly, athletic and other facilities.",
+       "folderId": "ind_000ttMockFileId",
+       "files": [
+        {
+         "id": "f_000trMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area VIII.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 1673928,
+         "modified": "2026-11-19T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000tsMockFileId",
+         "name": "Orientation Presentation - Area VIII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-21T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for assembly, athletic and other facilities.",
+       "folderId": "ind_000tuMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on assembly, athletic and other facilities is implemented and communicated to stakeholders.",
+       "folderId": "ind_000tvMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to assembly, athletic and other facilities are kept and updated regularly.",
+       "folderId": "ind_000txMockFileId",
+       "files": [
+        {
+         "id": "f_000twMockFileId",
+         "name": "Board Resolution No. 59, s. 2024 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4320667,
+         "modified": "2026-11-06T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of assembly, athletic and other facilities are evident, documented, and used for improvement.",
+       "folderId": "ind_000tyMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "F",
+     "name": "Medical and Dental Clinic",
+     "folderId": "param_000tzMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on medical and dental clinic.",
+       "folderId": "ind_000u0MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing medical and dental clinic.",
+       "folderId": "ind_000u3MockFileId",
+       "files": [
+        {
+         "id": "f_000u2MockFileId",
+         "name": "Action Plan 2025-2026 - Area VIII.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 5855226,
+         "modified": "2026-11-18T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        },
+        {
+         "id": "f_000u1MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 6721796,
+         "modified": "2026-11-11T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for medical and dental clinic.",
+       "folderId": "ind_000u4MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on medical and dental clinic is implemented and communicated to stakeholders.",
+       "folderId": "ind_000u5MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of medical and dental clinic are evident, documented, and used for improvement.",
+       "folderId": "ind_000u6MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "G",
+     "name": "Student Center",
+     "folderId": "param_000u7MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on student center.",
+       "folderId": "ind_000u8MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing student center.",
+       "folderId": "ind_000u9MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on student center is implemented and communicated to stakeholders.",
+       "folderId": "ind_000ubMockFileId",
+       "files": [
+        {
+         "id": "f_000uaMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 5516406,
+         "modified": "2026-11-18T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of student center are evident, documented, and used for improvement.",
+       "folderId": "ind_000ucMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "H",
+     "name": "Food Services/Canteen/Cafeteria",
+     "folderId": "param_000udMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on food services/canteen/cafeteria.",
+       "folderId": "ind_000uhMockFileId",
+       "files": [
+        {
+         "id": "f_000ugMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area VIII",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-22T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000ueMockFileId",
+         "name": "Certificate of Participation - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 3975054,
+         "modified": "2026-11-20T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000ufMockFileId",
+         "name": "Memorandum Order No. 93, s. 2025 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 5658158,
+         "modified": "2026-11-21T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing food services/canteen/cafeteria.",
+       "folderId": "ind_000uiMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for food services/canteen/cafeteria.",
+       "folderId": "ind_000ukMockFileId",
+       "files": [
+        {
+         "id": "f_000ujMockFileId",
+         "name": "Orientation Presentation - Area VIII",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-24T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on food services/canteen/cafeteria is implemented and communicated to stakeholders.",
+       "folderId": "ind_000unMockFileId",
+       "files": [
+        {
+         "id": "f_000ulMockFileId",
+         "name": "Attendance Sheet - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 1727038,
+         "modified": "2026-11-06T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "attendance"
+         ]
+        },
+        {
+         "id": "f_000umMockFileId",
+         "name": "Board Resolution No. 80, s. 2024 - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 4698346,
+         "modified": "2026-11-07T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to food services/canteen/cafeteria are kept and updated regularly.",
+       "folderId": "ind_000uoMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of food services/canteen/cafeteria are evident, documented, and used for improvement.",
+       "folderId": "ind_000upMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "I",
+     "name": "Accreditation Center",
+     "folderId": "param_000uqMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on accreditation center.",
+       "folderId": "ind_000urMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing accreditation center.",
+       "folderId": "ind_000utMockFileId",
+       "files": [
+        {
+         "id": "f_000usMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area VIII.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 2900705,
+         "modified": "2026-11-23T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "M&E",
+          "monitoring"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for accreditation center.",
+       "folderId": "ind_000uuMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on accreditation center is implemented and communicated to stakeholders.",
+       "folderId": "ind_000uvMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of accreditation center are evident, documented, and used for improvement.",
+       "folderId": "ind_000uwMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "J",
+     "name": "Housing",
+     "folderId": "param_000uxMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on housing.",
+       "folderId": "ind_000uyMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing housing.",
+       "folderId": "ind_000uzMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on housing is implemented and communicated to stakeholders.",
+       "folderId": "ind_000v0MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of housing are evident, documented, and used for improvement.",
+       "folderId": "ind_000v2MockFileId",
+       "files": [
+        {
+         "id": "f_000v1MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area VIII.pdf",
+         "mimeType": "application/pdf",
+         "size": 8589837,
+         "modified": "2026-11-15T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "IX",
+   "name": "Laboratories",
+   "folderId": "area_000v3MockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Laboratories, Shops and Facilities",
+     "folderId": "param_000v4MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on laboratories, shops and facilities.",
+       "folderId": "ind_000v5MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing laboratories, shops and facilities.",
+       "folderId": "ind_000v7MockFileId",
+       "files": [
+        {
+         "id": "f_000v6MockFileId",
+         "name": "Minutes of the Faculty Meeting (October 2025) - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 5698816,
+         "modified": "2026-11-17T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "minutes",
+          "meeting"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for laboratories, shops and facilities.",
+       "folderId": "ind_000vaMockFileId",
+       "files": [
+        {
+         "id": "f_000v9MockFileId",
+         "name": "Certificate of Participation - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 665836,
+         "modified": "2026-11-21T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000v8MockFileId",
+         "name": "Photo Documentation - Area IX.jpg",
+         "mimeType": "image/jpeg",
+         "size": 161951,
+         "modified": "2026-11-18T02:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on laboratories, shops and facilities is implemented and communicated to stakeholders.",
+       "folderId": "ind_000vbMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to laboratories, shops and facilities are kept and updated regularly.",
+       "folderId": "ind_000vcMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of laboratories, shops and facilities are evident, documented, and used for improvement.",
+       "folderId": "ind_000vdMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Equipment, Supplies and Materials",
+     "folderId": "param_000veMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on equipment, supplies and materials.",
+       "folderId": "ind_000viMockFileId",
+       "files": [
+        {
+         "id": "f_000vhMockFileId",
+         "name": "Action Plan 2025-2026 - Area IX.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 3181682,
+         "modified": "2026-11-19T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000vgMockFileId",
+         "name": "Certificate of Participation - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 5284406,
+         "modified": "2026-11-23T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000vfMockFileId",
+         "name": "Policy Manual (Approved Copy) - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 8894747,
+         "modified": "2026-11-01T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing equipment, supplies and materials.",
+       "folderId": "ind_000vmMockFileId",
+       "files": [
+        {
+         "id": "f_000vkMockFileId",
+         "name": "Action Plan 2025-2026 - Area IX.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 3631995,
+         "modified": "2026-11-17T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        },
+        {
+         "id": "f_000vlMockFileId",
+         "name": "Action Plan 2025-2026 - Area IX.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 5459365,
+         "modified": "2026-11-08T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        },
+        {
+         "id": "f_000vjMockFileId",
+         "name": "Certificate of Participation - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 3637309,
+         "modified": "2026-11-23T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for equipment, supplies and materials.",
+       "folderId": "ind_000vnMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on equipment, supplies and materials is implemented and communicated to stakeholders.",
+       "folderId": "ind_000voMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of equipment, supplies and materials are evident, documented, and used for improvement.",
+       "folderId": "ind_000vpMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Maintenance",
+     "folderId": "param_000vqMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on maintenance.",
+       "folderId": "ind_000vrMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing maintenance.",
+       "folderId": "ind_000vsMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on maintenance is implemented and communicated to stakeholders.",
+       "folderId": "ind_000vwMockFileId",
+       "files": [
+        {
+         "id": "f_000vvMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area IX",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-20T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000vuMockFileId",
+         "name": "scan0001 - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 7831109,
+         "modified": "2026-11-12T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000vtMockFileId",
+         "name": "Survey Results and Analysis - Area IX",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-03T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "survey",
+          "results"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of maintenance are evident, documented, and used for improvement.",
+       "folderId": "ind_000vxMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Special Provisions",
+     "folderId": "param_000vyMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on special provisions.",
+       "folderId": "ind_000vzMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing special provisions.",
+       "folderId": "ind_000w0MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for special provisions.",
+       "folderId": "ind_000w1MockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on special provisions is implemented and communicated to stakeholders.",
+       "folderId": "ind_000w4MockFileId",
+       "files": [
+        {
+         "id": "f_000w2MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 2483781,
+         "modified": "2026-11-11T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "manual",
+          "policy"
+         ]
+        },
+        {
+         "id": "f_000w3MockFileId",
+         "name": "Summary Matrix - Area IX",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-13T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to special provisions are kept and updated regularly.",
+       "folderId": "ind_000w7MockFileId",
+       "files": [
+        {
+         "id": "f_000w6MockFileId",
+         "name": "Orientation Presentation - Area IX",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-12T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        },
+        {
+         "id": "f_000w5MockFileId",
+         "name": "Photo Documentation - Area IX.jpg",
+         "mimeType": "image/jpeg",
+         "size": 1943874,
+         "modified": "2026-11-11T02:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of special provisions are evident, documented, and used for improvement.",
+       "folderId": "ind_000wbMockFileId",
+       "files": [
+        {
+         "id": "f_000w9MockFileId",
+         "name": "Board Resolution No. 17, s. 2024 - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 4631504,
+         "modified": "2026-11-08T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000w8MockFileId",
+         "name": "Memorandum Order No. 73, s. 2025 - Area IX.pdf",
+         "mimeType": "application/pdf",
+         "size": 7695899,
+         "modified": "2026-11-07T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "memo",
+          "order"
+         ]
+        },
+        {
+         "id": "f_000waMockFileId",
+         "name": "Survey Results and Analysis - Area IX",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-13T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "code": "X",
+   "name": "Administration",
+   "folderId": "area_000wcMockFileId",
+   "looseFiles": [],
+   "parameters": [
+    {
+     "code": "A",
+     "name": "Organization",
+     "folderId": "param_000wdMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on organization.",
+       "folderId": "ind_000weMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing organization.",
+       "folderId": "ind_000whMockFileId",
+       "files": [
+        {
+         "id": "f_000wgMockFileId",
+         "name": "Monitoring and Evaluation Tool - Area X.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 7439272,
+         "modified": "2026-11-22T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000wfMockFileId",
+         "name": "Photo Documentation - Area X.jpg",
+         "mimeType": "image/jpeg",
+         "size": 9012292,
+         "modified": "2026-11-04T05:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for organization.",
+       "folderId": "ind_000wlMockFileId",
+       "files": [
+        {
+         "id": "f_000wjMockFileId",
+         "name": "Certificate of Participation - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 8457155,
+         "modified": "2026-11-06T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000wkMockFileId",
+         "name": "Memorandum Order No. 31, s. 2025 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 1337139,
+         "modified": "2026-11-17T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000wiMockFileId",
+         "name": "Survey Results and Analysis - Area X",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-16T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on organization is implemented and communicated to stakeholders.",
+       "folderId": "ind_000wmMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of organization are evident, documented, and used for improvement.",
+       "folderId": "ind_000wnMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "B",
+     "name": "Academic Administration",
+     "folderId": "param_000woMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on academic administration.",
+       "folderId": "ind_000wrMockFileId",
+       "files": [
+        {
+         "id": "f_000wqMockFileId",
+         "name": "Board Resolution No. 45, s. 2024 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 6203521,
+         "modified": "2026-11-12T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000wpMockFileId",
+         "name": "scan0001 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 2263700,
+         "modified": "2026-11-02T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing academic administration.",
+       "folderId": "ind_000wsMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on academic administration is implemented and communicated to stakeholders.",
+       "folderId": "ind_000wtMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of academic administration are evident, documented, and used for improvement.",
+       "folderId": "ind_000wuMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "C",
+     "name": "Student Administration",
+     "folderId": "param_000wvMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on student administration.",
+       "folderId": "ind_000wwMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing student administration.",
+       "folderId": "ind_000wyMockFileId",
+       "files": [
+        {
+         "id": "f_000wxMockFileId",
+         "name": "Certificate of Participation - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 6514104,
+         "modified": "2026-11-21T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for student administration.",
+       "folderId": "ind_000x0MockFileId",
+       "files": [
+        {
+         "id": "f_000wzMockFileId",
+         "name": "Survey Results and Analysis - Area X",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-13T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on student administration is implemented and communicated to stakeholders.",
+       "folderId": "ind_000x4MockFileId",
+       "files": [
+        {
+         "id": "f_000x2MockFileId",
+         "name": "Minutes of the Faculty Meeting (March 2025) - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 4007369,
+         "modified": "2026-11-24T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000x3MockFileId",
+         "name": "Policy Manual (Approved Copy) - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 6612786,
+         "modified": "2026-11-14T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000x1MockFileId",
+         "name": "scan0001 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 399866,
+         "modified": "2026-11-04T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to student administration are kept and updated regularly.",
+       "folderId": "ind_000x6MockFileId",
+       "files": [
+        {
+         "id": "f_000x5MockFileId",
+         "name": "Action Plan 2025-2026 - Area X.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 3042889,
+         "modified": "2026-11-15T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of student administration are evident, documented, and used for improvement.",
+       "folderId": "ind_000xaMockFileId",
+       "files": [
+        {
+         "id": "f_000x9MockFileId",
+         "name": "Action Plan 2025-2026 - Area X.docx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+         "size": 7020221,
+         "modified": "2026-11-22T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "plan"
+         ]
+        },
+        {
+         "id": "f_000x7MockFileId",
+         "name": "Monitoring and Evaluation Tool - Area X.xlsx",
+         "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+         "size": 1777327,
+         "modified": "2026-11-02T05:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000x8MockFileId",
+         "name": "Photo Documentation - Area X.jpg",
+         "mimeType": "image/jpeg",
+         "size": 1521773,
+         "modified": "2026-11-06T01:15:00Z",
+         "viewUrl": "assets/sample-image.svg",
+         "previewUrl": "assets/sample-image.svg",
+         "keywords": [
+          "photos",
+          "documentation"
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "D",
+     "name": "Financial Management",
+     "folderId": "param_000xbMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on financial management.",
+       "folderId": "ind_000xcMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing financial management.",
+       "folderId": "ind_000xdMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for financial management.",
+       "folderId": "ind_000xeMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on financial management is implemented and communicated to stakeholders.",
+       "folderId": "ind_000xfMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of financial management are evident, documented, and used for improvement.",
+       "folderId": "ind_000xgMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "E",
+     "name": "Supply Management",
+     "folderId": "param_000xhMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on supply management.",
+       "folderId": "ind_000xiMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing supply management.",
+       "folderId": "ind_000xjMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on supply management is implemented and communicated to stakeholders.",
+       "folderId": "ind_000xkMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of supply management are evident, documented, and used for improvement.",
+       "folderId": "ind_000xlMockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "F",
+     "name": "Records Management",
+     "folderId": "param_000xmMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on records management.",
+       "folderId": "ind_000xnMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing records management.",
+       "folderId": "ind_000xoMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for records management.",
+       "folderId": "ind_000xrMockFileId",
+       "files": [
+        {
+         "id": "f_000xpMockFileId",
+         "name": "Certificate of Participation - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 1895042,
+         "modified": "2026-11-11T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000xqMockFileId",
+         "name": "Minutes of the Faculty Meeting (November 2025) - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 7460909,
+         "modified": "2026-11-10T00:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on records management is implemented and communicated to stakeholders.",
+       "folderId": "ind_000xsMockFileId",
+       "files": []
+      },
+      {
+       "code": "I.2",
+       "type": "I",
+       "text": "Records of activities related to records management are kept and updated regularly.",
+       "folderId": "ind_000xtMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of records management are evident, documented, and used for improvement.",
+       "folderId": "ind_000xxMockFileId",
+       "files": [
+        {
+         "id": "f_000xuMockFileId",
+         "name": "Board Resolution No. 99, s. 2024 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 5842178,
+         "modified": "2026-11-03T08:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        },
+        {
+         "id": "f_000xwMockFileId",
+         "name": "Minutes of the Faculty Meeting (January 2025) - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 1022751,
+         "modified": "2026-11-07T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "minutes",
+          "meeting"
+         ]
+        },
+        {
+         "id": "f_000xvMockFileId",
+         "name": "Orientation Presentation - Area X",
+         "mimeType": "application/vnd.google-apps.presentation",
+         "size": null,
+         "modified": "2026-11-06T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "orientation"
+         ]
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "code": "G",
+     "name": "Institutional Planning and Development",
+     "folderId": "param_000xyMockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on institutional planning and development.",
+       "folderId": "ind_000xzMockFileId",
+       "files": []
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing institutional planning and development.",
+       "folderId": "ind_000y0MockFileId",
+       "files": []
+      },
+      {
+       "code": "S.3",
+       "type": "S",
+       "text": "Adequate resources are allocated for institutional planning and development.",
+       "folderId": "ind_000y4MockFileId",
+       "files": [
+        {
+         "id": "f_000y2MockFileId",
+         "name": "Board Resolution No. 62, s. 2024 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 6874755,
+         "modified": "2026-11-22T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "BOR",
+          "resolution",
+          "approval"
+         ]
+        },
+        {
+         "id": "f_000y3MockFileId",
+         "name": "Memorandum Order No. 66, s. 2025 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 7818741,
+         "modified": "2026-11-18T01:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000y1MockFileId",
+         "name": "Survey Results and Analysis - Area X",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-12T02:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on institutional planning and development is implemented and communicated to stakeholders.",
+       "folderId": "ind_000y5MockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of institutional planning and development are evident, documented, and used for improvement.",
+       "folderId": "ind_000y6MockFileId",
+       "files": []
+      }
+     ]
+    },
+    {
+     "code": "H",
+     "name": "Performance of Administrative Personnel",
+     "folderId": "param_000y7MockFileId",
+     "looseFiles": [],
+     "indicators": [
+      {
+       "code": "S.1",
+       "type": "S",
+       "text": "There is an approved policy on performance of administrative personnel.",
+       "folderId": "ind_000yaMockFileId",
+       "files": [
+        {
+         "id": "f_000y8MockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area X",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-09T06:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000y9MockFileId",
+         "name": "Summary Matrix - Area X",
+         "mimeType": "application/vnd.google-apps.spreadsheet",
+         "size": null,
+         "modified": "2026-11-15T03:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": [
+          "matrix",
+          "summary"
+         ]
+        }
+       ]
+      },
+      {
+       "code": "S.2",
+       "type": "S",
+       "text": "The college has a system for planning and managing performance of administrative personnel.",
+       "folderId": "ind_000ydMockFileId",
+       "files": [
+        {
+         "id": "f_000ybMockFileId",
+         "name": "Accomplishment Report AY 2024-2025 - Area X",
+         "mimeType": "application/vnd.google-apps.document",
+         "size": null,
+         "modified": "2026-11-11T07:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        },
+        {
+         "id": "f_000ycMockFileId",
+         "name": "Board Resolution No. 99, s. 2024 - Area X.pdf",
+         "mimeType": "application/pdf",
+         "size": 2564427,
+         "modified": "2026-11-21T04:15:00Z",
+         "viewUrl": "assets/sample.pdf",
+         "previewUrl": "assets/sample.pdf",
+         "keywords": []
+        }
+       ]
+      },
+      {
+       "code": "I.1",
+       "type": "I",
+       "text": "The policy on performance of administrative personnel is implemented and communicated to stakeholders.",
+       "folderId": "ind_000yeMockFileId",
+       "files": []
+      },
+      {
+       "code": "O.1",
+       "type": "O",
+       "text": "Results of performance of administrative personnel are evident, documented, and used for improvement.",
+       "folderId": "ind_000yfMockFileId",
+       "files": []
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AACCUP Accreditation Evidence · TUP CIE</title>
+  <meta name="description" content="AACCUP accreditation evidence portal of the TUP College of Industrial Education.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" type="image/png" href="assets/tup-logo.png">
+  <link rel="stylesheet" href="css/styles.css?v=5">
+</head>
+<body>
+  <header class="site-header">
+    <div class="brand">
+      <div class="logos" id="logos"></div>
+      <div class="brand-text">
+        <div class="school" id="schoolName"></div>
+        <div class="college" id="collegeName"></div>
+        <h1 class="title" id="siteTitle"></h1>
+      </div>
+      <div class="user-pill" id="userPill" hidden></div>
+    </div>
+  </header>
+
+  <nav class="toolbar" id="toolbar" aria-label="Navigation" hidden>
+    <div class="toolbar-inner">
+      <button type="button" class="btn btn-sm tree-toggle" id="treeToggle" data-action="tree-toggle"
+              aria-controls="treePane" aria-expanded="false" hidden>☰ Files</button>
+      <a class="btn btn-sm" id="homeBtn" href="#/" title="Back to program selection">⌂ Home</a>
+      <a class="btn btn-sm" id="areasBtn" href="#/" title="Back to area selection" hidden>▦ Areas</a>
+      <label class="nav-select" id="progPick" hidden><span class="sr-only">Program</span><select id="progSelect"></select></label>
+      <label class="nav-select" id="areaPick" hidden><span class="sr-only">Area</span><select id="areaSelect"></select></label>
+      <form class="search" id="searchForm" role="search" autocomplete="off">
+        <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 2a8 8 0 0 1 6.32 12.9l5.39 5.4-1.42 1.4-5.39-5.38A8 8 0 1 1 10 2zm0 2a6 6 0 1 0 0 12 6 6 0 0 0 0-12z"/></svg>
+        <input id="searchInput" type="search" enterkeyhint="search"
+               placeholder="Search documents, keywords, indicators…" aria-label="Search documents">
+        <button type="button" class="search-clear" id="searchClear" aria-label="Clear search" hidden>×</button>
+      </form>
+    </div>
+  </nav>
+
+  <main id="app" class="wrap" tabindex="-1">
+    <div class="loading-block"><span class="spinner"></span> Loading…</div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <div id="notice" class="notice" hidden></div>
+      <div id="updated" class="updated"></div>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <noscript>
+    <p class="wrap">This site needs JavaScript.</p>
+  </noscript>
+
+  <script type="module" src="js/app.js?v=3"></script>
+</body>
+</html>
