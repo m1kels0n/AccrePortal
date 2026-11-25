@@ -26,5 +26,9 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
+      # GitHub's artifact listing can lag a few seconds behind the upload, and deploy-pages
+      # fails with "No artifacts named github-pages" if it looks too soon.
+      - name: Wait for the artifact to be listed
+        run: sleep 20
       - id: deployment
         uses: actions/deploy-pages@v4
