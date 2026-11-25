@@ -87,28 +87,31 @@ function scan_(source, t0) {
     }
   });
 
-  // ── 3. Files in indicator folders (+ one level of subfolders) ──
+  // ── 3. Files in indicator folders, plus every level of subfolders inside them ──
+  // A file in a subfolder is listed under its indicator, labeled with the subfolder path
+  // (e.g. "I.1.6.1. Participative planning › I.1.6.1.3. Students"). One batched query per level.
+  var MAX_SUB_DEPTH = 6;
   var indRows = rowsOf('indicator');
   var indSet = toSet_(indRows.map(function (r) { return r.folderId; }));
   var filesByInd = {};
-  var subs = {};
-  listChildren_(Object.keys(indSet), false).forEach(function (f) {
-    var ind = firstIn_(f.parents, indSet);
-    if (f.mimeType === FOLDER_MIME) subs[f.id] = { name: f.name, ind: ind };
-    else (filesByInd[ind] = filesByInd[ind] || []).push(toFile_(f));
-  });
-  var subIds = Object.keys(subs);
-  if (subIds.length) {
-    var subSet = toSet_(subIds);
-    listChildren_(subIds, false).forEach(function (f) {
-      var sub = subs[firstIn_(f.parents, subSet)];
-      if (!sub) return;
-      if (f.mimeType === FOLDER_MIME) {
-        issues.push({ type: 'deepFile', path: st.byId[sub.ind].path + ' > ' + sub.name + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only 1 subfolder level is scanned' });
+  // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself) }
+  var level = {};
+  Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '' }; });
+  for (var depth = 0; Object.keys(level).length && depth <= MAX_SUB_DEPTH; depth++) {
+    var levelSet = toSet_(Object.keys(level));
+    var next = {};
+    listChildren_(Object.keys(level), false).forEach(function (f) {
+      var parent = level[firstIn_(f.parents, levelSet)];
+      if (!parent) return;
+      if (f.mimeType !== FOLDER_MIME) {
+        (filesByInd[parent.ind] = filesByInd[parent.ind] || []).push(toFile_(f, parent.label || undefined));
+      } else if (depth < MAX_SUB_DEPTH) {
+        next[f.id] = { ind: parent.ind, label: parent.label ? parent.label + ' › ' + f.name : f.name };
       } else {
-        (filesByInd[sub.ind] = filesByInd[sub.ind] || []).push(toFile_(f, sub.name));
+        issues.push({ type: 'deepFile', path: st.byId[parent.ind].path + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
       }
     });
+    level = next;
   }
 
   // ── 4. Assemble, merge keywords, write (short critical section) ──

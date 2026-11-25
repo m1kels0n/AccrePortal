@@ -107,7 +107,7 @@ const ISSUE_LABELS = {
   missingFolder: ['Missing folders', 'Folder is in the trash or deleted. Restore it from Drive Trash, or Rebuild structure if it was removed on purpose.'],
   movedFolder: ['Moved folders', 'Folder was moved somewhere else. Its files are still listed, but move it back to keep Drive tidy.'],
   newFolder: ['New folders not in the structure', 'Run “Rebuild structure” so they appear on the site.'],
-  deepFile: ['Folders nested too deep', 'Only one level of subfolders inside an indicator is scanned. Move these files up a level.'],
+  deepFile: ['Folders nested too deep', 'Only 6 levels of subfolders inside an indicator are scanned. Move these files up a few levels.'],
 };
 
 /** Fetch issues + status after the admin page is in the DOM. */

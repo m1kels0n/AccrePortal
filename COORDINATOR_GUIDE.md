@@ -57,7 +57,7 @@ You can add keywords to any file in any area.
 
 - ❌ Rename, move or delete **folders**. The website relies on them.
 - ❌ Create your own Area, Parameter or indicator folders. Ask Ariel instead.
-- ❌ Put more than **one level** of subfolders inside an indicator folder.
+- ❌ Create your own subfolders inside indicator folders. Sub-indicator folders that already exist (e.g. **I.1.6.1 › I.1.6.1.3. Students**) are fine to upload into.
 - ❌ Upload anything confidential. Everything here can be opened by anyone with the link.
 
 If you uploaded something to the wrong place, tell Ariel. Moving files is easy.

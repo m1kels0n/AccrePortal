@@ -75,7 +75,7 @@ Program 1 - AACCUP/
 - Name variations are fine: `AREA II – Faculty`, `Area 2 Faculty`, `Param. B: …`, `S2. Goals`, `O1 - …`. Dashes, en/em dashes, colons, extra spaces and any letter case all work.
 - An extra level of **S / I / O group folders** under a parameter (e.g. `System Inputs and Processes › S.1 …`) is also understood.
 - An indicator folder's **Description** (Drive → right-click → File information → Details → Description), if set, becomes the full indicator text shown on the site.
-- One level of subfolders inside an indicator is counted as that indicator's files.
+- Subfolders inside an indicator (e.g. sub-indicators `I.1.6.1 › I.1.6.1.3. Students`) are read up to 6 levels deep. Their files are listed under the indicator, labeled with the subfolder path.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):
