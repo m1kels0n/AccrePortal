@@ -26,7 +26,10 @@ var LOG_MAX_ROWS = 3000;
 
 // ── Menu ─────────────────────────────────────────────────────
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('AACCUP')
+  var menu = SpreadsheetApp.getUi().createMenu('AACCUP');
+  // QuickSetup.gs (optional, install-specific) adds a one-click setup.
+  if (typeof quickSetup === 'function') menu.addItem('★ Quick setup (one click)', 'quickSetup').addSeparator();
+  menu
     .addItem('1. Setup / check settings', 'setup')
     .addItem('2. Build structure (read folders)', 'menuBuildStructure')
     .addItem('3. Build snapshot now', 'menuBuildSnapshot')

@@ -21,7 +21,7 @@ export const CONFIG = {
   // 'mock' = use data/mock-*.json (no backend needed)
   // 'live' = use each program's `source` below
   // You can also force it from the address bar: ?mock=1 or ?mock=0
-  mode: 'mock',
+  mode: 'live',
 
   // Everyone logs in with a 6-digit PIN (accreditor, coordinator or admin).
   // false = no login screen; everyone is a view-only accreditor (only for Plan B, see README).
@@ -40,23 +40,23 @@ export const CONFIG = {
   programs: [
     {
       code: 'p1',
-      name: 'Program 1',
+      name: 'MAIE-AS',
       // 'api'    = Apps Script web app (normal)
       // 'static' = Plan B: a snapshot JSON file committed to this site
       source: 'api',
-      apiUrl: '',            // https://script.google.com/macros/s/XXXX/exec
+      apiUrl: 'https://script.google.com/macros/s/AKfycbzwYwB5XIvWbLuK-uhYYjSo7mnqnQ8i8EJVBI5oy04whUIH1PPfhnOOV9Fh9CIFAXANfA/exec',
       staticUrl: 'data/snapshot-p1.json',
       mockUrl: 'data/mock-p1.json',
-      rootFolderUrl: 'https://drive.google.com/drive/folders/REPLACE_WITH_P1_ROOT_ID',
+      rootFolderUrl: 'https://drive.google.com/drive/folders/1J4tZnVvGS9bbltFql1mu5NgWECbY9CBG',
     },
     {
       code: 'p2',
-      name: 'Program 2',
+      name: 'MAT-THE',
       source: 'api',
-      apiUrl: '',
+      apiUrl: 'https://script.google.com/macros/s/AKfycbwPNVTk51DbLGjhzdB5cwd-JzDmHuEXapJoTEj1tgfVUBOtUKRrWaQ9ZWA5L2NOuMZ_/exec',
       staticUrl: 'data/snapshot-p2.json',
       mockUrl: 'data/mock-p2.json',
-      rootFolderUrl: 'https://drive.google.com/drive/folders/REPLACE_WITH_P2_ROOT_ID',
+      rootFolderUrl: 'https://drive.google.com/drive/folders/1g85kBN4yd8o343QQdInOUUYjpIAANNX1',
     },
   ],
 };

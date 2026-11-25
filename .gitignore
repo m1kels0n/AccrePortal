@@ -10,3 +10,7 @@ _backup_before_ux_update/
 Thumbs.db
 desktop.ini
 .vscode/
+.clasp-*.json
+
+# Install-specific one-click setup (has this install's Drive/Sheet IDs)
+apps-script/QuickSetup.gs
