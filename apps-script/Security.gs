@@ -81,20 +81,51 @@ function verifyLogin_(pin) {
   if (!isMain_()) throw apiError_('notMain', 'Logins go through the main program. Check config.js: the main program must be listed first.');
   pin = String(pin || '').trim();
   var cache = CacheService.getScriptCache();
-  var now = Date.now();
-  var f = null;
-  try { f = JSON.parse(cache.get('loginFails') || 'null'); } catch (e) { f = null; }
-  if (!f || now - f.t > FAIL_WINDOW_SEC * 1000) f = { n: 0, t: now };
-  if (f.n >= MAX_FAILS) throw apiError_('locked', 'Too many wrong PINs. Wait 5 minutes, then try again.');
+  var lock = LockService.getScriptLock();
+  var ttl = function (f) { return Math.max(1, Math.ceil((f.t + FAIL_WINDOW_SEC * 1000 - Date.now()) / 1000)); };
+  var readFails = function () {
+    try { return JSON.parse(cache.get('loginFails') || 'null'); } catch (e) { return null; }
+  };
 
-  var session = PIN_RE.test(pin) ? findPinOwner_(hashPin_(pin)) : null;
-  if (!session) {
+  // Count the attempt under the lock BEFORE checking the PIN, so parallel requests can't
+  // all read the same counter and slip past MAX_FAILS.
+  if (!lock.tryLock(10000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
+  var f;
+  try {
+    var now = Date.now();
+    f = readFails();
+    if (!f || now - f.t > FAIL_WINDOW_SEC * 1000) f = { n: 0, t: now };
+    if (f.n >= MAX_FAILS) throw apiError_('locked', 'Too many wrong PINs. Wait 5 minutes, then try again.');
     f.n++;
-    var left = Math.max(1, Math.ceil((f.t + FAIL_WINDOW_SEC * 1000 - now) / 1000));
-    cache.put('loginFails', JSON.stringify(f), left);
+    cache.put('loginFails', JSON.stringify(f), ttl(f));
+  } finally {
+    lock.releaseLock();
+  }
+
+  // Give the reserved attempt back (correct PIN, or a server error while checking it).
+  // Waits longer than the first lock so it outlasts a snapshot save holding the lock.
+  var giveBack = function () {
+    if (!lock.tryLock(15000)) return;
+    try {
+      var g = readFails();
+      if (g && g.t === f.t && g.n > 0) { g.n--; cache.put('loginFails', JSON.stringify(g), ttl(g)); }
+    } finally {
+      lock.releaseLock();
+    }
+  };
+
+  var session;
+  try {
+    session = PIN_RE.test(pin) ? findPinOwner_(hashPin_(pin)) : null;
+  } catch (e) {
+    giveBack();
+    throw e;
+  }
+  if (!session) {
     log_('loginFailed', '', 'attempt ' + f.n);
     throw apiError_('badPin', 'Wrong PIN. Please try again.');
   }
+  giveBack();
   return session;
 }
 
@@ -143,7 +174,12 @@ function checkToken_(token, need) {
   var expired = function () { return apiError_('expired', 'Your session expired. Please log in again.'); };
   var parts = String(token || '').split('.');
   if (parts.length !== 2 || !parts[0] || !parts[1]) throw expired();
-  if (!safeEqual_(sign_(parts[0]), parts[1])) throw expired();
+  if (!safeEqual_(sign_(parts[0]), parts[1])) {
+    // On a linked Sheet a bad signature means its link key differs from the main one.
+    // The main Sheet issued the token itself, so there it just means an old token.
+    if (isMain_()) throw expired();
+    throw apiError_('notLinked', 'This program is not linked to the main program (link key mismatch). Ask the admin to re-run Link to main program.');
+  }
   var data;
   try {
     data = JSON.parse(Utilities.newBlob(Utilities.base64DecodeWebSafe(parts[0])).getDataAsString('UTF-8'));

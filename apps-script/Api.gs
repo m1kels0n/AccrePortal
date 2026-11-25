@@ -98,14 +98,14 @@ function snapshotFor_(session, since) {
     return { ok: true, unchanged: true, hash: hash, generatedAt: c.meta.generatedAt, settings: pub };
   }
   var snap = JSON.parse(c.text);
-  var allowed = st.accreditorAreas === 'ALL' ? null : toSet_(st.accreditorAreas);
+  var allowed = st.accreditorAreas === 'ALL' ? null : toSet_(st.accreditorAreas.map(normalizeAreaCode_));
   return {
     schema: snap.schema,
     program: { code: snap.program.code, name: snap.program.name },
     generatedAt: snap.generatedAt,
     hash: hash,
     looseFiles: [],
-    areas: snap.areas.filter(function (a) { return !allowed || allowed[a.code]; }).map(viewerArea_),
+    areas: snap.areas.filter(function (a) { return !allowed || allowed[normalizeAreaCode_(a.code)]; }).map(viewerArea_),
     settings: pub,
   };
 }
@@ -121,8 +121,9 @@ function viewerArea_(a) {
           return {
             code: i.code, type: i.type, text: i.text,
             files: i.files.map(function (f) {
+              // A folder shortcut would preview as a browsable Drive folder (other areas, Drive links).
               var o = { id: f.id, name: f.name, mimeType: f.mimeType, size: f.size, modified: f.modified,
-                        previewUrl: f.previewUrl, keywords: f.keywords || [] };
+                        previewUrl: f.mimeType === FOLDER_MIME ? null : f.previewUrl, keywords: f.keywords || [] };
               if (f.subfolder) o.subfolder = f.subfolder;
               return o;
             }),
@@ -157,7 +158,27 @@ function handleSaveSettings_(body) {
     var v;
     if (a === 'ALL') v = 'ALL';
     else if (Object.prototype.toString.call(a) === '[object Array]') {
-      v = a.map(normalizeAreaCode_).filter(function (x) { return /^[A-Z0-9.\-]{1,12}$/.test(x); }).join(', ') || 'NONE';
+      // Store each area's real code from the current snapshot (key → code); without one,
+      // keep plain codes. Separators are refused because readSettings_ splits on them.
+      var real = null;
+      try {
+        var c = readSnapshot_();
+        if (c) {
+          real = {};
+          (JSON.parse(c.text).areas || []).forEach(function (ar) { real[normalizeAreaCode_(ar.code)] = String(ar.code); });
+        }
+      } catch (e) { real = null; }
+      var seen = {};
+      v = a.map(function (x) {
+        if (real) return real[normalizeAreaCode_(x)] || '';
+        x = String(x === null || x === undefined ? '' : x).trim();
+        return /^[A-Za-z0-9.\-]{1,48}$/.test(x) ? x : '';
+      }).filter(function (x) {
+        var k = normalizeAreaCode_(x);
+        if (!x || /[,;\s]/.test(x) || seen[k]) return false;
+        seen[k] = true;
+        return true;
+      }).join(', ') || 'NONE';
     } else {
       throw apiError_('invalid', 'Bad area list.');
     }

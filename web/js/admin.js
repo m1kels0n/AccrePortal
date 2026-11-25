@@ -1,10 +1,10 @@
 // Admin panel: accreditor access per program, watermark, scan status, issues.
 import { CONFIG } from './config.js';
 import { esc, fmtDate, toast } from './util.js';
-import { href } from './router.js';
+import { href, parseHash } from './router.js';
 import { post, isAdmin } from './api.js';
 import { crumbs, progressBadge, notFound, programName } from './views.js';
-import { getProgram, progress, areaLabel, hrefFor, countFiles } from './model.js';
+import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles } from './model.js';
 
 export function renderAdmin(state, route) {
   if (!isAdmin()) return notFound('#/', 'The admin panel needs the admin PIN.');
@@ -15,12 +15,25 @@ export function renderAdmin(state, route) {
       ${p.code === prog.code ? 'aria-current="true"' : ''}>${esc(programName(p, state.snaps[p.code]))}</a>`).join('');
 
   // ── Accreditor access for this program ──
+  const st = state.status[prog.code] || {};
+  const spinner = `<div class="loading-block"><span class="spinner"></span> Loading…</div>`;
+  // Saved area codes and snapshot codes can differ in form ("2" vs "II"), so compare keys.
+  const openKeys = settings && settings.accreditorAreas !== 'ALL' ? new Set((settings.accreditorAreas || []).map(areaKey)) : null;
   let access;
-  if (!snap || !settings) {
-    access = `<div class="loading-block"><span class="spinner"></span> Loading…</div>`;
+  if (!snap) {
+    access = st.noAccess
+      ? `<p class="error">This program's server did not accept the admin session.</p>
+        <p class="muted small">Check that it is linked to the main program (Link to main program in its Sheet), then reload this page.</p>`
+      : st.error && !st.loading
+        ? `<p class="error">${esc(st.error)}</p>${st.code === 'notLinked' ? '' : `
+          <p class="muted small">Press Refresh now (or Rebuild structure) below to build this program's snapshot.</p>`}`
+        : spinner;
+  } else if (!settings) {
+    access = st.loading || st.fromCache ? spinner
+      : `<p class="muted">Access settings are not available for this program right now. Press Refresh now below to load them.</p>`;
   } else {
     const all = settings.accreditorAreas === 'ALL';
-    const chosen = new Set(all ? snap.areas.map((a) => a.code) : settings.accreditorAreas);
+    const chosen = all ? new Set(snap.areas.map((a) => areaKey(a.code))) : openKeys;
     access = `<form data-form="access" data-prog="${esc(prog.code)}" class="access-form">
       <label class="switch"><input type="checkbox" name="enabled" ${settings.accreditorEnabled ? 'checked' : ''}>
         <span>Accreditors can open <strong>${esc(programName(prog, snap))}</strong></span></label>
@@ -31,7 +44,7 @@ export function renderAdmin(state, route) {
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-none">Select none</button>
         </div>
         <div class="check-grid">${snap.areas.map((a) => `<label class="check">
-            <input type="checkbox" name="area" value="${esc(a.code)}" ${chosen.has(a.code) ? 'checked' : ''}>
+            <input type="checkbox" name="area" value="${esc(a.code)}" ${chosen.has(areaKey(a.code)) ? 'checked' : ''}>
             <span><strong>${esc(areaLabel(a))}</strong> ${esc(a.name)} <span class="muted small">· ${countFiles(a)} docs</span></span></label>`).join('')}</div>
         <p class="muted small">When every area is ticked, new areas added later are shown automatically.</p>
       </fieldset>
@@ -44,7 +57,7 @@ export function renderAdmin(state, route) {
 
   const areaRows = snap ? snap.areas.map((a) => `<tr><td><a href="${hrefFor(prog.code, a)}">${esc(areaLabel(a))}</a></td><td>${esc(a.name)}</td>
       <td>${progressBadge(progress(a), true)}</td><td class="num">${countFiles(a)}</td>
-      <td>${settings && (settings.accreditorAreas === 'ALL' || settings.accreditorAreas.includes(a.code)) && settings.accreditorEnabled
+      <td>${settings && (settings.accreditorAreas === 'ALL' || openKeys.has(areaKey(a.code))) && settings.accreditorEnabled
         ? '<span class="ok">Open</span>' : '<span class="muted">Hidden</span>'}</td></tr>`).join('') : '';
   const total = snap ? progress(snap) : null;
 
@@ -96,7 +109,7 @@ export function renderAdmin(state, route) {
 
     <section class="card">
       <h3>Issues</h3>
-      <div id="adm-issues"><div class="loading-block"><span class="spinner"></span> Loading issues…</div></div>
+      <div id="adm-issues" data-prog="${esc(prog.code)}"><div class="loading-block"><span class="spinner"></span> Loading issues…</div></div>
     </section>`;
 }
 
@@ -116,7 +129,10 @@ export async function loadAdminData(progCode) {
   const box = document.getElementById('adm-issues');
   if (!isAdmin() || !box) return;
   const res = await post(prog, { action: 'issues' });
-  if (!document.getElementById('adm-issues')) return; // navigated away
+  // Drop a late answer after leaving the page or switching to another program's tab.
+  const cur = parseHash();
+  const curCode = (getProgram(cur.prog) || CONFIG.programs[0]).code;
+  if (cur.name !== 'admin' || curCode !== prog.code || !box.isConnected || box.dataset.prog !== prog.code) return;
   if (!res.ok) {
     box.innerHTML = `<p class="error">${esc(res.message || 'Could not load issues.')}</p>`;
     return;
@@ -162,7 +178,8 @@ export async function adminAction(kind, progCode, button, app) {
   button.disabled = true;
   status.className = 'form-status';
   status.textContent = kind === 'rebuild' ? 'Rebuilding structure… (up to a minute)' : 'Scanning files…';
-  const res = await post(prog, { action: kind === 'rebuild' ? 'rebuildStructure' : 'refresh' });
+  // These can run for minutes on big programs (Apps Script allows 6), longer than the normal timeout.
+  const res = await post(prog, { action: kind === 'rebuild' ? 'rebuildStructure' : 'refresh' }, { timeoutMs: 360000 });
   button.disabled = false;
   if (!res.ok) {
     status.className = 'form-status error';
@@ -208,7 +225,8 @@ export async function saveAccess(form, app) {
   if (!prog || !snap) return;
   const enabled = form.querySelector('input[name=enabled]').checked;
   const picked = [...form.querySelectorAll('input[name=area]:checked')].map((i) => i.value);
-  const areas = picked.length === snap.areas.length ? 'ALL' : picked;
+  const pickedKeys = new Set(picked.map(areaKey));
+  const areas = snap.areas.every((a) => pickedKeys.has(areaKey(a.code))) ? 'ALL' : picked;
   button.disabled = true;
   status.className = 'form-status';
   status.textContent = 'Saving…';
@@ -228,6 +246,6 @@ export async function saveAccess(form, app) {
     box.className = 'form-status ok';
     box.textContent = !enabled ? '✓ Saved. Accreditors cannot open this program.'
       : areas === 'ALL' ? '✓ Saved. Accreditors see every area.'
-      : `✓ Saved. Accreditors see ${picked.length ? picked.map((c) => 'Area ' + c).join(', ') : 'no areas'}.`;
+      : `✓ Saved. Accreditors see ${picked.length ? picked.map((c) => areaLabel({ code: c })).join(', ') : 'no areas'}.`;
   }
 }

@@ -1,6 +1,7 @@
 // Login, plus coordinator/admin actions: keyword editing and "Check now".
 import { toast } from './util.js';
 import { getProgram, locateFile } from './model.js';
+import * as V from './views.js';
 import { post, login, getSession, setSession, clearCaches, writeCache, cleanKeywords, isStaff } from './api.js';
 
 // ── Login ───────────────────────────────────────────────────
@@ -63,7 +64,8 @@ export async function handleSaveKeywords(form, app) {
   status.className = 'kw-status ok';
   status.textContent = '✓ Saved';
   setTimeout(() => { if (status.textContent === '✓ Saved') status.textContent = ''; }, 4000);
-  // Update the local copy so search sees the new keywords right away.
+  toast('✓ Keywords saved.');
+  // Update the local copy so search sees the new keywords right away (no redraw: the open document stays put).
   const snap = app.state.snaps[progCode];
   if (snap) {
     for (const hit of locateFile(snap, fileId)) hit.file.keywords = res.keywords;
@@ -86,6 +88,25 @@ function fileIds(snap) {
     }
   }
   return ids;
+}
+
+/** Swap in a fresh tree and staff tools, leaving the open document alone. */
+function redrawTree(app) {
+  const { html, workspace } = V.renderWorkspace(app.state, app.state.route, '');
+  if (!workspace) return;
+  const tpl = document.createElement('template');
+  tpl.innerHTML = html;
+  const scroller = document.getElementById('treeScroll');
+  const top = scroller ? scroller.scrollTop : 0;
+  for (const sel of ['.tree-staff', '#tree']) {
+    const fresh = tpl.content.querySelector(sel);
+    const old = document.querySelector(sel);
+    if (fresh && old) old.replaceWith(fresh);
+  }
+  if (scroller) scroller.scrollTop = top;
+  // Re-run the tree filter (if any) so its result list matches the new files.
+  const filter = document.getElementById('treeFilter');
+  if (filter && filter.value) filter.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 export async function checkNow(progCode, button, app) {
@@ -126,8 +147,37 @@ export async function checkNow(progCode, button, app) {
   }
 
   await app.refresh(progCode, true);
-  app.state.touched = false;
-  app.render();
+  if (!getSession()) return;
+  const st = app.state.status[progCode] || {};
+  if (st.noAccess) {
+    app.state.touched = false;
+    app.render();
+    toast('This program is no longer open to your PIN.', 'error');
+    return;
+  }
+  if (st.error) {
+    // refresh() may already have redrawn the page, so look the status box up again.
+    button.disabled = false;
+    const box = document.getElementById('chk-status');
+    if (box) {
+      box.className = 'form-status error';
+      box.textContent = 'Drive was checked, but the updated list could not be loaded. Try again.';
+    }
+    return;
+  }
+
+  // Rebuilding the page would reload the open document, so only redraw the tree then.
+  const r = app.state.route;
+  const viewing = r && r.name === 'workspace' && r.prog === progCode && r.fileId && (r.q || '').trim().length < 2
+    && document.querySelector(`.viewer-frame[data-file="${CSS.escape(r.fileId)}"]`)
+    && locateFile(app.state.snaps[progCode], r.fileId).length > 0;
+  if (viewing) {
+    button.disabled = false;
+    redrawTree(app);
+  } else {
+    app.state.touched = false;
+    app.render();
+  }
 
   const after = fileIds(app.state.snaps[progCode]);
   const added = [...after].filter((id) => !before.has(id)).length;

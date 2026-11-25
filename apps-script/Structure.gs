@@ -81,13 +81,38 @@ function buildStructure_() {
   rows = rows.concat(groupRows, indRows);
 
   rows.forEach(function (r) { counts[r.level]++; });
+  var issueCount = rows.filter(function (r) { return r.status !== 'ok'; }).length;
+  rows = rows.concat(hiddenLeftovers_(rows, overrides));
   rows.sort(function (a, b) { return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0; });
   writeStructure_(rows);
 
-  var issueCount = rows.filter(function (r) { return r.status !== 'ok'; }).length;
   log_('buildStructure', '', counts.area + ' areas, ' + counts.parameter + ' parameters, ' + counts.indicator +
        ' indicators, ' + issueCount + ' naming issues, ' + (Date.now() - t0) + ' ms');
   return { ok: true, counts: counts, issueCount: issueCount, ms: Date.now() - t0 };
+}
+
+/**
+ * Folders under a hidden folder are not listed, so their old rows (and override columns)
+ * would be lost. Keep those old rows as they were, so un-hiding later restores them.
+ */
+function hiddenLeftovers_(rows, old) {
+  var fresh = byId_(rows);
+  var out = [];
+  Object.keys(old).forEach(function (id) {
+    if (fresh[id]) return;
+    for (var x = old[id], guard = 0; x && guard < 10; x = old[x.parentFolderId], guard++) {
+      var parent = fresh[x.parentFolderId];
+      if (parent) {
+        if (parent.hiddenFlag) {
+          var keep = { hiddenFlag: true };
+          SHEET_HEADERS.Structure.forEach(function (h) { keep[h] = old[id][h]; });
+          out.push(keep);
+        }
+        return;
+      }
+    }
+  });
+  return out;
 }
 
 /** Build one Structure row from a Drive folder. */

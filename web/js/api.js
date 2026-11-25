@@ -2,7 +2,7 @@
 // and a mock backend so the site can be tried before Apps Script exists.
 import { CONFIG } from './config.js';
 import { store } from './util.js';
-import { locateFile } from './model.js';
+import { locateFile, areaKey } from './model.js';
 
 const CACHE_PREFIX = 'aaccup:v2:snap:';
 const SESSION_KEY = 'aaccup:v2:session';
@@ -35,6 +35,9 @@ export function getSession() {
 }
 export function setSession(session) { store.set(SESSION_KEY, session, true); }
 export function clearSession() { store.remove(SESSION_KEY, true); }
+/** The stored session even after it has run out (getSession() drops those). */
+function storedSession() { return CONFIG.requireLogin === false ? GUEST : store.get(SESSION_KEY, true); }
+export const hasStoredSession = () => !!storedSession();
 
 export const isStaff = (s = getSession()) => !!s && (s.role === 'coordinator' || s.role === 'admin');
 export const isAdmin = (s = getSession()) => !!s && s.role === 'admin';
@@ -62,6 +65,10 @@ export function readCache(code) {
 export function writeCache(code, data) {
   store.set(cacheKey(code), { fetchedAt: new Date().toISOString(), data }, true);
 }
+export function removeCache(code) {
+  store.remove(CACHE_PREFIX + code, true);
+  store.remove(CACHE_PREFIX + 'mock:' + code, true);
+}
 export function clearCaches() {
   for (const p of CONFIG.programs) {
     store.remove(CACHE_PREFIX + p.code, true);
@@ -70,9 +77,9 @@ export function clearCaches() {
 }
 
 // ── Low level fetch with timeout ────────────────────────────
-async function fetchJson(url, options = {}) {
+async function fetchJson(url, options = {}, timeoutMs = CONFIG.requestTimeoutMs) {
   const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), CONFIG.requestTimeoutMs);
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
     const res = await fetch(url, { ...options, signal: ctrl.signal, redirect: 'follow' });
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -89,9 +96,20 @@ function apiError(data) {
 }
 
 /**
+ * Should an 'expired' answer end the whole session? Only if the token sent is still the
+ * current one (not a reply from before a logout/login), and only when the main program
+ * said so or the session really ran out. A linked program alone just shows an error.
+ */
+function endsSession(prog, sent) {
+  const cur = storedSession();
+  if (!cur || cur.token !== sent?.token) return false;
+  return prog.code === mainProgram().code || (!!sent.expiresAt && new Date(sent.expiresAt) <= new Date());
+}
+
+/**
  * Fetch a program's snapshot for the logged-in user. Returns either a full snapshot
  * or { unchanged: true, generatedAt, settings } when `sinceHash` still matches.
- * Throws an Error with .code 'expired' or 'noAccess' when relevant.
+ * Throws an Error with .code 'expired', 'notLinked' or 'noAccess' when relevant.
  */
 export async function fetchSnapshot(prog, sinceHash) {
   const s = getSession();
@@ -105,14 +123,14 @@ export async function fetchSnapshot(prog, sinceHash) {
   if (sinceHash) params.set('since', sinceHash);
   const data = await fetchJson(prog.apiUrl + '?' + params);
   if (data && data.ok === false) {
-    if (data.error === 'expired') onExpired();
+    if (data.error === 'expired' && endsSession(prog, s)) onExpired();
     throw apiError(data);
   }
   return data;
 }
 
 /** POST an action to a program's Apps Script (text/plain avoids a CORS preflight). The token is added automatically. */
-export async function post(prog, payload) {
+export async function post(prog, payload, opts = {}) {
   const s = getSession();
   const body = s?.token && payload.action !== 'login' ? { token: s.token, ...payload } : payload;
   let res;
@@ -122,12 +140,12 @@ export async function post(prog, payload) {
     res = { ok: false, error: 'offline', message: 'This needs the live backend (apiUrl in config.js).' };
   } else {
     try {
-      res = await fetchJson(prog.apiUrl, { method: 'POST', body: JSON.stringify(body) });
+      res = await fetchJson(prog.apiUrl, { method: 'POST', body: JSON.stringify(body) }, opts.timeoutMs);
     } catch (err) {
       res = { ok: false, error: 'network', message: err.name === 'AbortError' ? 'The server took too long. Try again.' : 'Cannot reach the server. Check your connection.' };
     }
   }
-  if (res && res.error === 'expired' && payload.action !== 'login') onExpired();
+  if (res && res.error === 'expired' && payload.action !== 'login' && endsSession(prog, s)) onExpired();
   return res;
 }
 
@@ -178,7 +196,7 @@ function mockReadToken(token) {
 
 /** Same filtering the Apps Script does for accreditors (see Api.gs viewerArea_). */
 function accreditorCopy(snap, settings) {
-  const allowed = settings.accreditorAreas === 'ALL' ? null : new Set(settings.accreditorAreas);
+  const allowed = settings.accreditorAreas === 'ALL' ? null : new Set(settings.accreditorAreas.map(areaKey));
   return {
     schema: snap.schema,
     mock: true,
@@ -186,7 +204,7 @@ function accreditorCopy(snap, settings) {
     generatedAt: snap.generatedAt,
     hash: snap.hash + '.' + JSON.stringify(settings.accreditorAreas),
     looseFiles: [],
-    areas: snap.areas.filter((a) => !allowed || allowed.has(a.code)).map((a) => ({
+    areas: snap.areas.filter((a) => !allowed || allowed.has(areaKey(a.code))).map((a) => ({
       code: a.code, name: a.name, looseFiles: [],
       parameters: a.parameters.map((p) => ({
         code: p.code, name: p.name, looseFiles: [],

@@ -283,15 +283,17 @@ function upsertKeywords_(fileId, keywords, user) {
   var i = ids.indexOf(fileId);
   if (!keywords.length) { if (i !== -1) sh.deleteRow(i + 2); return; }
   var values = [[fileId, keywords.join(', '), user, new Date()]];
-  if (i === -1) sh.getRange(sh.getLastRow() + 1, 1, 1, 4).setValues(values);
-  else sh.getRange(i + 2, 1, 1, 4).setValues(values);
+  var row = i === -1 ? sh.getLastRow() + 1 : i + 2;
+  // Plain text, so Sheets never turns keywords into dates, numbers or formulas.
+  sh.getRange(row, 1, 1, 2).setNumberFormat('@');
+  sh.getRange(row, 1, 1, 4).setValues(values);
 }
 
 function cleanKeywords_(input) {
   var seen = {};
   var out = [];
   String(input || '').split(/[,;\n]/).forEach(function (raw) {
-    var k = raw.replace(/\s+/g, ' ').trim().slice(0, 40);
+    var k = raw.replace(/\s+/g, ' ').replace(/^[\s=+\-@]+/, '').trim().slice(0, 40); // no formula starts
     var key = k.toLowerCase();
     if (k && !seen[key] && out.length < 20) { seen[key] = true; out.push(k); }
   });
@@ -431,6 +433,8 @@ function cachePutChunked_(key, text, meta) {
     cache.putAll(values, CACHE_TTL);
   } catch (e) {
     console.warn('Cache write failed (the Drive file will be used): ' + e);
+    // Drop the old meta too, or readers keep getting the previous version for hours.
+    try { cache.remove(key + ':meta'); } catch (e2) { console.warn('Cache meta remove failed: ' + e2); }
   }
 }
 

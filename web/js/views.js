@@ -43,11 +43,10 @@ function unavailable(prog, status) {
       <p>This program has not been opened for viewing. Please ask the accreditation coordinator.</p>
       <p><a class="btn" href="#/">Back to programs</a></p></div>`;
   }
-  const drive = isStaff()
-    ? `<p><a class="btn" href="${esc(prog.rootFolderUrl)}" target="_blank" rel="noopener">Open the ${esc(prog.name)} folder in Google Drive</a></p>` : '';
+  // No snapshot here, so no Drive folder link: its URL only comes inside a staff snapshot.
   return `<div class="card error-card">
     <h3>${esc(prog.name)} is not available right now</h3>
-    <p>${esc(status.error || 'The evidence list could not be loaded.')}</p>${drive}
+    <p>${esc(status.error || 'The evidence list could not be loaded.')}</p>
   </div>`;
 }
 
@@ -316,7 +315,24 @@ function treeStaffTools(prog, snap, area, route) {
     </div>
     <span class="muted small">Last checked ${esc(fmtDate(snap.generatedAt, true))}</span>
     <span class="form-status" id="chk-status" aria-live="polite"></span>
+    ${looseWarning(area)}
   </div>`;
+}
+
+/** Files dropped into the area or a parameter folder instead of an indicator (staff snapshots only). */
+function looseWarning(area) {
+  if (!isStaff()) return '';
+  const loose = [
+    ...(area.looseFiles || []).map((f) => ({ f, where: areaLabel(area) + ' folder' })),
+    ...area.parameters.flatMap((p) => (p.looseFiles || []).map((f) => ({ f, where: paramLabel(p) + ' folder' }))),
+  ];
+  if (!loose.length) return '';
+  return `<details class="tree-loose">
+    <summary>⚠ ${plural(loose.length, 'misplaced file')} <span class="muted">(accreditors cannot see ${loose.length > 1 ? 'them' : 'it'})</span></summary>
+    <p class="muted">Move ${loose.length > 1 ? 'these' : 'this'} into an indicator folder in Drive.</p>
+    <ul>${loose.map(({ f, where }) => `<li><a href="${esc(f.viewUrl)}" target="_blank" rel="noopener">${esc(f.name)}</a>
+      <span class="muted">in ${esc(where)}</span></li>`).join('')}</ul>
+  </details>`;
 }
 
 function renderViewer(state, prog, snap, area, route) {
@@ -348,6 +364,10 @@ function renderViewer(state, prog, snap, area, route) {
     <div class="viewer-bar">
       <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
       <span class="viewer-path" title="${esc(ind.text || '')}">${esc(paramLabel(param))} › ${esc(ind.code)}</span>
+      ${staff ? `<div class="viewer-kw" data-kw-scope>
+        <button type="button" class="btn btn-ghost btn-sm" data-action="kw-toggle" aria-label="Edit keywords for ${esc(file.name)}">✎ Keywords</button>
+        ${kwEditor(prog.code, file)}
+      </div>` : ''}
     </div>
     ${body}
   </div>`;

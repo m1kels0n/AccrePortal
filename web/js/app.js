@@ -3,8 +3,8 @@ import { CONFIG } from './config.js';
 import { esc, fmtDate, debounce, toast, tokenize } from './util.js';
 import { parseHash, href, replaceQuery, navigate } from './router.js';
 import {
-  readCache, writeCache, clearCaches, fetchSnapshot, isMock, post, getSession, clearSession,
-  isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram,
+  readCache, writeCache, removeCache, clearCaches, fetchSnapshot, isMock, post, getSession, clearSession,
+  isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
 import { getProgram, findArea, areaLabel, hrefFor } from './model.js';
@@ -84,7 +84,8 @@ function renderChrome() {
   document.getElementById('treeToggle').hidden = !inWs;
   document.getElementById('treeToggle').setAttribute('aria-expanded', String(state.treeOpen));
 
-  const snap = route.prog && state.snaps[route.prog];
+  // getProgram first: a raw key like #/constructor would otherwise hit Object.prototype.
+  const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const areasBtn = document.getElementById('areasBtn');
   areasBtn.hidden = !(route.prog && getProgram(route.prog) && route.name === 'workspace');
   if (!areasBtn.hidden) areasBtn.href = href([route.prog]);
@@ -115,8 +116,10 @@ function renderChrome() {
   const offline = loggedIn ? CONFIG.programs.filter((p) => state.status[p.code]?.offline) : [];
   const notice = document.getElementById('notice');
   if (offline.length) {
-    notice.innerHTML = 'Showing a saved copy — live data is unavailable right now.' + (isStaff()
-      ? ' ' + offline.map((p) => `<a href="${esc(p.rootFolderUrl)}" target="_blank" rel="noopener">Open ${esc(p.name)} folder in Drive</a>`).join(' · ') : '');
+    // The folder link only exists in staff snapshots (never in the public config).
+    const links = isStaff() ? offline.filter((p) => state.snaps[p.code]?.program?.rootFolderUrl)
+      .map((p) => `<a href="${esc(state.snaps[p.code].program.rootFolderUrl)}" target="_blank" rel="noopener">Open ${esc(p.name)} folder in Drive</a>`) : [];
+    notice.innerHTML = 'Showing a saved copy — live data is unavailable right now.' + (links.length ? ' ' + links.join(' · ') : '');
     notice.hidden = false;
   } else {
     notice.hidden = true;
@@ -144,7 +147,7 @@ function render(background = false) {
   // Background data updates must not wipe a form the user has started filling in,
   // reload an open document, or steal focus from the tree filter.
   if (background) {
-    const viewing = route.fileId && !route.q && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
+    const viewing = route.fileId && route.q.trim().length < 2 && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
     if (state.touched || viewing || document.activeElement?.id === 'treeFilter') { renderChrome(); return; }
   }
   state.touched = false;
@@ -169,6 +172,9 @@ function render(background = false) {
     default: html = V.notFound();
   }
   main.innerHTML = html;
+  // Removing a focused field (e.g. the PIN box) fires a late `change` that would mark the new
+  // screen as "touched" and block background redraws, so reset the flag after the swap too.
+  state.touched = false;
   main.classList.toggle('wrap', !workspace);
   document.body.classList.toggle('is-workspace', workspace);
   document.body.classList.toggle('is-login', route.name === 'login');
@@ -196,7 +202,7 @@ function setTitle(route, searching) {
   const base = 'AACCUP Evidence · TUP CIE';
   if (route.name === 'login') { document.title = 'Log in · ' + base; return; }
   if (searching) { document.title = `Search: ${route.q} · ${base}`; return; }
-  const snap = state.snaps[route.prog];
+  const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const area = snap && findArea(snap, route.area);
   const bits = [route.ind, area ? areaLabel(area) : null, snap?.program?.name].filter(Boolean);
   document.title = (bits.length ? bits.join(' · ') + ' · ' : '') + base;
@@ -248,6 +254,9 @@ function setTreeOpen(open) {
 async function refresh(code, force = false) {
   const prog = getProgram(code);
   if (!prog || !getSession()) return;
+  // A reply that arrives after logout or a new login belongs to the old session: drop it.
+  const tok = getSession().token;
+  const stale = () => !getSession() || getSession().token !== tok;
   const had = state.snaps[code];
   const statusKey = (s) => (s?.loading ? 'loading' : s?.noAccess ? 'noAccess' : s?.error ? 'error' : s?.fromCache ? 'cache' : 'ok');
   const before = statusKey(state.status[code]);
@@ -256,7 +265,7 @@ async function refresh(code, force = false) {
   if (!had) state.status[code] = { loading: true };
   try {
     const data = await fetchSnapshot(prog, force ? null : had?.hash);
-    if (!getSession()) return; // logged out while loading
+    if (stale()) return;
     if (data && data.unchanged && had) {
       if (data.generatedAt) had.generatedAt = data.generatedAt;
       if (data.settings) had.settings = data.settings;
@@ -272,16 +281,19 @@ async function refresh(code, force = false) {
     if (data.settings) state.settings[code] = data.settings;
     state.status[code] = { ok: true, fetchedAt: Date.now() };
   } catch (err) {
-    if (err.code === 'expired' || !getSession()) return; // handled by sessionExpired()
+    if (stale()) return; // old session, or sessionExpired() already logged out
     if (err.code === 'noAccess') {
-      changed = !!state.snaps[code];
+      changed = !!state.snaps[code] || !!state.settings[code];
       delete state.snaps[code];
+      delete state.settings[code];
+      removeCache(code);
       reindex();
       state.status[code] = { noAccess: true, fetchedAt: Date.now() };
     } else {
       console.warn('Snapshot refresh failed for', code, err);
       state.status[code] = {
         error: err.name === 'AbortError' ? 'The server took too long to respond.' : (err.message || 'Network error'),
+        code: err.code,
         offline: !!state.snaps[code],
         fetchedAt: Date.now(),
       };
@@ -348,7 +360,8 @@ function logout() {
 }
 
 function sessionExpired() {
-  if (!getSession() || CONFIG.requireLogin === false) return;
+  // Not getSession(): it already drops a session that just ran out, which is the case to handle here.
+  if (!hasStoredSession() || CONFIG.requireLogin === false) return;
   if (location.hash && !location.hash.startsWith('#/login')) nextHash.set(location.hash);
   clearSession();
   clearCaches();
@@ -388,6 +401,11 @@ window.addEventListener('hashchange', () => {
   if (r.fileId) {
     state.treeOpen = false; // close the drawer on phones once a document is picked
     document.body.classList.add('tree-lock'); // desktop: shrink the tree back even though the mouse is still on it
+    // Once the shrink finishes, unlock if the pointer is no longer on the tree (e.g. it is over the
+    // document iframe, which sends no pointermove here), so hovering the tree again widens it.
+    setTimeout(() => {
+      if (!document.querySelector('.tree-pane:hover')) document.body.classList.remove('tree-lock');
+    }, 250);
   }
   render();
   if (!document.body.classList.contains('is-workspace')) window.scrollTo(0, 0);
@@ -403,7 +421,7 @@ document.addEventListener('click', (e) => {
     state.searchLimit += 200;
     render();
   } else if (action === 'kw-toggle') {
-    const form = el.closest('.file-item')?.querySelector('.kw-form');
+    const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
   } else if (action === 'logout') {
     logout();
@@ -435,7 +453,7 @@ document.addEventListener('toggle', (e) => {
 document.addEventListener('change', (e) => {
   if (e.target.id === 'progSelect') navigate(href([e.target.value]));
   if (e.target.id === 'areaSelect') {
-    const snap = state.snaps[state.route?.prog];
+    const snap = getProgram(state.route?.prog) ? state.snaps[state.route.prog] : null;
     const area = snap && findArea(snap, e.target.value);
     if (area) navigate(hrefFor(state.route.prog, area));
   }
@@ -455,7 +473,7 @@ main.addEventListener('input', (e) => {
   }
   state.touched = true;
 });
-main.addEventListener('change', (e) => { if (e.target.id !== 'treeFilter') state.touched = true; });
+main.addEventListener('change', (e) => { if (e.target.id !== 'treeFilter' && e.target.name !== 'pin') state.touched = true; });
 
 document.addEventListener('submit', (e) => {
   const form = e.target;

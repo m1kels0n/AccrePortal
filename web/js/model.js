@@ -94,6 +94,22 @@ export function areaLabel(area) { return isRoman(area.code) ? 'Area ' + area.cod
 export function paramLabel(param) { return /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
 function isRoman(code) { return /^[IVXL]+$/.test(code); }
 
+/** Comparison key for an area code; must match normalizeAreaCode_ in Code.gs ("Area 2", "ii", "II" → "II"). */
+export function areaKey(v) {
+  const s = String(v ?? '').trim().replace(/^area\s*/i, '');
+  if (/^\d+$/.test(s)) return intToRoman(Number(s));
+  if (/^[IVXL]+$/i.test(s)) return s.toUpperCase();
+  return s.toLowerCase();
+}
+// Same as intToRoman_ in Structure.gs.
+function intToRoman(n) {
+  let out = '';
+  for (const [v, r] of [[50, 'L'], [40, 'XL'], [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']]) {
+    while (n >= v) { out += r; n -= v; }
+  }
+  return out;
+}
+
 export function hrefFor(prog, area, param, ind, fileId, q) {
   const parts = [prog, area?.code, param?.code, ind?.code];
   if (fileId) parts.push('f', fileId);

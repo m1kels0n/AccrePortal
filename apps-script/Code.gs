@@ -314,10 +314,15 @@ function readAccess_() {
   }).filter(function (r) { return r.accreditorName || r.pinHash; });
 }
 
+/**
+ * Comparison key for an area code ("Area 3", "iii", "III" → "III"; slugs → lowercase).
+ * Must match areaKey() in web/js/model.js.
+ */
 function normalizeAreaCode_(v) {
-  var s = String(v || '').trim().toUpperCase().replace(/^AREA\s*/, '');
-  if (/^\d+$/.test(s)) s = intToRoman_(Number(s));
-  return s;
+  var s = String(v === null || v === undefined ? '' : v).trim().replace(/^area\s*/i, '');
+  if (/^\d+$/.test(s)) return intToRoman_(Number(s));
+  if (/^[IVXL]+$/i.test(s)) return s.toUpperCase();
+  return s.toLowerCase();
 }
 
 function log_(action, user, details) {

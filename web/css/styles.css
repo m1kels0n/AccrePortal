@@ -266,6 +266,11 @@ body.is-workspace .site-footer { display: none; }
 .viewer-empty { margin: 0; color: var(--muted); font-size: 1rem; text-align: center; }
 .tree-staff { display: grid; gap: 4px; }
 .tree-staff .btn-row { margin: 0; }
+.tree-loose { font-size: .8rem; color: #5b4300; background: #fff4d6; border: 1px solid #f0d58a; border-radius: 8px; padding: 4px 8px; }
+.tree-loose summary { cursor: pointer; font-weight: 600; }
+.tree-loose p { margin: 4px 0; }
+.tree-loose ul { margin: 0; padding-left: 16px; max-height: 9em; overflow: auto; }
+.tree-loose a { word-break: break-word; }
 
 /* File lists */
 .file-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
@@ -316,7 +321,15 @@ body.is-workspace .site-footer { display: none; }
 .linklike { background: none; border: 0; padding: 0; font: inherit; color: var(--secondary); text-decoration: underline; cursor: pointer; }
 
 /* Viewer */
-.viewer-bar { display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-bottom: 4px; line-height: 1.3; }
+.viewer-bar { position: relative; display: flex; align-items: baseline; gap: 10px; min-width: 0; margin-bottom: 4px; line-height: 1.3; }
+/* Staff keyword editor: button at the end of the bar, form drops down over the top of the document */
+.viewer-kw { margin-left: auto; flex-shrink: 0; align-self: center; }
+.viewer-kw > .btn { padding: 2px 8px; font-size: .8rem; }
+.viewer-kw .kw-form {
+  position: absolute; z-index: 5; top: calc(100% + 2px); right: 0; width: min(100%, 520px);
+  padding: 10px 12px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.15);
+}
 .viewer-name { font-weight: 700; font-size: .9rem; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .viewer-path { font-size: .78rem; color: var(--muted); flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .viewer-frame { position: relative; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }

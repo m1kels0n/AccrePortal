@@ -158,12 +158,12 @@ Edit `web/js/config.js`:
 mode: 'live',
 programs: [
   { code: 'p1', name: 'BTVTEd …', source: 'api',
-    apiUrl: 'https://script.google.com/macros/s/AKfy…/exec',
-    rootFolderUrl: 'https://drive.google.com/drive/folders/<program 1 root id>', … },
+    apiUrl: 'https://script.google.com/macros/s/AKfy…/exec', … },
   { code: 'p2', … },
 ],
 ```
 The **first** program in the list must be the main one (Program 1), because logins are sent to it.
+Don't put Drive folder links in `config.js`: it is public. Coordinators and the admin get each program's Drive root link from the server after they log in.
 
 Also set `school`, `college`, `colors` and `logos`. Put logo files in `web/assets/` (PNG or SVG, square), e.g. `{ src: 'assets/tup-logo.png', alt: 'TUP logo' }`.
 
@@ -207,7 +207,7 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 - Keep the trigger **on**. Don't run **Rebuild structure** unless folders changed.
 - Before the visit: Admin panel → open only the programs and areas the accreditors should see.
 - Admin panel: log in with the admin PIN, then **Admin panel** in the header (or `…/#/admin/p1`).
-- If anything breaks, coordinators and the admin still see each program's Drive root link in the error and offline notices.
+- If anything breaks, coordinators and the admin still see each program's Drive root link in the offline notice (once that program's file list has loaded in their tab).
 
 ## Troubleshooting
 
@@ -219,7 +219,7 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 | A document says "You need access" | That file isn't "Anyone with the link". Fix it in Drive (usually files uploaded before the folder was shared, or moved in from elsewhere). |
 | Login: "Too many wrong PINs" | Wait 5 minutes. (Ten wrong PINs from anyone pause all logins briefly.) |
 | Login says "Logins go through the main program" | The first program in `config.js` must be the main Sheet (Setup answered YES). |
-| Program 2 keeps asking to log in again | Program 2 isn't linked: AACCUP → Link to main program, paste the key from Program 1, then deploy a new version. |
+| Program 2 says "not linked to the main program (link key mismatch)" | Program 2's link key differs from Program 1's: AACCUP → Link to main program, paste the key from Program 1, then deploy a new version. |
 | An accreditor sees "not open yet" | Admin panel → tick "Accreditors can open …" for that program. |
 | Code changes not live | Deploy → Manage deployments → Edit → **New version**. |
 | `Drive is not defined` | The manifest wasn't saved: re-paste `appsscript.json`, or Services ＋ → Drive API v3. |

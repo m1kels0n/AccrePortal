@@ -5,7 +5,7 @@
 export const CONFIG = {
   school: 'Technological University of the Philippines',
   college: 'College of Industrial Education',
-  title: 'AACCUP Accreditation Evidence',
+  title: 'MAIE-AS and MAT-THE Program Accreditation',
 
   logos: [
     { src: 'assets/tup-logo.png', alt: 'TUP logo' },
@@ -47,7 +47,6 @@ export const CONFIG = {
       apiUrl: 'https://script.google.com/macros/s/AKfycbzwYwB5XIvWbLuK-uhYYjSo7mnqnQ8i8EJVBI5oy04whUIH1PPfhnOOV9Fh9CIFAXANfA/exec',
       staticUrl: 'data/snapshot-p1.json',
       mockUrl: 'data/mock-p1.json',
-      rootFolderUrl: 'https://drive.google.com/drive/folders/1J4tZnVvGS9bbltFql1mu5NgWECbY9CBG',
     },
     {
       code: 'p2',
@@ -56,7 +55,6 @@ export const CONFIG = {
       apiUrl: 'https://script.google.com/macros/s/AKfycbwPNVTk51DbLGjhzdB5cwd-JzDmHuEXapJoTEj1tgfVUBOtUKRrWaQ9ZWA5L2NOuMZ_/exec',
       staticUrl: 'data/snapshot-p2.json',
       mockUrl: 'data/mock-p2.json',
-      rootFolderUrl: 'https://drive.google.com/drive/folders/1g85kBN4yd8o343QQdInOUUYjpIAANNX1',
     },
   ],
 };
