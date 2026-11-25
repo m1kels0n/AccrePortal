@@ -127,7 +127,8 @@ function viewerArea_(a) {
               if (f.subfolder) o.subfolder = f.subfolder;
               return o;
             }),
-            subfolders: i.subfolders || [],
+            // Folder names only: no Drive IDs for accreditors.
+            subfolders: (i.subfolders || []).map(function (s) { return typeof s === 'string' ? s : s.path; }),
           };
         }),
       };

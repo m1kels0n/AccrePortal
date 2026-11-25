@@ -231,7 +231,7 @@ function renderTree(state, prog, area, route) {
             title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
           <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
       };
-      const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen);
+      const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
       const indActive = onI && !route.fileId;
       const n = ind.files.length;
       return `<li class="tn-ind ${n ? '' : 'empty'}">
@@ -266,19 +266,23 @@ const SUB_SEP = ' › ';
 
 /**
  * Group an indicator's files by their Drive subfolder path: { files, folders: Map<name, node> }.
- * `subfolders` (every subfolder path, from the backend) adds the folders that have no files yet.
+ * `subfolders` (every subfolder, from the backend) adds the folders that have no files yet.
+ * Staff get { path, id } entries (id = Drive folder, for "add files"); accreditors get bare paths.
  */
 function subfolderTree(files, subfolders = []) {
   const root = { files: [], folders: new Map() };
   const walk = (path) => {
     let node = root;
     for (const name of path ? path.split(SUB_SEP) : []) {
-      if (!node.folders.has(name)) node.folders.set(name, { files: [], folders: new Map() });
+      if (!node.folders.has(name)) node.folders.set(name, { files: [], folders: new Map(), id: null });
       node = node.folders.get(name);
     }
     return node;
   };
-  subfolders.forEach(walk);
+  subfolders.forEach((s) => {
+    const node = walk(typeof s === 'string' ? s : s.path);
+    if (s && s.id) node.id = s.id;
+  });
   for (const f of files) walk(f.subfolder).files.push(f);
   return root;
 }
@@ -290,20 +294,23 @@ function folderFileIds(node, out = []) {
 }
 
 /** Subfolders first (natural order, like Drive), then the files directly in this folder. */
-function renderFolder(node, key, fileLink, isActive, isOpen) {
+function renderFolder(node, key, fileLink, isActive, isOpen, staff) {
   const names = [...node.folders.keys()].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const folders = names.map((name) => {
     const child = node.folders.get(name);
     const fk = `${key}/~${name}`;
     const ids = folderFileIds(child);
-    const inner = renderFolder(child, fk, fileLink, isActive, isOpen);
+    const inner = renderFolder(child, fk, fileLink, isActive, isOpen, staff);
+    const add = staff && child.id
+      ? `<a class="tn-add" href="https://drive.google.com/drive/folders/${esc(child.id)}" target="_blank" rel="noopener"
+           title="Add files to “${esc(name)}”: opens this folder in Google Drive" aria-label="Add files to ${esc(name)} (opens Google Drive)">＋</a>` : '';
     return `<li class="tn-folder ${ids.length ? '' : 'empty'}">
       <details data-node="${esc(fk)}" ${isOpen(fk, ids.some(isActive)) ? 'open' : ''}>
         <summary><span class="tn-link" title="${esc(name)}">
           <span class="tn-folder-icon" aria-hidden="true">📁</span>
           <span class="tn-text">${esc(name)}</span>
           <span class="tn-count">${ids.length}</span>
-        </span></summary>
+        </span>${add}</summary>
         ${inner ? `<ul>${inner}</ul>` : '<p class="tn-none">No documents yet</p>'}
       </details></li>`;
   }).join('');

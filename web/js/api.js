@@ -211,7 +211,7 @@ function accreditorCopy(snap, settings) {
         indicators: p.indicators.map((i) => ({
           code: i.code, type: i.type, text: i.text,
           files: i.files.map(({ viewUrl, ...f }) => f),
-          subfolders: i.subfolders || [],
+          subfolders: (i.subfolders || []).map((s) => (typeof s === 'string' ? s : s.path)),
         })),
       })),
     })),

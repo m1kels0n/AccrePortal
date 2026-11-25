@@ -94,7 +94,7 @@ function scan_(source, t0) {
   var indRows = rowsOf('indicator');
   var indSet = toSet_(indRows.map(function (r) { return r.folderId; }));
   var filesByInd = {};
-  var subsByInd = {};   // indicator folderId -> every subfolder path inside it, empty ones too
+  var subsByInd = {};   // indicator folderId -> [{ path, id }] for every subfolder inside it, empty ones too
   // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself) }
   var level = {};
   Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '' }; });
@@ -109,7 +109,7 @@ function scan_(source, t0) {
       } else if (depth < MAX_SUB_DEPTH) {
         var label = parent.label ? parent.label + ' › ' + f.name : f.name;
         next[f.id] = { ind: parent.ind, label: label };
-        (subsByInd[parent.ind] = subsByInd[parent.ind] || []).push(label);
+        (subsByInd[parent.ind] = subsByInd[parent.ind] || []).push({ path: label, id: f.id });
       } else {
         issues.push({ type: 'deepFile', path: st.byId[parent.ind].path + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
       }
@@ -169,7 +169,11 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
             var t = i.code.match(/^([SIO])\.\d/);
             var out = { code: i.code, type: t ? t[1] : null, text: i.text, folderId: i.folderId, files: files };
             // Sorted so the snapshot hash doesn't change just because Drive listed folders in another order.
-            if (subsByInd[i.folderId]) out.subfolders = subsByInd[i.folderId].slice().sort();
+            if (subsByInd[i.folderId]) {
+              out.subfolders = subsByInd[i.folderId].slice().sort(function (a, b) {
+                return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1;
+              });
+            }
             return out;
           }),
         };
