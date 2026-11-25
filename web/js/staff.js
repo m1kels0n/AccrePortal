@@ -104,9 +104,6 @@ function redrawTree(app) {
     if (fresh && old) old.replaceWith(fresh);
   }
   if (scroller) scroller.scrollTop = top;
-  // Re-run the tree filter (if any) so its result list matches the new files.
-  const filter = document.getElementById('treeFilter');
-  if (filter && filter.value) filter.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 export async function checkNow(progCode, button, app) {

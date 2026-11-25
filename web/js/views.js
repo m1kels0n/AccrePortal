@@ -1,6 +1,6 @@
 // Screens: login, choose program, choose area, workspace (file tree + content), search.
 import { CONFIG } from './config.js';
-import { esc, highlight, fileKind, fmtSize, fmtDate, plural, normalize } from './util.js';
+import { esc, highlight, fileKind, fmtSize, fmtDate, plural } from './util.js';
 import { href } from './router.js';
 import { isStaff, lastPlace } from './api.js';
 import {
@@ -194,8 +194,6 @@ export function renderWorkspace(state, route, searchHtml) {
           <span class="tree-area-name">${esc(area.name)}</span>
         </a>
         <div class="tree-tools">
-          <input type="search" class="tree-filter" id="treeFilter" placeholder="Filter this area…"
-                 aria-label="Filter documents in this area" value="${esc(state.treeFilter)}" autocomplete="off">
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
         </div>
@@ -203,7 +201,6 @@ export function renderWorkspace(state, route, searchHtml) {
       </div>
       <div class="tree-scroll" id="treeScroll">
         <nav class="tree" id="tree">${renderTree(state, prog, area, route)}</nav>
-        <div class="tree-results" id="treeResults" hidden></div>
       </div>
     </aside>
     <div class="tree-backdrop" data-action="tree-close"></div>
@@ -261,35 +258,6 @@ function renderTree(state, prog, area, route) {
       </details></li>`;
   }).join('');
   return params ? `<ul class="tree-root">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
-}
-
-/** Flat list shown in the tree pane while the filter box has text. */
-export function treeFilterResults(progCode, area, tokens) {
-  if (!area) return '';
-  const files = [];
-  const inds = [];
-  for (const param of area.parameters) {
-    for (const ind of param.indicators) {
-      const indText = normalize(`${ind.code} ${ind.text} ${param.code} ${param.name}`);
-      if (tokens.every((t) => indText.includes(t))) inds.push({ param, ind });
-      for (const f of ind.files) {
-        const hay = normalize(`${f.name} ${(f.keywords || []).join(' ')} ${f.subfolder || ''}`) + ' ' + indText;
-        if (tokens.every((t) => hay.includes(t))) files.push({ param, ind, f });
-      }
-    }
-  }
-  if (!files.length && !inds.length) return '<p class="tn-none">Nothing matches in this area.</p>';
-  const fileItems = files.slice(0, 200).map(({ param, ind, f }) => {
-    const kind = fileKind(f.mimeType);
-    return `<li><a class="tn-link tn-file" href="${hrefFor(progCode, area, param, ind, f.id)}" title="${esc(f.name)}">
-      <span class="kind kind-xs ${kind.cls}">${kind.label}</span>
-      <span class="tn-text">${highlight(f.name, tokens)}<small class="tn-path">${esc(param.code)} › ${esc(ind.code)}</small></span></a></li>`;
-  }).join('');
-  const indItems = inds.slice(0, 50).map(({ param, ind }) => `<li><a class="tn-link" href="${hrefFor(progCode, area, param, ind)}">
-      <span class="tn-code tn-${esc(ind.type || 'x')}">${esc(ind.code)}</span>
-      <span class="tn-text">${highlight(ind.text || ind.code, tokens)}<small class="tn-path">${esc(paramLabel(param))}</small></span></a></li>`).join('');
-  return `<p class="tn-summary">${plural(files.length, 'document')}${inds.length ? ', ' + plural(inds.length, 'indicator') : ''}</p>
-    <ul class="tree-flat">${fileItems}${indItems}</ul>`;
 }
 
 /** The viewer pane stays empty until a document is picked; selecting a folder only opens it in the tree. */

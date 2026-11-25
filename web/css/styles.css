@@ -216,15 +216,10 @@ body.is-workspace .site-footer { display: none; }
 .tree-area .badge { height: 26px; min-width: 40px; font-size: .8rem; }
 .tree-area-name { overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .tree-tools { display: flex; gap: 4px; align-items: center; }
-.tree-filter {
-  flex: 1; min-width: 0; font: inherit; font-size: .85rem; padding: 6px 10px;
-  border: 1.5px solid var(--line); border-radius: 8px; background: var(--bg); outline: none;
-}
-.tree-filter:focus { border-color: var(--secondary); background: #fff; }
 .icon-btn { flex-shrink: 0; width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: #fff; cursor: pointer; font-size: 1rem; line-height: 1; color: var(--ink-2); }
 .icon-btn:hover { border-color: var(--ink-2); }
 .tree-scroll { flex: 1; min-height: 0; overflow: auto; padding: 6px 4px 24px; overscroll-behavior: contain; }
-.tree ul, .tree-flat { list-style: none; margin: 0; padding: 0; }
+.tree ul { list-style: none; margin: 0; padding: 0; }
 .tree details > ul { padding-left: 14px; }
 .tree summary { list-style: none; display: flex; align-items: flex-start; cursor: pointer; border-radius: 6px; }
 .tree summary::-webkit-details-marker { display: none; }
@@ -251,10 +246,7 @@ body.is-workspace .site-footer { display: none; }
 .tn-missing { flex-shrink: 0; color: var(--err); font-size: .7rem; padding-top: 2px; }
 .tn-ind.empty > details > summary .tn-text { color: var(--muted); }
 .tn-file { padding-left: 20px; }
-.tree-flat .tn-file { padding-left: 6px; }
 .tn-none { margin: 2px 0 4px 36px; font-size: .78rem; color: var(--muted); font-style: italic; }
-.tn-path { display: block; color: var(--muted); font-size: .72rem; font-weight: 400; }
-.tn-summary { margin: 4px 8px 6px; font-size: .78rem; color: var(--muted); }
 .kind-xs { width: 28px; height: 18px; border-radius: 4px; font-size: .55rem; margin-top: 1px; }
 .tree-backdrop { display: none; }
 

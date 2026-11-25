@@ -1,6 +1,6 @@
 // Bootstrap: login gate, load snapshots, route, render, wire events.
 import { CONFIG } from './config.js';
-import { esc, fmtDate, debounce, toast, tokenize } from './util.js';
+import { esc, fmtDate, debounce, toast } from './util.js';
 import { parseHash, href, replaceQuery, navigate } from './router.js';
 import {
   readCache, writeCache, removeCache, clearCaches, fetchSnapshot, isMock, post, getSession, clearSession,
@@ -23,7 +23,6 @@ const state = {
   touched: false,   // user typed into a form on the current screen
   openNodes: new Set(),    // tree branches the user opened
   closedNodes: new Set(),  // branches on the current path the user closed
-  treeFilter: '',
   treeOpen: false,         // tree drawer on small screens
   get watermark() {
     const s = this.settings[mainProgram().code] || Object.values(this.settings)[0];
@@ -145,10 +144,10 @@ function render(background = false) {
   clearBtn.hidden = !input.value;
 
   // Background data updates must not wipe a form the user has started filling in,
-  // reload an open document, or steal focus from the tree filter.
+  // or reload an open document.
   if (background) {
     const viewing = route.fileId && route.q.trim().length < 2 && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
-    if (state.touched || viewing || document.activeElement?.id === 'treeFilter') { renderChrome(); return; }
+    if (state.touched || viewing) { renderChrome(); return; }
   }
   state.touched = false;
 
@@ -159,7 +158,6 @@ function render(background = false) {
   const oldScroll = document.getElementById('treeScroll');
   const sameArea = route.name === 'workspace' && main.querySelector(`.workspace[data-area="${CSS.escape(route.prog + '/' + route.area)}"]`);
   const treeTop = sameArea && oldScroll ? oldScroll.scrollTop : 0;
-  if (route.name === 'workspace' && !sameArea) state.treeFilter = '';
 
   let html;
   let workspace = false;
@@ -185,7 +183,6 @@ function render(background = false) {
 
   if (workspace) {
     const scroller = document.getElementById('treeScroll');
-    applyTreeFilter();
     if (sameArea) scroller.scrollTop = treeTop;
     else scroller.querySelector('.tn-link.active')?.scrollIntoView({ block: 'center' });
     const prog = getProgram(route.prog);
@@ -226,26 +223,11 @@ function setupViewer() {
   frame.addEventListener('load', () => { clearTimeout(timer); loading?.remove(); }, { once: true });
 }
 
-/** Tree filter: swaps the tree for a flat list of matches (keeps the tree's open/closed state intact). */
-function applyTreeFilter() {
-  const tree = document.getElementById('tree');
-  const box = document.getElementById('treeResults');
-  if (!tree || !box) return;
-  const tokens = tokenize(state.treeFilter);
-  if (!tokens.length) { tree.hidden = false; box.hidden = true; box.innerHTML = ''; return; }
-  const route = state.route;
-  const area = findArea(state.snaps[route.prog], route.area);
-  box.innerHTML = V.treeFilterResults(route.prog, area, tokens);
-  tree.hidden = true;
-  box.hidden = false;
-}
-
 function setTreeOpen(open) {
   state.treeOpen = open;
   document.body.classList.toggle('tree-open', open && document.body.classList.contains('is-workspace'));
   document.getElementById('treeToggle').setAttribute('aria-expanded', String(open));
   if (open) {
-    document.getElementById('treeFilter')?.focus({ preventScroll: true });
     document.querySelector('#treeScroll .tn-link.active')?.scrollIntoView({ block: 'center' });
   }
 }
@@ -335,7 +317,6 @@ function resetData() {
   state.settings = {};
   state.openNodes.clear();
   state.closedNodes.clear();
-  state.treeFilter = '';
   state.treeOpen = false;
   reindex();
 }
@@ -460,11 +441,6 @@ document.addEventListener('change', (e) => {
 });
 
 main.addEventListener('input', (e) => {
-  if (e.target.id === 'treeFilter') {
-    state.treeFilter = e.target.value;
-    applyTreeFilter();
-    return;
-  }
   if (e.target.name === 'pin') {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
     if (digits !== e.target.value) e.target.value = digits;
@@ -473,7 +449,7 @@ main.addEventListener('input', (e) => {
   }
   state.touched = true;
 });
-main.addEventListener('change', (e) => { if (e.target.id !== 'treeFilter' && e.target.name !== 'pin') state.touched = true; });
+main.addEventListener('change', (e) => { if (e.target.name !== 'pin') state.touched = true; });
 
 document.addEventListener('submit', (e) => {
   const form = e.target;
