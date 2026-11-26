@@ -7,7 +7,7 @@ import {
   isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
-import { getProgram, findArea, findParam, findIndicator, areaLabel, indLabel, hrefFor, withGeneral } from './model.js';
+import { getProgram, findArea, findParam, findIndicator, areaLabel, areaTitle, indLabel, hrefFor, prepareSnapshot } from './model.js';
 import * as V from './views.js';
 import * as S from './staff.js';
 import * as A from './admin.js';
@@ -86,7 +86,10 @@ function renderChrome() {
   // getProgram first: a raw key like #/constructor would otherwise hit Object.prototype.
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const areasBtn = document.getElementById('areasBtn');
-  areasBtn.hidden = !(route.prog && getProgram(route.prog) && route.name === 'workspace');
+  // Back to the Self-Survey Report page: only from the instrument or an area (not from CR / PPP / Other).
+  const curArea = snap && route.name === 'workspace' ? findArea(snap, route.area) : null;
+  areasBtn.hidden = !(route.prog && getProgram(route.prog) && route.name === 'workspace')
+    || !!(curArea && (curArea.general || (curArea.section && curArea.code !== 'SSI')));
   if (!areasBtn.hidden) areasBtn.href = href([route.prog]);
 
   const progPick = document.getElementById('progPick');
@@ -100,7 +103,7 @@ function renderChrome() {
   areaPick.hidden = !(route.name === 'workspace' && snap && snap.areas.length > 1);
   if (!areaPick.hidden) {
     document.getElementById('areaSelect').innerHTML = snap.areas.map((a) =>
-      `<option value="${esc(a.code)}" ${a.code === route.area ? 'selected' : ''}>${esc(areaLabel(a))} — ${esc(a.name)}</option>`).join('');
+      `<option value="${esc(a.code)}" ${a.code === route.area ? 'selected' : ''}>${esc(areaTitle(a))}</option>`).join('');
   }
   document.getElementById('searchForm').hidden = route.name === 'admin';
   input.placeholder = route.prog && snap ? `Search ${V.programName(getProgram(route.prog), snap)}…` : 'Search documents, keywords, indicators…';
@@ -255,7 +258,7 @@ async function refresh(code, force = false) {
       writeCache(code, had);
     } else if (data && Array.isArray(data.areas)) {
       changed = !had || had.hash !== data.hash || !data.hash || isMock();
-      state.snaps[code] = withGeneral(data);
+      state.snaps[code] = prepareSnapshot(data);
       writeCache(code, data);
       reindex();
     } else {
@@ -301,7 +304,7 @@ function loadFromCache() {
   for (const p of CONFIG.programs) {
     const cached = readCache(p.code);
     if (cached) {
-      state.snaps[p.code] = withGeneral(cached.data);
+      state.snaps[p.code] = prepareSnapshot(cached.data);
       if (cached.data.settings) state.settings[p.code] = cached.data.settings;
       state.status[p.code] = { fromCache: true };
     } else {

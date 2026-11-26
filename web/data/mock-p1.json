@@ -14,6 +14,126 @@
   "indicatorsWithFiles": 149,
   "files": 304
  },
+ "looseFiles": [
+  {
+   "id": "f_000rootMockFileId",
+   "name": "Campus Development Plan 2026.pdf",
+   "mimeType": "application/pdf",
+   "size": 524288,
+   "modified": "2026-11-20T02:00:00Z",
+   "viewUrl": "assets/sample.pdf",
+   "previewUrl": "assets/sample.pdf",
+   "keywords": [
+    "campus"
+   ]
+  }
+ ],
+ "sections": [
+  {
+   "code": "CR",
+   "name": "Compliance Report",
+   "folderId": "MOCK_ROOT_p1",
+   "files": [
+    {
+     "id": "f_cr01MockFileId",
+     "name": "Compliance Report 2026.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "code": "PPP",
+   "name": "Program Performance Profile",
+   "folderId": "MOCKPPPFOLDER",
+   "files": [
+    {
+     "id": "f_ppp01MockFileId",
+     "name": "PPP 2026 - Summary.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    },
+    {
+     "id": "f_ppp02MockFileId",
+     "name": "Enrollment 2021-2026.xlsx",
+     "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Part I - Profile"
+    },
+    {
+     "id": "f_ppp03MockFileId",
+     "name": "Faculty profile.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Part I - Profile"
+    },
+    {
+     "id": "f_ppp04MockFileId",
+     "name": "Graduate tracer study.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Part II - Performance"
+    }
+   ],
+   "subfolders": [
+    {
+     "path": "Part I - Profile",
+     "id": "MOCKPPP1"
+    },
+    {
+     "path": "Part II - Performance",
+     "id": "MOCKPPP2"
+    }
+   ]
+  },
+  {
+   "code": "SSI",
+   "name": "Self-Survey Instrument",
+   "folderId": "MOCKSSIFOLDER",
+   "files": [
+    {
+     "id": "f_ssi01MockFileId",
+     "name": "Self-Survey Instrument (signed).pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    },
+    {
+     "id": "f_ssi02MockFileId",
+     "name": "Rating summary.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    }
+   ]
+  }
+ ],
  "areas": [
   {
    "code": "I",
@@ -6217,20 +6337,6 @@
       }
      ]
     }
-   ]
-  }
- ],
- "looseFiles": [
-  {
-   "id": "f_000rootMockFileId",
-   "name": "Program Profile 2026.pdf",
-   "mimeType": "application/pdf",
-   "size": 1048576,
-   "modified": "2026-11-20T02:00:00Z",
-   "viewUrl": "assets/sample.pdf",
-   "previewUrl": "assets/sample.pdf",
-   "keywords": [
-    "profile"
    ]
   }
  ]

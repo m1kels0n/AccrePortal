@@ -5,9 +5,9 @@ This guide is for **area coordinators**. You only need Google Drive and the webs
 ## 1. Log in
 
 1. Open the portal website and type the **6-digit coordinator PIN** (all coordinators share the same one). It logs you in as soon as you type the 6th digit.
-2. **Choose a program**, then **choose an area**.
-3. The screen now shows the area's folders on the **left** (Parameters › Indicators › files) and the selected item on the **right**.
-   - **⌂ Home** goes back to the programs; **▦ Areas** goes back to the area list.
+2. On the program's card, choose **Compliance Report**, **PPP**, or **Self-Survey Report** (then the Self-Survey Instrument or an area).
+3. The screen now shows the folders on the **left** (for an area: Parameters › Indicators › files) and the selected item on the **right**.
+   - **⌂ Home** goes back to the programs; **▦ Areas** goes back to the Self-Survey Report list.
    - The **Program ▾** and **Area ▾** menus at the top switch directly.
    - On a phone, tap **☰ Files** to show the list.
 
@@ -30,7 +30,8 @@ Keep the coordinator PIN within the coordinator team. Never give it to accredito
 **Or directly in Drive:** open the program folder (link from Ariel) → the **Area** → the **Parameter** → the **indicator** folder, and upload there.
 
 ✅ Evidence for an indicator goes **inside that indicator folder** (S.1, S.2, I.1, O.1 …).
-📄 A file put directly in a Parameter folder, an Area folder or the program folder is shown to everyone under **General documents** (at the top of that parameter, at the top of that area, or as the **General** area). Use this for documents that belong to the whole parameter, area or program.
+📄 A file put directly in a Parameter or Area folder is shown to everyone under **General documents** at the top of that parameter or area.
+📋 **Compliance Report, PPP, Self-Survey Instrument:** put them in the program folder, next to the Area folders, either as one file (e.g. `Compliance Report 2026.pdf`) or in a folder with that name. Other files left in the program folder show as **Other documents**.
 
 If one document is evidence for two indicators, upload it once. Then, in the second folder, right-click → **Add shortcut** to point to it.
 

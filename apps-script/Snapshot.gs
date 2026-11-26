@@ -49,8 +49,8 @@ function scan_(source, t0) {
     if (r.status === 'duplicateCode') issues.push({ type: 'duplicateCode', path: parentPath_(r), folderId: r.folderId, name: r.rawName });
   });
 
-  // ── 1. Children of root + areas + parameters + S/I/O groups ──
-  var containers = [cfg.rootFolderId].concat(st.rows.filter(function (r) { return r.level !== 'indicator'; }).map(function (r) { return r.folderId; }));
+  // ── 1. Children of root + areas + parameters + S/I/O groups (sections are scanned in step 3) ──
+  var containers = [cfg.rootFolderId].concat(st.rows.filter(function (r) { return r.level !== 'indicator' && r.level !== 'section'; }).map(function (r) { return r.folderId; }));
   var containerSet = toSet_(containers);
   var seenParent = {};   // folderId → parent it was found in
   var loose = {};        // container folderId → [file]
@@ -87,11 +87,11 @@ function scan_(source, t0) {
     }
   });
 
-  // ── 3. Files in indicator folders, plus every level of subfolders inside them ──
+  // ── 3. Files in indicator and section folders, plus every level of subfolders inside them ──
   // A file in a subfolder is listed under its indicator, labeled with the subfolder path
   // (e.g. "I.1.6.1. Participative planning › I.1.6.1.3. Students"). One batched query per level.
   var MAX_SUB_DEPTH = 6;
-  var indRows = rowsOf('indicator');
+  var indRows = rowsOf('indicator').concat(rowsOf('section'));
   var indSet = toSet_(indRows.map(function (r) { return r.folderId; }));
   var filesByInd = {};
   var subsByInd = {};   // indicator folderId -> [{ path, id }] for every subfolder inside it, empty ones too
@@ -134,6 +134,7 @@ function scan_(source, t0) {
 
 function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
   subsByInd = subsByInd || {};
+  var bySub = function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1; };
   var bySort = function (a, b) { return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0; };
   var group = function (level, key) {
     var m = {};
@@ -169,16 +170,34 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
             var t = i.code.match(/^([SIO])\.\d/);
             var out = { code: i.code, type: t ? t[1] : null, text: i.text, folderId: i.folderId, files: files };
             // Sorted so the snapshot hash doesn't change just because Drive listed folders in another order.
-            if (subsByInd[i.folderId]) {
-              out.subfolders = subsByInd[i.folderId].slice().sort(function (a, b) {
-                return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1;
-              });
-            }
+            if (subsByInd[i.folderId]) out.subfolders = subsByInd[i.folderId].slice().sort(bySub);
             return out;
           }),
         };
       }),
     };
+  });
+
+  // Sections: Compliance Report, PPP, Self-Survey Instrument. A section is its folder, and/or
+  // files at the program root named after it (e.g. one "Compliance Report.pdf" next to the areas).
+  var secByCode = {};
+  st.rows.filter(function (r) { return r.level === 'section'; }).sort(bySort).forEach(function (r) {
+    var sec = { code: r.code, name: r.name, folderId: r.folderId, files: (filesByInd[r.folderId] || []).slice() };
+    if (subsByInd[r.folderId]) sec.subfolders = subsByInd[r.folderId].slice().sort(bySub);
+    if (!secByCode[r.code]) secByCode[r.code] = sec;
+  });
+  var rootLoose = [];
+  (loose[cfg.rootFolderId] || []).forEach(function (f) {
+    var code = sectionOf_(f.name);
+    if (!code) { rootLoose.push(f); return; }
+    if (!secByCode[code]) secByCode[code] = { code: code, name: SECTIONS[code].name, folderId: cfg.rootFolderId, files: [] };
+    secByCode[code].files.push(f);
+  });
+  var sections = Object.keys(SECTIONS).filter(function (c) { return secByCode[c]; }).map(function (c) {
+    var sec = secByCode[c];
+    sec.files = withKw(sec.files);
+    stats.files += sec.files.length;
+    return sec;
   });
 
   var body = {
@@ -188,7 +207,8 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
       name: cfg.programName || 'Program',
       rootFolderUrl: 'https://drive.google.com/drive/folders/' + cfg.rootFolderId,
     },
-    looseFiles: withKw(loose[cfg.rootFolderId]),
+    looseFiles: withKw(rootLoose),
+    sections: sections,
     areas: areas,
   };
   var hash = md5_(JSON.stringify(body));
@@ -199,6 +219,7 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
     hash: hash,
     stats: stats,
     looseFiles: body.looseFiles,
+    sections: sections,
     areas: areas,
   };
 }
@@ -253,7 +274,7 @@ function readIssues_() {
  */
 function patchSnapshotKeywords_(snap, fileId, keywords) {
   eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) f.keywords = keywords; });
-  var body = { schema: 1, program: snap.program, looseFiles: snap.looseFiles, areas: snap.areas };
+  var body = { schema: 1, program: snap.program, looseFiles: snap.looseFiles, sections: snap.sections || [], areas: snap.areas };
   snap.hash = md5_(JSON.stringify(body));
   cachePutChunked_('snap', JSON.stringify(snap), { hash: snap.hash, generatedAt: snap.generatedAt });
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
@@ -268,6 +289,7 @@ function hasFile_(snap, fileId) {
 
 function eachFileInSnapshot_(snap, fn) {
   (snap.looseFiles || []).forEach(function (f) { fn(f, null); });
+  (snap.sections || []).forEach(function (s) { s.files.forEach(function (f) { fn(f, null); }); });
   (snap.areas || []).forEach(function (a) {
     (a.looseFiles || []).forEach(function (f) { fn(f, a); });
     a.parameters.forEach(function (p) {

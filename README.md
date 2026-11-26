@@ -67,6 +67,9 @@ TUP's Google Workspace settings could block the two things this design needs. Fi
 Your folders already exist, one root per program:
 ```
 Program 1 - AACCUP/
+  Compliance Report 2026.pdf            ← a single file is enough (or a "Compliance Report" folder)
+  PPP - Program Performance Profile/    ← any subfolders inside
+  Self-Survey Instrument/               ← any subfolders inside
   Area I - Vision, Mission, Goals and Objectives/
     Parameter A - Statement of Vision, Mission, Goals and Objectives/
       S.1 - The institution has a clearly stated vision and mission/   ← files go here
@@ -76,7 +79,8 @@ Program 1 - AACCUP/
 - An extra level of **S / I / O group folders** under a parameter (e.g. `System Inputs and Processes › S.1 …`) is also understood.
 - An indicator folder's **Description** (Drive → right-click → File information → Details → Description), if set, becomes the full indicator text shown on the site.
 - Subfolders inside an indicator (e.g. sub-indicators `I.1.6.1 › I.1.6.1.3. Students`) are read up to 6 levels deep. Their files are listed under the indicator, labeled with the subfolder path.
-- Files placed directly in a Parameter folder, an Area folder or the program root are shown to everyone as **General documents** (top of that parameter, top of that area, or a **General** area first in the list). They are not counted in indicator progress.
+- **Sections** at the program root: a folder or a file whose name contains `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` (without "Report") → Self-Survey Instrument. Each program card on the home page shows Compliance Report, PPP and Self-Survey Report (= the instrument + Area I–X). Inside a section folder any subfolders work (up to 6 levels). After creating a section **folder**, run **Rebuild structure**; a section **file** shows up on the next scan.
+- Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):

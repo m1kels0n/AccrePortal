@@ -4,7 +4,7 @@ import { esc, fmtDate, toast } from './util.js';
 import { href, parseHash } from './router.js';
 import { post, isAdmin } from './api.js';
 import { crumbs, progressBadge, notFound, programName } from './views.js';
-import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realAreas } from './model.js';
+import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realAreas, accessAreas } from './model.js';
 
 export function renderAdmin(state, route) {
   if (!isAdmin()) return notFound('#/', 'The admin panel needs the admin PIN.');
@@ -33,21 +33,21 @@ export function renderAdmin(state, route) {
       : `<p class="muted">Access settings are not available for this program right now. Press Refresh now below to load them.</p>`;
   } else {
     const all = settings.accreditorAreas === 'ALL';
-    const chosen = all ? new Set(realAreas(snap).map((a) => areaKey(a.code))) : openKeys;
+    const chosen = all ? new Set(accessAreas(snap).map((a) => areaKey(a.code))) : openKeys;
     access = `<form data-form="access" data-prog="${esc(prog.code)}" class="access-form">
       <label class="switch"><input type="checkbox" name="enabled" ${settings.accreditorEnabled ? 'checked' : ''}>
         <span>Accreditors can open <strong>${esc(programName(prog, snap))}</strong></span></label>
       <fieldset class="area-checks">
-        <legend>Areas accreditors can see</legend>
+        <legend>What accreditors can see</legend>
         <div class="btn-row tight">
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-all">Select all</button>
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-none">Select none</button>
         </div>
-        <div class="check-grid">${realAreas(snap).map((a) => `<label class="check">
+        <div class="check-grid">${accessAreas(snap).map((a) => `<label class="check">
             <input type="checkbox" name="area" value="${esc(a.code)}" ${chosen.has(areaKey(a.code)) ? 'checked' : ''}>
-            <span><strong>${esc(areaLabel(a))}</strong> ${esc(a.name)} <span class="muted small">· ${countFiles(a)} docs</span></span></label>`).join('')}</div>
+            <span><strong>${esc(areaLabel(a))}</strong>${a.section ? '' : ' ' + esc(a.name)} <span class="muted small">· ${countFiles(a)} docs</span></span></label>`).join('')}</div>
         <p class="muted small">When every area is ticked, new areas added later are shown automatically.
-          Files at the top of the program folder ("General") are shown whenever the program is open.</p>
+          Other files at the top of the program folder ("Other documents") are shown whenever the program is open.</p>
       </fieldset>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">Save access</button>

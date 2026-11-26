@@ -205,6 +205,10 @@ function accreditorCopy(snap, settings) {
     generatedAt: snap.generatedAt,
     hash: snap.hash + '.' + JSON.stringify(settings.accreditorAreas),
     looseFiles: files(snap.looseFiles),
+    sections: (snap.sections || []).filter((x) => !allowed || allowed.has(areaKey(x.code))).map((x) => ({
+      code: x.code, name: x.name, files: files(x.files),
+      subfolders: (x.subfolders || []).map((sf) => (typeof sf === 'string' ? sf : sf.path)),
+    })),
     areas: snap.areas.filter((a) => !allowed || allowed.has(areaKey(a.code))).map((a) => ({
       code: a.code, name: a.name, looseFiles: files(a.looseFiles),
       parameters: a.parameters.map((p) => ({

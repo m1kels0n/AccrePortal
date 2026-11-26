@@ -6,7 +6,7 @@ import { isStaff, lastPlace } from './api.js';
 import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
-  realAreas, shortCode, indLabel, placeLabel,
+  realAreas, shortCode, indLabel, placeLabel, areaTitle, findSection, otherArea,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -115,19 +115,60 @@ export function renderLogin() {
   </div>`;
 }
 
-// ── Step 1: choose a program ────────────────────────────────
+// ── Home: one card per program ──────────────────────────────
+const ICONS = {
+  CR: '<path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
+  PPP: '<path d="M4 20h16"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-8"/>',
+  SSR: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/>',
+};
+const icon = (key) => `<svg class="ptile-icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[key]}</svg>`;
+
+/** A section opens its tree; with just one document it opens that document directly. */
+function sectionHref(progCode, area) {
+  const list = areaFileList(area);
+  return list.length === 1 ? hrefFor(progCode, area, list[0].param, list[0].ind, list[0].file.id) : hrefFor(progCode, area);
+}
+
+function programTile(key, title, sub, link, meta) {
+  const inner = `${icon(key)}<span class="ptile-text"><span class="ptile-title">${esc(title)}</span>
+      ${sub ? `<span class="ptile-sub">${esc(sub)}</span>` : ''}</span>`;
+  if (!link) {
+    return `<li><span class="ptile is-off" aria-disabled="true">${inner}<span class="ptile-meta">Not available yet</span></span></li>`;
+  }
+  return `<li><a class="ptile" href="${link}">${inner}<span class="ptile-meta">${esc(meta)} <span aria-hidden="true">→</span></span></a></li>`;
+}
+
+function programCard(prog, snap) {
+  const cr = findSection(snap, 'CR');
+  const ppp = findSection(snap, 'PPP');
+  const ssi = findSection(snap, 'SSI');
+  const areas = realAreas(snap);
+  const ssrDocs = areas.reduce((n, a) => n + countFiles(a), ssi ? countFiles(ssi) : 0);
+  const ssrSub = (ssi ? 'Instrument + ' : '') + plural(areas.length, 'area');
+  const other = otherArea(snap);
+  const full = snap.program?.name && snap.program.name !== prog.name ? snap.program.name : '';
+  return `<li><article class="card program-card">
+      <header class="pc-head">
+        <span class="pc-code">${esc(prog.name)}</span>
+        <div class="pc-title">
+          ${full ? `<h3>${esc(full)}</h3>` : `<h3 class="sr-only">${esc(prog.name)}</h3>`}
+          <p class="muted small">${plural(countFiles(snap), 'document')}</p>
+        </div>
+      </header>
+      <ul class="ptiles">
+        ${programTile('CR', 'Compliance Report', '', cr && sectionHref(prog.code, cr), cr && docCountLabel(countFiles(cr)))}
+        ${programTile('PPP', 'PPP', 'Program Performance Profile', ppp && sectionHref(prog.code, ppp), ppp && docCountLabel(countFiles(ppp)))}
+        ${programTile('SSR', 'Self-Survey Report', ssrSub, (ssi || areas.length) && href([prog.code]), docCountLabel(ssrDocs))}
+      </ul>
+      ${other ? `<a class="pc-other" href="${hrefFor(prog.code, other)}">Other documents · ${countFiles(other)}</a>` : ''}
+    </article></li>`;
+}
+
 export function renderHome(state) {
-  const staff = isStaff();
   const visible = CONFIG.programs.filter((p) => !state.status[p.code]?.noAccess);
   const cards = visible.map((prog) => {
     const snap = state.snaps[prog.code];
-    if (!snap) return `<li>${unavailable(prog, state.status[prog.code])}</li>`;
-    return `<li><a class="card program-card" href="${href([prog.code])}">
-        <h3>${esc(programName(prog, snap))}</h3>
-        <p class="muted">${plural(realAreas(snap).length, 'area')} · ${plural(countFiles(snap), 'document')}</p>
-        ${staff ? progressBadge(progress(snap)) : ''}
-        <span class="cta">Choose →</span>
-      </a></li>`;
+    return snap ? programCard(prog, snap) : `<li>${unavailable(prog, state.status[prog.code])}</li>`;
   }).join('');
 
   const last = lastPlace.get();
@@ -137,29 +178,28 @@ export function renderHome(state) {
       <span>Continue where you left off:</span>
       <strong>${esc(programName(getProgram(last.prog), lastSnap))} › ${esc(areaLabel(lastArea))}</strong> →</a>` : '';
 
-  return `${resume}${pageHead('<span class="step">Step 1 of 2</span>', 'Choose a program')}
+  return `${resume}${pageHead('', 'Choose a program')}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
       : `<div class="card empty"><p>No program is open for viewing yet. Please ask the accreditation coordinator.</p></div>`}
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;
 }
 
-// ── Step 2: choose an area ──────────────────────────────────
+// ── Self-Survey Report: the instrument + Area I … X ─────────
 export function renderProgram(state, route) {
   const prog = getProgram(route.prog);
   if (!prog) return notFound();
   const snap = state.snaps[prog.code];
   if (!snap) return unavailable(prog, state.status[prog.code]);
-  const staff = isStaff();
-  const cards = snap.areas.map((area) => `<li><a class="card area-card" href="${hrefFor(prog.code, area)}">
+  const ssi = findSection(snap, 'SSI');
+  const cards = [...(ssi ? [ssi] : []), ...realAreas(snap)].map((area) => `<li><a class="card area-card ${area.section ? 'area-card-ssi' : ''}" href="${hrefFor(prog.code, area)}">
       <span class="badge badge-area">${esc(shortCode(area))}</span>
       <span class="area-card-main">
-        <span class="area-card-label">${esc(areaLabel(area))}</span>
+        <span class="area-card-label">${esc(area.section ? 'Instrument' : areaLabel(area))}</span>
         <span class="area-card-name">${esc(area.name)}</span>
         <span class="muted small">${docCountLabel(countFiles(area))}</span>
-        ${staff && !area.general ? progressBadge(progress(area), true) : ''}
       </span></a></li>`).join('');
-  return crumbs([{ label: 'Programs', href: '#/' }, { label: programName(prog, snap), href: href([prog.code]) }]) +
-    pageHead('<span class="step">Step 2 of 2</span>', 'Choose an area', `<p class="muted">${esc(programName(prog, snap))}</p>`) +
+  return crumbs([{ label: 'Programs', href: '#/' }, { label: programName(prog, snap) + ' · Self-Survey Report', href: href([prog.code]) }]) +
+    pageHead(esc(programName(prog, snap)), 'Self-Survey Report', '<p class="muted">Choose the Self-Survey Instrument or an area.</p>') +
     (cards ? `<ul class="area-grid">${cards}</ul>` : '<div class="card empty"><p>No areas are open for viewing.</p></div>');
 }
 
@@ -187,6 +227,8 @@ export function renderWorkspace(state, route, searchHtml) {
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
           ${checkNowButton(prog)}
+          ${isStaff() && area.section && area.folderId ? `<a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(area.folderId)}" target="_blank" rel="noopener"
+              title="Add files to “${esc(area.name)}”: opens its folder in Google Drive">＋ Add files</a>` : ''}
         </div>
         ${treeStaffTools()}
       </div>
@@ -212,6 +254,7 @@ function renderTree(state, prog, area, route) {
   const params = area.parameters.map((param) => {
     const onP = route.param === param.code;
     // An Area folder's own files: one "General documents" row at the top, no parameter level.
+    // A section (Compliance Report, PPP, …): its files and subfolders directly, no row at all.
     if (param.general) return param.indicators.map((ind) => indRow(prog, area, param, ind, route, onP, isOpen, staff)).join('');
     const pk = nodeKey(prog.code, area.code, param.code);
     const inds = param.indicators.map((ind) => indRow(prog, area, param, ind, route, onP, isOpen, staff)).join('');
@@ -228,7 +271,7 @@ function renderTree(state, prog, area, route) {
         <ul>${inds}</ul>
       </details></li>`;
   }).join('');
-  return params ? `<ul class="tree-root">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
+  return params ? `<ul class="tree-root ${area.section ? 'tree-flat' : ''}">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
 }
 
 /** One indicator (or "General documents") row with its files and subfolders. */
@@ -243,6 +286,7 @@ function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
       <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
   };
   const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
+  if (ind.inline) return files || '<li><p class="tn-none">No documents yet</p></li>';
   const indActive = onI && !route.fileId;
   const n = ind.files.length;
   const title = ind.general ? indLabel(ind) : ind.code + ' · ' + (ind.text || '');
@@ -424,7 +468,7 @@ export function renderSearch(state, route, results, scope) {
         <span class="result-path">${esc(`${multi ? progName + ' › ' : ''}${paramLabel(e.param)}`)} · ${docCountLabel(e.ind.files.length)}</span>
       </li>`).join('');
     return `<section class="result-group">
-      <h3 class="group-title">${multi ? esc(progName) + ' · ' : ''}${esc(areaLabel(g.area))} — ${esc(g.area.name)}</h3>
+      <h3 class="group-title">${multi ? esc(progName) + ' · ' : ''}${esc(areaTitle(g.area))}</h3>
       <ul class="results">${files}${inds}</ul>
     </section>`;
   }).join('');

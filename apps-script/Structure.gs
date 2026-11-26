@@ -4,6 +4,9 @@
  * Expected tree:  Root › Area I … X › Parameter A, B … › S.1, S.2, I.1, O.1 …
  * Also accepted:  Parameter › "System Inputs and Processes" / "Implementation" / "Outcomes"
  *                 (or "S" / "I" / "O") › S.1 …   ← transparent "group" folders
+ * Sections:       Root › "Compliance Report" / "PPP" / "Self-Survey Instrument": any folders inside,
+ *                 scanned like an indicator's subfolders. A FILE at the root with one of these names
+ *                 joins that section too (see sectionOf_).
  *
  * Folder names are parsed tolerantly (-, –, —, :, extra spaces, any case).
  * Override columns (codeOverride, nameOverride, textOverride, hidden) are kept across rebuilds.
@@ -15,6 +18,21 @@ var PARAM_RE = new RegExp('^param(?:eter)?\\.?\\s*([a-z])(?![a-z0-9])' + SEP_RE 
 var IND_RE = new RegExp('^([sio])\\s*[.\\-–—]?\\s*(\\d+(?:\\.\\d+)*)(?![\\d])' + SEP_RE + '(.*)$', 'i');
 var GROUP_RE = /^(?:[sio]\s*[-–—:.]\s*)?(system|inputs?|implementation|outcomes?)\b/i;
 var TYPE_ORDER = { S: 1, I: 2, O: 3 };
+var SECTIONS = {
+  CR: { name: 'Compliance Report', order: 1 },
+  PPP: { name: 'Program Performance Profile', order: 2 },
+  SSI: { name: 'Self-Survey Instrument', order: 3 },
+};
+
+/** Section code for a root folder or file name ("Compliance Report.pdf" → CR), or ''. */
+function sectionOf_(raw) {
+  var name = cleanName_(raw).replace(/\.[a-z0-9]{2,5}$/i, '');
+  if (AREA_RE.test(name)) return '';
+  if (/compliance/i.test(name)) return 'CR';
+  if (/\bppp\b|performance[\s\-–—_]*profile/i.test(name)) return 'PPP';
+  if (/self[\s\-–—_]*survey/i.test(name) && !/report/i.test(name)) return 'SSI';
+  return '';
+}
 
 /** Public: run from the menu or the admin panel. */
 function buildStructure() {
@@ -36,15 +54,19 @@ function buildStructure_() {
   readTable_('Structure').forEach(function (r) { if (r.folderId) overrides[r.folderId] = r; });
 
   var rows = [];
-  var counts = { area: 0, parameter: 0, group: 0, indicator: 0 };
+  var counts = { section: 0, area: 0, parameter: 0, group: 0, indicator: 0 };
   var usable = function (f) { return f.name.charAt(0) !== '_' && f.id !== cfg.systemFolderId; };
 
-  // Level 1: areas
-  var areaRows = listChildren_([cfg.rootFolderId], true, 'description').filter(usable).map(function (f) {
-    return makeRow_('area', f, null, overrides);
+  // Level 1: sections (Compliance Report, PPP, Self-Survey Instrument) and areas
+  var areaRows = [];
+  var sectionRows = [];
+  listChildren_([cfg.rootFolderId], true, 'description').filter(usable).forEach(function (f) {
+    if (sectionOf_(f.name)) sectionRows.push(makeRow_('section', f, null, overrides));
+    else areaRows.push(makeRow_('area', f, null, overrides));
   });
+  dedupeCodes_(sectionRows);
   dedupeCodes_(areaRows);
-  rows = rows.concat(areaRows);
+  rows = rows.concat(sectionRows, areaRows);
 
   // Level 2: parameters
   var openAreas = areaRows.filter(function (r) { return !r.hiddenFlag; });
@@ -160,6 +182,7 @@ function labelFor_(level, row) {
   if (level === 'area') return /^[IVXL]+$/.test(row.code) ? 'Area ' + row.code : row.rawName;
   if (level === 'parameter') return /^[A-Z]$/.test(row.code) ? 'Parameter ' + row.code : row.rawName;
   if (level === 'group') return row.rawName;
+  if (level === 'section') return row.name;
   return row.code;
 }
 
@@ -179,6 +202,9 @@ function parseFolderName_(level, raw) {
   } else if (level === 'parameter') {
     m = name.match(PARAM_RE);
     if (m) return { ok: true, code: m[1].toUpperCase(), rest: m[2].trim(), sort: m[1].toUpperCase() };
+  } else if (level === 'section') {
+    var sc = sectionOf_(name);
+    if (SECTIONS[sc]) return { ok: true, code: sc, rest: SECTIONS[sc].name, sort: '0-' + SECTIONS[sc].order };
   } else if (level === 'group') {
     var t = (name.match(/^[sio]\b/i) || name.match(GROUP_RE) || [''])[0].charAt(0).toUpperCase();
     return { ok: true, code: TYPE_ORDER[t] ? t : slug_(name), rest: name, sort: '0-' + (TYPE_ORDER[t] || 9) };

@@ -22,19 +22,25 @@ export function findIndicator(param, code) {
   return param?.indicators?.find((i) => i.code === code) || null;
 }
 
-/** Code of the "General documents" rows in links (no Drive folder name parses to it). */
+/** Codes of the made-up rows in links (no Drive folder name parses to them). */
 export const GENERAL = '_general';
+const SECTION_DOC = '_doc';
 const GENERAL_LABEL = 'General documents';
+/** Sections shown on the program card, in this order. */
+export const SECTION_CODES = ['CR', 'PPP', 'SSI'];
 
 /**
- * Files sitting directly in a Parameter folder, an Area folder or the program root (looseFiles)
- * become a "General documents" indicator at the top of that parameter, a "General documents"
- * row at the top of that area, and a "General" area first in the list. Shown to everyone like
- * any other document; not counted in indicator progress. Safe to run twice (empties looseFiles).
+ * Turn a snapshot into the shape the screens use (safe to run twice):
+ * - Sections (Compliance Report, PPP, Self-Survey Instrument) become areas with `section: true`
+ *   whose files and subfolders sit directly at the top of the tree.
+ * - Files directly in a Parameter or Area folder (looseFiles) become a "General documents" row
+ *   at the top of that parameter / area.
+ * - Files directly in the program folder become an "Other documents" area (`general: true`).
+ * Made-up rows have `general: true`: not counted in indicator progress, not listed as indicators.
  */
-export function withGeneral(snap) {
+export function prepareSnapshot(snap) {
   if (!snap || !Array.isArray(snap.areas)) return snap;
-  const ind = (files, folderId) => ({ code: GENERAL, type: null, text: GENERAL_LABEL, general: true, folderId, files });
+  const ind = (files, folderId) => ({ code: GENERAL, badge: 'GEN', type: null, text: GENERAL_LABEL, general: true, folderId, files });
   const param = (files, folderId) => ({ code: GENERAL, name: GENERAL_LABEL, general: true, folderId, looseFiles: [], indicators: [ind(files, folderId)] });
   for (const area of snap.areas) {
     for (const p of area.parameters) {
@@ -44,16 +50,31 @@ export function withGeneral(snap) {
     if (area.looseFiles?.length) area.parameters.unshift(param(area.looseFiles, area.folderId));
     area.looseFiles = [];
   }
+  const rootId = (String(snap.program?.rootFolderUrl || '').match(/folders\/([\w-]+)/) || [])[1];
+  const sections = (snap.sections || []).map((sec) => {
+    const folderId = sec.folderId || rootId;
+    const doc = { code: SECTION_DOC, type: null, text: sec.name, general: true, inline: true, folderId, files: sec.files || [], subfolders: sec.subfolders || [] };
+    return {
+      code: sec.code, name: sec.name, section: true, folderId, looseFiles: [],
+      parameters: [{ code: SECTION_DOC, name: sec.name, general: true, folderId, looseFiles: [], indicators: [doc] }],
+    };
+  }).sort((a, b) => SECTION_CODES.indexOf(a.code) - SECTION_CODES.indexOf(b.code));
+  snap.areas.unshift(...sections);
+  snap.sections = [];
   if (snap.looseFiles?.length) {
-    const rootId = (String(snap.program?.rootFolderUrl || '').match(/folders\/([\w-]+)/) || [])[1];
-    snap.areas.unshift({ code: GENERAL, name: 'Program-wide documents', general: true, folderId: rootId, looseFiles: [], parameters: [param(snap.looseFiles, rootId)] });
+    snap.areas.push({ code: GENERAL, badge: 'GEN', name: 'Other documents', general: true, folderId: rootId, looseFiles: [],
+      parameters: [param(snap.looseFiles, rootId)] });
   }
   snap.looseFiles = [];
   return snap;
 }
 
-/** The real accreditation areas (without the "General" one). */
-export const realAreas = (snap) => (snap?.areas || []).filter((a) => !a.general);
+/** Area I … X (no sections, no "Other documents"). */
+export const realAreas = (snap) => (snap?.areas || []).filter((a) => !a.general && !a.section);
+/** What the admin can open or hide for accreditors: the sections and Area I … X. */
+export const accessAreas = (snap) => (snap?.areas || []).filter((a) => !a.general);
+export const findSection = (snap, code) => (snap?.areas || []).find((a) => a.section && a.code === code) || null;
+export const otherArea = (snap) => (snap?.areas || []).find((a) => a.general) || null;
 
 /** Number of documents under a node. */
 export function countFiles(node) {
@@ -114,8 +135,9 @@ export function areaFileList(area) {
 export function locateFile(snap, fileId) {
   const hits = [];
   eachFile(snap, (file, ctx) => { if (file.id === fileId) hits.push({ file, ...ctx }); });
-  // Raw mock snapshots (before withGeneral) still keep these in looseFiles.
+  // Raw mock snapshots (before prepareSnapshot) still keep these in looseFiles.
   for (const f of snap?.looseFiles || []) if (f.id === fileId) hits.push({ file: f });
+  for (const sec of snap?.sections || []) for (const f of sec.files || []) if (f.id === fileId) hits.push({ file: f });
   for (const area of snap?.areas || []) {
     for (const f of area.looseFiles || []) if (f.id === fileId) hits.push({ file: f, area });
     for (const param of area.parameters) {
@@ -125,11 +147,13 @@ export function locateFile(snap, fileId) {
   return hits;
 }
 
-export function areaLabel(area) { return area.general ? 'General' : isRoman(area.code) ? 'Area ' + area.code : area.code; }
-export function paramLabel(param) { return param.general ? GENERAL_LABEL : /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
-export function indLabel(ind) { return ind.general ? GENERAL_LABEL : ind.code; }
-/** Short code for badges ("GEN" for the General rows). */
-export function shortCode(node) { return node.general ? 'GEN' : node.code; }
+export function areaLabel(area) { return area.general || area.section ? area.name : isRoman(area.code) ? 'Area ' + area.code : area.code; }
+/** "Area I — Vision, Mission …", or just "Compliance Report". */
+export function areaTitle(area) { const l = areaLabel(area); return l === area.name ? l : l + ' — ' + area.name; }
+export function paramLabel(param) { return param.general ? param.name : /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
+export function indLabel(ind) { return ind.general ? ind.text : ind.code; }
+/** Short code for badges ("GEN" for the General rows, "CR" / "PPP" / "SSI" for sections). */
+export function shortCode(node) { return node.badge || node.code; }
 /** "Parameter A › S.1", "Parameter A › General documents", or just "General documents". */
 export function placeLabel(param, ind) { return param.general ? indLabel(ind) : paramLabel(param) + ' › ' + indLabel(ind); }
 function isRoman(code) { return /^[IVXL]+$/.test(code); }
