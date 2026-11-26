@@ -139,6 +139,7 @@ main { flex: 1; padding-block: 16px 32px; outline: none; }
 .login-logos { display: flex; justify-content: center; gap: 10px; margin-bottom: 8px; }
 .login-logos img { width: 64px; height: 64px; object-fit: contain; }
 .pin-input {
+  width: 100%; /* fill the card, never its natural (wider than a phone) size */
   font: inherit; font-size: 1.8rem !important; letter-spacing: .5em; text-align: center; font-variant-numeric: tabular-nums;
   padding: 10px 12px 10px calc(12px + .5em) !important;
 }
@@ -368,6 +369,7 @@ mark { background: color-mix(in srgb, var(--accent) 45%, #fff); color: inherit; 
 
 /* Forms (login, admin) */
 .form { display: grid; gap: 12px; margin-top: 12px; }
+.form > * { min-width: 0; } /* let form rows shrink to fit narrow screens */
 .form input, .form select { font: inherit; font-weight: 400; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; }
 .form input:focus { border-color: var(--secondary); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 18%, transparent); }
 .plain { margin: 0; padding-left: 18px; }
