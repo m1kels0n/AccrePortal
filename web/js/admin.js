@@ -4,7 +4,7 @@ import { esc, fmtDate, toast } from './util.js';
 import { href, parseHash } from './router.js';
 import { post, isAdmin } from './api.js';
 import { crumbs, progressBadge, notFound, programName } from './views.js';
-import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles } from './model.js';
+import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realAreas } from './model.js';
 
 export function renderAdmin(state, route) {
   if (!isAdmin()) return notFound('#/', 'The admin panel needs the admin PIN.');
@@ -33,7 +33,7 @@ export function renderAdmin(state, route) {
       : `<p class="muted">Access settings are not available for this program right now. Press Refresh now below to load them.</p>`;
   } else {
     const all = settings.accreditorAreas === 'ALL';
-    const chosen = all ? new Set(snap.areas.map((a) => areaKey(a.code))) : openKeys;
+    const chosen = all ? new Set(realAreas(snap).map((a) => areaKey(a.code))) : openKeys;
     access = `<form data-form="access" data-prog="${esc(prog.code)}" class="access-form">
       <label class="switch"><input type="checkbox" name="enabled" ${settings.accreditorEnabled ? 'checked' : ''}>
         <span>Accreditors can open <strong>${esc(programName(prog, snap))}</strong></span></label>
@@ -43,10 +43,11 @@ export function renderAdmin(state, route) {
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-all">Select all</button>
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-none">Select none</button>
         </div>
-        <div class="check-grid">${snap.areas.map((a) => `<label class="check">
+        <div class="check-grid">${realAreas(snap).map((a) => `<label class="check">
             <input type="checkbox" name="area" value="${esc(a.code)}" ${chosen.has(areaKey(a.code)) ? 'checked' : ''}>
             <span><strong>${esc(areaLabel(a))}</strong> ${esc(a.name)} <span class="muted small">· ${countFiles(a)} docs</span></span></label>`).join('')}</div>
-        <p class="muted small">When every area is ticked, new areas added later are shown automatically.</p>
+        <p class="muted small">When every area is ticked, new areas added later are shown automatically.
+          Files at the top of the program folder ("General") are shown whenever the program is open.</p>
       </fieldset>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">Save access</button>
@@ -55,7 +56,7 @@ export function renderAdmin(state, route) {
     </form>`;
   }
 
-  const areaRows = snap ? snap.areas.map((a) => `<tr><td><a href="${hrefFor(prog.code, a)}">${esc(areaLabel(a))}</a></td><td>${esc(a.name)}</td>
+  const areaRows = snap ? realAreas(snap).map((a) => `<tr><td><a href="${hrefFor(prog.code, a)}">${esc(areaLabel(a))}</a></td><td>${esc(a.name)}</td>
       <td>${progressBadge(progress(a), true)}</td><td class="num">${countFiles(a)}</td>
       <td>${settings && (settings.accreditorAreas === 'ALL' || openKeys.has(areaKey(a.code))) && settings.accreditorEnabled
         ? '<span class="ok">Open</span>' : '<span class="muted">Hidden</span>'}</td></tr>`).join('') : '';
@@ -114,7 +115,6 @@ export function renderAdmin(state, route) {
 }
 
 const ISSUE_LABELS = {
-  misplaced: ['Misplaced files', 'Files sitting in an Area/Parameter folder (or the root) instead of an indicator folder. Move them into the right indicator.'],
   badFolderName: ['Folder names not following the pattern', 'Still shown on the site. Fix the name in Drive, or set codeOverride / nameOverride in the Structure tab, then Rebuild structure.'],
   duplicateCode: ['Duplicate codes', 'Two folders with the same code under one parent.'],
   missingFolder: ['Missing folders', 'Folder is in the trash or deleted. Restore it from Drive Trash, or Rebuild structure if it was removed on purpose.'],
@@ -142,7 +142,9 @@ export async function loadAdminData(progCode) {
   set('adm-scanms', res.lastScanMs ? (res.lastScanMs / 1000).toFixed(1) + ' s' : '—');
   set('adm-trigger', res.triggerActive ? 'On (every 5 min)' : 'OFF: install it from the Sheet menu');
   const byType = {};
-  for (const it of res.items || []) (byType[it.type] = byType[it.type] || []).push(it);
+  // Files outside indicator folders are shown as "General documents" now; an issues.json
+  // written by an older backend can still list them as "misplaced".
+  for (const it of res.items || []) if (it.type !== 'misplaced') (byType[it.type] = byType[it.type] || []).push(it);
   const types = Object.keys(byType);
   if (!types.length) { box.innerHTML = '<p class="ok">✓ No issues found.</p>'; return; }
   box.innerHTML = types.map((t) => {

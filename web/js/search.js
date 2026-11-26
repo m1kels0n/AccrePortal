@@ -17,7 +17,8 @@ export function buildIndex(snapshots) {
         for (const ind of param.indicators) {
           const indText = normalize(`${ind.code} ${ind.text}`);
           const base = { prog: prog.code, progOrder, areaOrder, area, param, ind };
-          indicators.push({ ...base, nText: indText, nCtx: areaCtx + ' ' + paramCtx });
+          // "General documents" rows are found through their files, not as indicator results.
+          if (!ind.general) indicators.push({ ...base, nText: indText, nCtx: areaCtx + ' ' + paramCtx });
           for (const file of ind.files) {
             files.push({
               ...base,

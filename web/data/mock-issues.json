@@ -3,18 +3,6 @@
   "generatedAt": "2026-11-25T09:40:38.892Z",
   "items": [
    {
-    "type": "misplaced",
-    "path": "Area I > Parameter A",
-    "fileId": "f_000iyMockFileId",
-    "name": "scan001.pdf"
-   },
-   {
-    "type": "misplaced",
-    "path": "Area II",
-    "fileId": "f_000izMockFileId",
-    "name": "Faculty files to sort.docx"
-   },
-   {
     "type": "badFolderName",
     "path": "Area III > Parameter A",
     "folderId": "MOCKFOLDER1",

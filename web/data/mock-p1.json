@@ -6219,5 +6219,19 @@
     }
    ]
   }
+ ],
+ "looseFiles": [
+  {
+   "id": "f_000rootMockFileId",
+   "name": "Program Profile 2026.pdf",
+   "mimeType": "application/pdf",
+   "size": 1048576,
+   "modified": "2026-11-20T02:00:00Z",
+   "viewUrl": "assets/sample.pdf",
+   "previewUrl": "assets/sample.pdf",
+   "keywords": [
+    "profile"
+   ]
+  }
  ]
 }

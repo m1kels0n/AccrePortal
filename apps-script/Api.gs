@@ -104,29 +104,26 @@ function snapshotFor_(session, since) {
     program: { code: snap.program.code, name: snap.program.name },
     generatedAt: snap.generatedAt,
     hash: hash,
-    looseFiles: [],
+    looseFiles: (snap.looseFiles || []).map(viewerFile_),
     areas: snap.areas.filter(function (a) { return !allowed || allowed[normalizeAreaCode_(a.code)]; }).map(viewerArea_),
     settings: pub,
   };
 }
 
-/** Accreditor copy of an area: no Drive folder IDs, no "open in Drive" links, no misplaced files. */
+/**
+ * Accreditor copy of an area: no Drive folder IDs, no "open in Drive" links.
+ * Files directly in the area / parameter folders (looseFiles) are kept: the site shows them as "General documents".
+ */
 function viewerArea_(a) {
   return {
-    code: a.code, name: a.name, looseFiles: [],
+    code: a.code, name: a.name, looseFiles: (a.looseFiles || []).map(viewerFile_),
     parameters: a.parameters.map(function (p) {
       return {
-        code: p.code, name: p.name, looseFiles: [],
+        code: p.code, name: p.name, looseFiles: (p.looseFiles || []).map(viewerFile_),
         indicators: p.indicators.map(function (i) {
           return {
             code: i.code, type: i.type, text: i.text,
-            files: i.files.map(function (f) {
-              // A folder shortcut would preview as a browsable Drive folder (other areas, Drive links).
-              var o = { id: f.id, name: f.name, mimeType: f.mimeType, size: f.size, modified: f.modified,
-                        previewUrl: f.mimeType === FOLDER_MIME ? null : f.previewUrl, keywords: f.keywords || [] };
-              if (f.subfolder) o.subfolder = f.subfolder;
-              return o;
-            }),
+            files: i.files.map(viewerFile_),
             // Folder names only: no Drive IDs for accreditors.
             subfolders: (i.subfolders || []).map(function (s) { return typeof s === 'string' ? s : s.path; }),
           };
@@ -134,6 +131,14 @@ function viewerArea_(a) {
       };
     }),
   };
+}
+
+/** Accreditor copy of a file. A folder shortcut would preview as a browsable Drive folder (other areas, Drive links). */
+function viewerFile_(f) {
+  var o = { id: f.id, name: f.name, mimeType: f.mimeType, size: f.size, modified: f.modified,
+            previewUrl: f.mimeType === FOLDER_MIME ? null : f.previewUrl, keywords: f.keywords || [] };
+  if (f.subfolder) o.subfolder = f.subfolder;
+  return o;
 }
 
 // ── Viewer settings (Config tab: accreditorEnabled, accreditorAreas, watermark) ──
@@ -206,7 +211,7 @@ function handleSaveKeywords_(body) {
     var c = readSnapshot_();
     if (!c) throw apiError_('notFound', 'No snapshot yet.');
     var snap = JSON.parse(c.text);
-    if (!areasOfFile_(snap, fileId).length) throw apiError_('notFound', 'File not found. It may have been moved or deleted. Reload the page.');
+    if (!hasFile_(snap, fileId)) throw apiError_('notFound', 'File not found. It may have been moved or deleted. Reload the page.');
     upsertKeywords_(fileId, keywords, s.name);
     patchSnapshotKeywords_(snap, fileId, keywords);
   } finally {

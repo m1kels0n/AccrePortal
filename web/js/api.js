@@ -197,20 +197,21 @@ function mockReadToken(token) {
 /** Same filtering the Apps Script does for accreditors (see Api.gs viewerArea_). */
 function accreditorCopy(snap, settings) {
   const allowed = settings.accreditorAreas === 'ALL' ? null : new Set(settings.accreditorAreas.map(areaKey));
+  const files = (list) => (list || []).map(({ viewUrl, ...f }) => f);
   return {
     schema: snap.schema,
     mock: true,
     program: { code: snap.program.code, name: snap.program.name },
     generatedAt: snap.generatedAt,
     hash: snap.hash + '.' + JSON.stringify(settings.accreditorAreas),
-    looseFiles: [],
+    looseFiles: files(snap.looseFiles),
     areas: snap.areas.filter((a) => !allowed || allowed.has(areaKey(a.code))).map((a) => ({
-      code: a.code, name: a.name, looseFiles: [],
+      code: a.code, name: a.name, looseFiles: files(a.looseFiles),
       parameters: a.parameters.map((p) => ({
-        code: p.code, name: p.name, looseFiles: [],
+        code: p.code, name: p.name, looseFiles: files(p.looseFiles),
         indicators: p.indicators.map((i) => ({
           code: i.code, type: i.type, text: i.text,
-          files: i.files.map(({ viewUrl, ...f }) => f),
+          files: files(i.files),
           subfolders: (i.subfolders || []).map((s) => (typeof s === 'string' ? s : s.path)),
         })),
       })),

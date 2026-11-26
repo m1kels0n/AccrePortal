@@ -6,6 +6,7 @@ import { isStaff, lastPlace } from './api.js';
 import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
+  realAreas, shortCode, indLabel, placeLabel,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -94,16 +95,6 @@ function fileRow(progCode, file, viewHref, staff) {
   </li>`;
 }
 
-/** Files outside any indicator folder: coordinators/admin only (accreditors never receive them). */
-function looseSection(files) {
-  if (!isStaff() || !files || !files.length) return '';
-  return `<section class="card warn-card">
-    <h3>General / misplaced <span class="count">${files.length}</span></h3>
-    <p class="muted small">These files are not inside an indicator folder, so accreditors <strong>cannot see them</strong>. Move them into the right indicator folder in Drive.</p>
-    <ul class="plain">${files.map((f) => `<li><a href="${esc(f.viewUrl)}" target="_blank" rel="noopener">${esc(f.name)}</a></li>`).join('')}</ul>
-  </section>`;
-}
-
 // ── Login ───────────────────────────────────────────────────
 export function renderLogin() {
   return `<div class="login-wrap">
@@ -133,7 +124,7 @@ export function renderHome(state) {
     if (!snap) return `<li>${unavailable(prog, state.status[prog.code])}</li>`;
     return `<li><a class="card program-card" href="${href([prog.code])}">
         <h3>${esc(programName(prog, snap))}</h3>
-        <p class="muted">${plural(snap.areas.length, 'area')} · ${plural(countFiles(snap), 'document')}</p>
+        <p class="muted">${plural(realAreas(snap).length, 'area')} · ${plural(countFiles(snap), 'document')}</p>
         ${staff ? progressBadge(progress(snap)) : ''}
         <span class="cta">Choose →</span>
       </a></li>`;
@@ -160,16 +151,15 @@ export function renderProgram(state, route) {
   if (!snap) return unavailable(prog, state.status[prog.code]);
   const staff = isStaff();
   const cards = snap.areas.map((area) => `<li><a class="card area-card" href="${hrefFor(prog.code, area)}">
-      <span class="badge badge-area">${esc(area.code)}</span>
+      <span class="badge badge-area">${esc(shortCode(area))}</span>
       <span class="area-card-main">
         <span class="area-card-label">${esc(areaLabel(area))}</span>
         <span class="area-card-name">${esc(area.name)}</span>
         <span class="muted small">${docCountLabel(countFiles(area))}</span>
-        ${staff ? progressBadge(progress(area), true) : ''}
+        ${staff && !area.general ? progressBadge(progress(area), true) : ''}
       </span></a></li>`).join('');
   return crumbs([{ label: 'Programs', href: '#/' }, { label: programName(prog, snap), href: href([prog.code]) }]) +
     pageHead('<span class="step">Step 2 of 2</span>', 'Choose an area', `<p class="muted">${esc(programName(prog, snap))}</p>`) +
-    looseSection(snap.looseFiles) +
     (cards ? `<ul class="area-grid">${cards}</ul>` : '<div class="card empty"><p>No areas are open for viewing.</p></div>');
 }
 
@@ -190,7 +180,7 @@ export function renderWorkspace(state, route, searchHtml) {
       <div class="tree-head">
         <button type="button" class="btn tree-close" data-action="tree-close">✕ Close list of files</button>
         <a class="tree-area" href="${hrefFor(prog.code, area)}" title="${esc(area.name)}">
-          <span class="badge badge-area">${esc(area.code)}</span>
+          <span class="badge badge-area">${esc(shortCode(area))}</span>
           <span class="tree-area-name">${esc(area.name)}</span>
         </a>
         <div class="tree-tools">
@@ -198,7 +188,7 @@ export function renderWorkspace(state, route, searchHtml) {
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
           ${checkNowButton(prog)}
         </div>
-        ${treeStaffTools(area)}
+        ${treeStaffTools()}
       </div>
       <div class="tree-scroll" id="treeScroll">
         <nav class="tree" id="tree">${renderTree(state, prog, area, route)}</nav>
@@ -220,32 +210,11 @@ function renderTree(state, prog, area, route) {
   const staff = isStaff();
   const isOpen = (key, onPath) => (onPath ? !state.closedNodes.has(key) : state.openNodes.has(key));
   const params = area.parameters.map((param) => {
-    const pk = nodeKey(prog.code, area.code, param.code);
     const onP = route.param === param.code;
-    const inds = param.indicators.map((ind) => {
-      const ik = nodeKey(prog.code, area.code, param.code, ind.code);
-      const onI = onP && route.ind === ind.code;
-      const fileLink = (f) => {
-        const active = onI && route.fileId === f.id;
-        const kind = fileKind(f.mimeType);
-        return `<li><a class="tn-link tn-file ${active ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind, f.id)}"
-            title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
-          <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
-      };
-      const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
-      const indActive = onI && !route.fileId;
-      const n = ind.files.length;
-      return `<li class="tn-ind ${n ? '' : 'empty'}">
-        <details data-node="${esc(ik)}" ${isOpen(ik, onI) ? 'open' : ''}>
-          <summary><a class="tn-link ${indActive ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind)}"
-              title="${esc(ind.code + ' · ' + (ind.text || ''))}" ${indActive ? 'aria-current="page"' : ''}>
-            <span class="tn-code tn-${esc(ind.type || 'x')}">${esc(ind.code)}</span>
-            <span class="tn-text">${esc(ind.text || ind.code)}</span>
-            ${staff && !n ? '<span class="tn-missing" title="No documents yet">●</span>' : `<span class="tn-count">${n}</span>`}
-          </a>${staff ? addToDrive(ind.folderId, ind.code) : ''}</summary>
-          ${files ? `<ul>${files}</ul>` : '<p class="tn-none">No documents yet</p>'}
-        </details></li>`;
-    }).join('');
+    // An Area folder's own files: one "General documents" row at the top, no parameter level.
+    if (param.general) return param.indicators.map((ind) => indRow(prog, area, param, ind, route, onP, isOpen, staff)).join('');
+    const pk = nodeKey(prog.code, area.code, param.code);
+    const inds = param.indicators.map((ind) => indRow(prog, area, param, ind, route, onP, isOpen, staff)).join('');
     const paramActive = onP && !route.ind;
     const pp = progress(param);
     return `<li class="tn-param">
@@ -260,6 +229,33 @@ function renderTree(state, prog, area, route) {
       </details></li>`;
   }).join('');
   return params ? `<ul class="tree-root">${params}</ul>` : '<p class="tn-none">No parameters found.</p>';
+}
+
+/** One indicator (or "General documents") row with its files and subfolders. */
+function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
+  const ik = nodeKey(prog.code, area.code, param.code, ind.code);
+  const onI = onP && route.ind === ind.code;
+  const fileLink = (f) => {
+    const active = onI && route.fileId === f.id;
+    const kind = fileKind(f.mimeType);
+    return `<li><a class="tn-link tn-file ${active ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind, f.id)}"
+        title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
+      <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
+  };
+  const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
+  const indActive = onI && !route.fileId;
+  const n = ind.files.length;
+  const title = ind.general ? indLabel(ind) : ind.code + ' · ' + (ind.text || '');
+  return `<li class="tn-ind ${n ? '' : 'empty'} ${ind.general ? 'tn-general' : ''}">
+    <details data-node="${esc(ik)}" ${isOpen(ik, onI) ? 'open' : ''}>
+      <summary><a class="tn-link ${indActive ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind)}"
+          title="${esc(title)}" ${indActive ? 'aria-current="page"' : ''}>
+        <span class="tn-code tn-${esc(ind.type || 'x')}">${esc(shortCode(ind))}</span>
+        <span class="tn-text">${esc(ind.text || ind.code)}</span>
+        ${staff && !n ? '<span class="tn-missing" title="No documents yet">●</span>' : `<span class="tn-count">${n}</span>`}
+      </a>${staff ? addToDrive(ind.folderId, indLabel(ind)) : ''}</summary>
+      ${files ? `<ul>${files}</ul>` : '<p class="tn-none">No documents yet</p>'}
+    </details></li>`;
 }
 
 /** Staff "＋" on a tree row: opens that exact Drive folder in a new tab to drop files into. */
@@ -336,30 +332,13 @@ function checkNowButton(prog) {
         title="Rescan Google Drive now, right after uploading">↻ Check now</button>`;
 }
 
-/** Coordinator/admin status and warnings under the tree tools.
+/** Coordinator/admin status line under the tree tools.
  *  Adding files is done with the ＋ on each indicator and subfolder row in the tree. */
-function treeStaffTools(area) {
+function treeStaffTools() {
   if (!isStaff()) return '';
   return `<div class="tree-staff">
     <span class="form-status" id="chk-status" aria-live="polite"></span>
-    ${looseWarning(area)}
   </div>`;
-}
-
-/** Files dropped into the area or a parameter folder instead of an indicator (staff snapshots only). */
-function looseWarning(area) {
-  if (!isStaff()) return '';
-  const loose = [
-    ...(area.looseFiles || []).map((f) => ({ f, where: areaLabel(area) + ' folder' })),
-    ...area.parameters.flatMap((p) => (p.looseFiles || []).map((f) => ({ f, where: paramLabel(p) + ' folder' }))),
-  ];
-  if (!loose.length) return '';
-  return `<details class="tree-loose">
-    <summary>⚠ ${plural(loose.length, 'misplaced file')} <span class="muted">(accreditors cannot see ${loose.length > 1 ? 'them' : 'it'})</span></summary>
-    <p class="muted">Move ${loose.length > 1 ? 'these' : 'this'} into an indicator folder in Drive.</p>
-    <ul>${loose.map(({ f, where }) => `<li><a href="${esc(f.viewUrl)}" target="_blank" rel="noopener">${esc(f.name)}</a>
-      <span class="muted">in ${esc(where)}</span></li>`).join('')}</ul>
-  </details>`;
 }
 
 function renderViewer(state, prog, snap, area, route) {
@@ -390,7 +369,7 @@ function renderViewer(state, prog, snap, area, route) {
   return `<div class="viewer">
     <div class="viewer-bar">
       <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
-      <span class="viewer-path" title="${esc(ind.text || '')}">${esc(paramLabel(param))} › ${esc(ind.code)}</span>
+      <span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>
       ${staff ? `<div class="viewer-kw" data-kw-scope>
         <button type="button" class="btn btn-ghost btn-sm" data-action="kw-toggle" aria-label="Edit keywords for ${esc(file.name)}">✎ Keywords</button>
         ${kwEditor(prog.code, file)}
@@ -427,7 +406,7 @@ export function renderSearch(state, route, results, scope) {
       const kind = fileKind(e.file.mimeType);
       const kwLine = e.matchedKeywords.length
         ? `<span class="match-kw">Matched keyword: ${e.matchedKeywords.map((k) => highlight(k, results.tokens)).join(', ')}</span>` : '';
-      const pathText = `${multi ? progName + ' › ' : ''}${paramLabel(e.param)} › ${e.ind.code}`;
+      const pathText = `${multi ? progName + ' › ' : ''}${placeLabel(e.param, e.ind)}`;
       return `<li class="result">
         <a class="result-file" href="${hrefFor(g.prog, e.area, e.param, e.ind, e.file.id)}">
           <span class="kind ${kind.cls}">${kind.label}</span>

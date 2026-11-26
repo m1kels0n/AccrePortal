@@ -76,6 +76,7 @@ Program 1 - AACCUP/
 - An extra level of **S / I / O group folders** under a parameter (e.g. `System Inputs and Processes › S.1 …`) is also understood.
 - An indicator folder's **Description** (Drive → right-click → File information → Details → Description), if set, becomes the full indicator text shown on the site.
 - Subfolders inside an indicator (e.g. sub-indicators `I.1.6.1 › I.1.6.1.3. Students`) are read up to 6 levels deep. Their files are listed under the indicator, labeled with the subfolder path.
+- Files placed directly in a Parameter folder, an Area folder or the program root are shown to everyone as **General documents** (top of that parameter, top of that area, or a **General** area first in the list). They are not counted in indicator progress.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):
@@ -195,7 +196,7 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 - [ ] Search: multiple words, a keyword-only match ("Matched keyword: …"), accents, and the × button.
 - [ ] **Coordinator:** can open every area of both programs. The **＋** on an indicator (and on a subfolder) row opens the right Drive folder. Upload a file, tap **Check now**: it shows "1 new file" within seconds. Save a keyword on a file someone else uploaded, then search for it.
 - [ ] **Admin:** Admin panel → untick an area, Save; log in as accreditor in another browser: that area is gone. Turn the watermark off and on.
-- [ ] Put a test file directly in a Parameter folder: Admin → Issues shows it as misplaced.
+- [ ] Put a test file directly in a Parameter folder, Check now: it shows under **General documents** at the top of that parameter, for coordinators and accreditors.
 - [ ] Ten wrong PINs in a row pause logins for 5 minutes.
 - [ ] Temporarily break `apiUrl`: the site shows the saved copy plus a notice. Then restore it.
 - [ ] Projector: `Ctrl +` / `Ctrl -` zoom stays readable.

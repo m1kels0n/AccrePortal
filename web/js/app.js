@@ -7,7 +7,7 @@ import {
   isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
-import { getProgram, findArea, areaLabel, hrefFor } from './model.js';
+import { getProgram, findArea, findParam, findIndicator, areaLabel, indLabel, hrefFor, withGeneral } from './model.js';
 import * as V from './views.js';
 import * as S from './staff.js';
 import * as A from './admin.js';
@@ -201,7 +201,8 @@ function setTitle(route, searching) {
   if (searching) { document.title = `Search: ${route.q} · ${base}`; return; }
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const area = snap && findArea(snap, route.area);
-  const bits = [route.ind, area ? areaLabel(area) : null, snap?.program?.name].filter(Boolean);
+  const ind = area && findIndicator(findParam(area, route.param), route.ind);
+  const bits = [ind ? indLabel(ind) : route.ind, area ? areaLabel(area) : null, snap?.program?.name].filter(Boolean);
   document.title = (bits.length ? bits.join(' · ') + ' · ' : '') + base;
 }
 
@@ -254,7 +255,7 @@ async function refresh(code, force = false) {
       writeCache(code, had);
     } else if (data && Array.isArray(data.areas)) {
       changed = !had || had.hash !== data.hash || !data.hash || isMock();
-      state.snaps[code] = data;
+      state.snaps[code] = withGeneral(data);
       writeCache(code, data);
       reindex();
     } else {
@@ -300,7 +301,7 @@ function loadFromCache() {
   for (const p of CONFIG.programs) {
     const cached = readCache(p.code);
     if (cached) {
-      state.snaps[p.code] = cached.data;
+      state.snaps[p.code] = withGeneral(cached.data);
       if (cached.data.settings) state.settings[p.code] = cached.data.settings;
       state.status[p.code] = { fromCache: true };
     } else {

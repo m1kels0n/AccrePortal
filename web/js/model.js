@@ -22,7 +22,40 @@ export function findIndicator(param, code) {
   return param?.indicators?.find((i) => i.code === code) || null;
 }
 
-/** Number of documents under a node (misplaced files are not counted). */
+/** Code of the "General documents" rows in links (no Drive folder name parses to it). */
+export const GENERAL = '_general';
+const GENERAL_LABEL = 'General documents';
+
+/**
+ * Files sitting directly in a Parameter folder, an Area folder or the program root (looseFiles)
+ * become a "General documents" indicator at the top of that parameter, a "General documents"
+ * row at the top of that area, and a "General" area first in the list. Shown to everyone like
+ * any other document; not counted in indicator progress. Safe to run twice (empties looseFiles).
+ */
+export function withGeneral(snap) {
+  if (!snap || !Array.isArray(snap.areas)) return snap;
+  const ind = (files, folderId) => ({ code: GENERAL, type: null, text: GENERAL_LABEL, general: true, folderId, files });
+  const param = (files, folderId) => ({ code: GENERAL, name: GENERAL_LABEL, general: true, folderId, looseFiles: [], indicators: [ind(files, folderId)] });
+  for (const area of snap.areas) {
+    for (const p of area.parameters) {
+      if (p.looseFiles?.length) p.indicators.unshift(ind(p.looseFiles, p.folderId));
+      p.looseFiles = [];
+    }
+    if (area.looseFiles?.length) area.parameters.unshift(param(area.looseFiles, area.folderId));
+    area.looseFiles = [];
+  }
+  if (snap.looseFiles?.length) {
+    const rootId = (String(snap.program?.rootFolderUrl || '').match(/folders\/([\w-]+)/) || [])[1];
+    snap.areas.unshift({ code: GENERAL, name: 'Program-wide documents', general: true, folderId: rootId, looseFiles: [], parameters: [param(snap.looseFiles, rootId)] });
+  }
+  snap.looseFiles = [];
+  return snap;
+}
+
+/** The real accreditation areas (without the "General" one). */
+export const realAreas = (snap) => (snap?.areas || []).filter((a) => !a.general);
+
+/** Number of documents under a node. */
 export function countFiles(node) {
   if (!node) return 0;
   if (node.files) return node.files.length;
@@ -32,10 +65,10 @@ export function countFiles(node) {
   return 0;
 }
 
-/** Indicators with at least one document / total indicators. */
+/** Indicators with at least one document / total indicators ("General documents" rows left out). */
 export function progress(node) {
   let done = 0, total = 0;
-  const visit = (ind) => { total++; if (ind.files.length) done++; };
+  const visit = (ind) => { if (ind.general) return; total++; if (ind.files.length) done++; };
   if (node?.files) visit(node);
   else if (node?.indicators) node.indicators.forEach(visit);
   else if (node?.parameters) node.parameters.forEach((p) => p.indicators.forEach(visit));
@@ -81,6 +114,8 @@ export function areaFileList(area) {
 export function locateFile(snap, fileId) {
   const hits = [];
   eachFile(snap, (file, ctx) => { if (file.id === fileId) hits.push({ file, ...ctx }); });
+  // Raw mock snapshots (before withGeneral) still keep these in looseFiles.
+  for (const f of snap?.looseFiles || []) if (f.id === fileId) hits.push({ file: f });
   for (const area of snap?.areas || []) {
     for (const f of area.looseFiles || []) if (f.id === fileId) hits.push({ file: f, area });
     for (const param of area.parameters) {
@@ -90,8 +125,13 @@ export function locateFile(snap, fileId) {
   return hits;
 }
 
-export function areaLabel(area) { return isRoman(area.code) ? 'Area ' + area.code : area.code; }
-export function paramLabel(param) { return /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
+export function areaLabel(area) { return area.general ? 'General' : isRoman(area.code) ? 'Area ' + area.code : area.code; }
+export function paramLabel(param) { return param.general ? GENERAL_LABEL : /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
+export function indLabel(ind) { return ind.general ? GENERAL_LABEL : ind.code; }
+/** Short code for badges ("GEN" for the General rows). */
+export function shortCode(node) { return node.general ? 'GEN' : node.code; }
+/** "Parameter A › S.1", "Parameter A › General documents", or just "General documents". */
+export function placeLabel(param, ind) { return param.general ? indLabel(ind) : paramLabel(param) + ' › ' + indLabel(ind); }
 function isRoman(code) { return /^[IVXL]+$/.test(code); }
 
 /** Comparison key for an area code; must match normalizeAreaCode_ in Code.gs ("Area 2", "ii", "II" → "II"). */

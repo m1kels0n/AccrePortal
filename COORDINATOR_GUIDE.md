@@ -29,8 +29,8 @@ Keep the coordinator PIN within the coordinator team. Never give it to accredito
 
 **Or directly in Drive:** open the program folder (link from Ariel) → the **Area** → the **Parameter** → the **indicator** folder, and upload there.
 
-✅ Files must go **inside an indicator folder** (S.1, S.2, I.1, O.1 …).
-❌ A file left in an Area or Parameter folder is **not shown** to accreditors. It appears as "General / misplaced" for coordinators and on the admin's list.
+✅ Evidence for an indicator goes **inside that indicator folder** (S.1, S.2, I.1, O.1 …).
+📄 A file put directly in a Parameter folder, an Area folder or the program folder is shown to everyone under **General documents** (at the top of that parameter, at the top of that area, or as the **General** area). Use this for documents that belong to the whole parameter, area or program.
 
 If one document is evidence for two indicators, upload it once. Then, in the second folder, right-click → **Add shortcut** to point to it.
 

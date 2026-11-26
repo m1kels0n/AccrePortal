@@ -62,8 +62,8 @@ function scan_(source, t0) {
         issues.push({ type: 'newFolder', path: containerPath_(parent, st, cfg), folderId: f.id, name: f.name, hint: 'Run Rebuild structure' });
       }
     } else {
+      // Not an issue: the site lists these as "General documents" of that area / parameter / program.
       (loose[parent] = loose[parent] || []).push(toFile_(f));
-      issues.push({ type: 'misplaced', path: containerPath_(parent, st, cfg), fileId: f.id, name: f.name });
     }
   });
 
@@ -259,11 +259,11 @@ function patchSnapshotKeywords_(snap, fileId, keywords) {
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
 }
 
-/** Area codes in which a file id appears (shortcuts can make it appear more than once). */
-function areasOfFile_(snap, fileId) {
-  var out = [];
-  eachFileInSnapshot_(snap, function (f, area) { if (f.id === fileId && area && out.indexOf(area.code) === -1) out.push(area.code); });
-  return out;
+/** Is this file id anywhere in the snapshot (program root files included)? */
+function hasFile_(snap, fileId) {
+  var found = false;
+  eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) found = true; });
+  return found;
 }
 
 function eachFileInSnapshot_(snap, fn) {
