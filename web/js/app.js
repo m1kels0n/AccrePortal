@@ -196,7 +196,7 @@ function render(background = false) {
 }
 
 function setTitle(route, searching) {
-  const base = 'AACCUP Evidence · TUP CIE';
+  const base = 'TUP-CIE Accreditation 2026';
   if (route.name === 'login') { document.title = 'Log in · ' + base; return; }
   if (searching) { document.title = `Search: ${route.q} · ${base}`; return; }
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
