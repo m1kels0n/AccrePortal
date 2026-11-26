@@ -1,7 +1,7 @@
 // Instant in-browser search over the loaded snapshots.
 import { CONFIG } from './config.js';
 import { normalize, tokenize } from './util.js';
-import { areaLabel, paramLabel } from './model.js';
+import { areaTitle, paramLabel } from './model.js';
 
 /** Pre-normalize everything once per snapshot load. */
 export function buildIndex(snapshots) {
@@ -11,7 +11,7 @@ export function buildIndex(snapshots) {
     const snap = snapshots[prog.code];
     if (!snap) return;
     snap.areas.forEach((area, areaOrder) => {
-      const areaCtx = normalize(`${areaLabel(area)} ${area.name}`);
+      const areaCtx = normalize(`${areaTitle(area)} ${area.name}`);
       for (const param of area.parameters) {
         const paramCtx = normalize(`${paramLabel(param)} ${param.name}`);
         for (const ind of param.indicators) {

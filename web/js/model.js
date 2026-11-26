@@ -26,16 +26,73 @@ export function findIndicator(param, code) {
 export const GENERAL = '_general';
 const SECTION_DOC = '_doc';
 const GENERAL_LABEL = 'General documents';
-/** Sections shown on the program card, in this order. */
-export const SECTION_CODES = ['CR', 'PPP', 'SSI'];
+/** Separator the backend puts between nested subfolder names in `file.subfolder`. */
+export const SUB_SEP = ' › ';
+/** Sections whose top-level subfolders are shown as cards (one card per area folder). */
+const GROUPED = { CR: 'Compliance Report', PPP: 'PPP' };
+const AREA_NAME_RE = /^area\s*([ivxl]+|\d{1,2})(?![a-z0-9])[\s\-–—:.,_]*(.*)$/i;
+
+/** A made-up area whose files and subfolders sit directly at the top of the tree. */
+function docArea(code, name, folderId, files, subfolders, extra) {
+  const doc = { code: SECTION_DOC, type: null, text: name, general: true, inline: true, folderId, files, subfolders };
+  return { code, name, section: true, folderId, looseFiles: [], ...extra,
+    parameters: [{ code: SECTION_DOC, name, general: true, folderId, looseFiles: [], indicators: [doc] }] };
+}
+
+/**
+ * Compliance Report / PPP: one card per top-level subfolder ("Area 02 - Faculty" → card
+ * "Area II · Faculty"), its contents shown as they are in Drive. Files directly in the section
+ * folder: a "General documents" card first.
+ */
+function groupCards(sec, folderId) {
+  const cards = new Map();
+  const card = (name) => {
+    if (!cards.has(name)) cards.set(name, { name, files: [], subfolders: [], folderId: undefined });
+    return cards.get(name);
+  };
+  for (const sf of sec.subfolders || []) {
+    const [first, ...rest] = (typeof sf === 'string' ? sf : sf.path).split(SUB_SEP);
+    const c = card(first);
+    if (!rest.length) { if (sf.id) c.folderId = sf.id; continue; }
+    c.subfolders.push(typeof sf === 'string' ? rest.join(SUB_SEP) : { path: rest.join(SUB_SEP), id: sf.id });
+  }
+  const general = [];
+  for (const f of sec.files || []) {
+    if (!f.subfolder) { general.push(f); continue; }
+    const [first, ...rest] = f.subfolder.split(SUB_SEP);
+    card(first).files.push(f);
+    if (rest.length) f.subfolder = rest.join(SUB_SEP); else delete f.subfolder;
+  }
+  const used = new Set();
+  const out = [...cards.values()].map((c) => {
+    const m = c.name.trim().match(AREA_NAME_RE);
+    const num = m ? (/^\d+$/.test(m[1]) ? Number(m[1]) : romanToInt(m[1])) : 0;
+    const roman = num > 0 && num <= 50 ? intToRoman(num) : '';
+    const slug = c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'folder';
+    const base = `${sec.code}-${roman || slug}`;
+    let code = base;
+    for (let i = 2; used.has(code); i++) code = `${base}-${i}`;
+    used.add(code);
+    const extra = roman
+      ? { label: 'Area ' + roman, badge: roman, sort: [0, num, ''] }
+      : { badge: c.name.replace(/[^A-Za-z0-9]/g, '').slice(0, 3).toUpperCase() || '•', sort: [1, 0, c.name.toLowerCase()] };
+    const name = roman ? (m[2].trim() || 'Area ' + roman) : c.name;
+    return docArea(code, name, c.folderId, c.files, c.subfolders, { group: sec.code, groupName: GROUPED[sec.code], ...extra });
+  }).sort((a, b) => a.sort[0] - b.sort[0] || a.sort[1] - b.sort[1] || a.sort[2].localeCompare(b.sort[2], undefined, { numeric: true }));
+  if (general.length) {
+    out.unshift(docArea(`${sec.code}-GEN`, GENERAL_LABEL, folderId, general, [],
+      { group: sec.code, groupName: GROUPED[sec.code], badge: 'GEN' }));
+  }
+  return out;
+}
 
 /**
  * Turn a snapshot into the shape the screens use (safe to run twice):
- * - Sections (Compliance Report, PPP, Self-Survey Instrument) become areas with `section: true`
- *   whose files and subfolders sit directly at the top of the tree.
- * - Files directly in a Parameter or Area folder (looseFiles) become a "General documents" row
- *   at the top of that parameter / area.
- * - Files directly in the program folder become an "Other documents" area (`general: true`).
+ * - Actual Self-Survey Report: an area (`section: true`) whose files and subfolders sit directly in the tree.
+ * - Compliance Report / PPP: listed in `snap.groups`; each top-level subfolder becomes such an area
+ *   with `group: 'CR' | 'PPP'` (shown as cards on the group's page).
+ * - Files directly in a Parameter or Area folder (looseFiles): a "General documents" row at the top.
+ * - Files directly in the program folder: an "Other documents" area (`general: true`).
  * Made-up rows have `general: true`: not counted in indicator progress, not listed as indicators.
  */
 export function prepareSnapshot(snap) {
@@ -51,15 +108,22 @@ export function prepareSnapshot(snap) {
     area.looseFiles = [];
   }
   const rootId = (String(snap.program?.rootFolderUrl || '').match(/folders\/([\w-]+)/) || [])[1];
-  const sections = (snap.sections || []).map((sec) => {
-    const folderId = sec.folderId || rootId;
-    const doc = { code: SECTION_DOC, type: null, text: sec.name, general: true, inline: true, folderId, files: sec.files || [], subfolders: sec.subfolders || [] };
-    return {
-      code: sec.code, name: sec.name, section: true, folderId, looseFiles: [],
-      parameters: [{ code: SECTION_DOC, name: sec.name, general: true, folderId, looseFiles: [], indicators: [doc] }],
-    };
-  }).sort((a, b) => SECTION_CODES.indexOf(a.code) - SECTION_CODES.indexOf(b.code));
-  snap.areas.unshift(...sections);
+  if (snap.sections?.length || !snap.groups) {
+    const made = [];
+    snap.groups = [];
+    for (const sec of snap.sections || []) {
+      const folderId = sec.folderId || rootId;
+      if (GROUPED[sec.code]) {
+        snap.groups.push({ code: sec.code, name: sec.name, folderId });
+        made.push(...groupCards(sec, folderId));
+      } else {
+        made.unshift(docArea(sec.code, sec.name, folderId, sec.files || [], sec.subfolders || []));
+      }
+    }
+    const order = Object.keys(GROUPED);
+    snap.groups.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
+    snap.areas.unshift(...made);
+  }
   snap.sections = [];
   if (snap.looseFiles?.length) {
     snap.areas.push({ code: GENERAL, badge: 'GEN', name: 'Other documents', general: true, folderId: rootId, looseFiles: [],
@@ -69,12 +133,31 @@ export function prepareSnapshot(snap) {
   return snap;
 }
 
-/** Area I … X (no sections, no "Other documents"). */
+/** Area I … X of the Self-Survey Report and Evidences (no sections, cards or "Other documents"). */
 export const realAreas = (snap) => (snap?.areas || []).filter((a) => !a.general && !a.section);
-/** What the admin can open or hide for accreditors: the sections and Area I … X. */
-export const accessAreas = (snap) => (snap?.areas || []).filter((a) => !a.general);
-export const findSection = (snap, code) => (snap?.areas || []).find((a) => a.section && a.code === code) || null;
+export const findSection = (snap, code) => (snap?.areas || []).find((a) => a.section && !a.group && a.code === code) || null;
+export const findGroup = (snap, code) => (snap?.groups || []).find((g) => g.code === code) || null;
+export const groupCardsOf = (snap, code) => (snap?.areas || []).filter((a) => a.group === code);
 export const otherArea = (snap) => (snap?.areas || []).find((a) => a.general) || null;
+
+/**
+ * What the admin can open or hide for accreditors: Compliance Report and PPP as a whole,
+ * the Actual Self-Survey Report, and Area I … X. [{ code, label, name, docs }]
+ */
+export function accessItems(snap) {
+  const groups = (snap?.groups || []).map((g) => ({ code: g.code, label: g.name, name: '',
+    docs: groupCardsOf(snap, g.code).reduce((n, a) => n + countFiles(a), 0) }));
+  const rest = (snap?.areas || []).filter((a) => !a.general && !a.group).map((a) => ({
+    code: a.code, label: areaLabel(a), name: a.section ? '' : a.name, docs: countFiles(a) }));
+  return [...groups, ...rest];
+}
+
+/** The areas listed with this one in the toolbar's area menu (same card page). */
+export function siblingAreas(snap, area) {
+  if (!area || area.general) return [];
+  if (area.group) return groupCardsOf(snap, area.group);
+  return (snap?.areas || []).filter((a) => !a.general && !a.group);
+}
 
 /** Number of documents under a node. */
 export function countFiles(node) {
@@ -147,12 +230,16 @@ export function locateFile(snap, fileId) {
   return hits;
 }
 
-export function areaLabel(area) { return area.general || area.section ? area.name : isRoman(area.code) ? 'Area ' + area.code : area.code; }
-/** "Area I — Vision, Mission …", or just "Compliance Report". */
-export function areaTitle(area) { const l = areaLabel(area); return l === area.name ? l : l + ' — ' + area.name; }
+export function areaLabel(area) { return area.label || (area.general || area.section ? area.name : isRoman(area.code) ? 'Area ' + area.code : area.code); }
+/** "Area I — Vision, Mission …", "Compliance Report › Area II — Faculty", or just "PPP". */
+export function areaTitle(area) {
+  const l = areaLabel(area);
+  const base = l === area.name ? l : l + ' — ' + area.name;
+  return area.groupName ? area.groupName + ' › ' + base : base;
+}
 export function paramLabel(param) { return param.general ? param.name : /^[A-Z]$/.test(param.code) ? 'Parameter ' + param.code : param.code; }
 export function indLabel(ind) { return ind.general ? ind.text : ind.code; }
-/** Short code for badges ("GEN" for the General rows, "CR" / "PPP" / "SSI" for sections). */
+/** Short code for badges ("GEN" for General rows, "CR" / "PPP" / "SSR", "II" for an area card). */
 export function shortCode(node) { return node.badge || node.code; }
 /** "Parameter A › S.1", "Parameter A › General documents", or just "General documents". */
 export function placeLabel(param, ind) { return param.general ? indLabel(ind) : paramLabel(param) + ' › ' + indLabel(ind); }
@@ -164,6 +251,18 @@ export function areaKey(v) {
   if (/^\d+$/.test(s)) return intToRoman(Number(s));
   if (/^[IVXL]+$/i.test(s)) return s.toUpperCase();
   return s.toLowerCase();
+}
+// Same as romanToInt_ in Structure.gs.
+function romanToInt(r) {
+  const v = { I: 1, V: 5, X: 10, L: 50 };
+  const t = String(r).toUpperCase();
+  let total = 0;
+  for (let i = 0; i < t.length; i++) {
+    const cur = v[t[i]], next = v[t[i + 1]] || 0;
+    if (!cur) return 0;
+    total += cur < next ? -cur : cur;
+  }
+  return total;
 }
 // Same as intToRoman_ in Structure.gs.
 function intToRoman(n) {

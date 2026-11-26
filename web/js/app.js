@@ -7,7 +7,7 @@ import {
   isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
-import { getProgram, findArea, findParam, findIndicator, areaLabel, areaTitle, indLabel, hrefFor, prepareSnapshot } from './model.js';
+import { getProgram, findArea, findParam, findIndicator, findGroup, areaTitle, indLabel, hrefFor, prepareSnapshot, siblingAreas } from './model.js';
 import * as V from './views.js';
 import * as S from './staff.js';
 import * as A from './admin.js';
@@ -86,11 +86,14 @@ function renderChrome() {
   // getProgram first: a raw key like #/constructor would otherwise hit Object.prototype.
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const areasBtn = document.getElementById('areasBtn');
-  // Back to the Self-Survey Report page: only from the instrument or an area (not from CR / PPP / Other).
+  // Back to the card page this area was picked from: a Compliance Report / PPP card → that
+  // section's page; the Actual Self-Survey Report or Area I … X → the Self-Survey Report page.
   const curArea = snap && route.name === 'workspace' ? findArea(snap, route.area) : null;
-  areasBtn.hidden = !(route.prog && getProgram(route.prog) && route.name === 'workspace')
-    || !!(curArea && (curArea.general || (curArea.section && curArea.code !== 'SSI')));
-  if (!areasBtn.hidden) areasBtn.href = href([route.prog]);
+  const back = curArea && !curArea.general
+    ? (curArea.group ? { href: href([route.prog, curArea.group]), text: '▦ ' + curArea.groupName } : { href: href([route.prog]), text: '▦ Areas' })
+    : null;
+  areasBtn.hidden = !back;
+  if (back) { areasBtn.href = back.href; areasBtn.textContent = back.text; }
 
   const progPick = document.getElementById('progPick');
   const visibleProgs = CONFIG.programs.filter((p) => state.snaps[p.code]);
@@ -100,10 +103,11 @@ function renderChrome() {
       `<option value="${esc(p.code)}" ${p.code === route.prog ? 'selected' : ''}>${esc(V.programName(p, state.snaps[p.code]))}</option>`).join('');
   }
   const areaPick = document.getElementById('areaPick');
-  areaPick.hidden = !(route.name === 'workspace' && snap && snap.areas.length > 1);
+  const siblings = siblingAreas(snap, curArea);
+  areaPick.hidden = siblings.length < 2;
   if (!areaPick.hidden) {
-    document.getElementById('areaSelect').innerHTML = snap.areas.map((a) =>
-      `<option value="${esc(a.code)}" ${a.code === route.area ? 'selected' : ''}>${esc(areaTitle(a))}</option>`).join('');
+    document.getElementById('areaSelect').innerHTML = siblings.map((a) =>
+      `<option value="${esc(a.code)}" ${a.code === route.area ? 'selected' : ''}>${esc(a.group ? areaTitle({ ...a, groupName: '' }) : areaTitle(a))}</option>`).join('');
   }
   document.getElementById('searchForm').hidden = route.name === 'admin';
   input.placeholder = route.prog && snap ? `Search ${V.programName(getProgram(route.prog), snap)}…` : 'Search documents, keywords, indicators…';
@@ -205,7 +209,8 @@ function setTitle(route, searching) {
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const area = snap && findArea(snap, route.area);
   const ind = area && findIndicator(findParam(area, route.param), route.ind);
-  const bits = [ind ? indLabel(ind) : route.ind, area ? areaLabel(area) : null, snap?.program?.name].filter(Boolean);
+  const group = !area && snap && findGroup(snap, route.area);
+  const bits = [ind ? indLabel(ind) : route.ind, area ? areaTitle(area) : group ? group.name : null, snap?.program?.name].filter(Boolean);
   document.title = (bits.length ? bits.join(' · ') + ' · ' : '') + base;
 }
 

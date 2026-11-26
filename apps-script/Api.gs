@@ -105,7 +105,7 @@ function snapshotFor_(session, since) {
     generatedAt: snap.generatedAt,
     hash: hash,
     looseFiles: (snap.looseFiles || []).map(viewerFile_),
-    // Sections (Compliance Report, PPP, Self-Survey Instrument) are opened and hidden like areas.
+    // Sections (Compliance Report, PPP, Actual Self-Survey Report) are opened and hidden like areas.
     sections: (snap.sections || []).filter(function (x) { return !allowed || allowed[normalizeAreaCode_(x.code)]; }).map(function (x) {
       return { code: x.code, name: x.name, files: x.files.map(viewerFile_),
                subfolders: (x.subfolders || []).map(function (s) { return typeof s === 'string' ? s : s.path; }) };

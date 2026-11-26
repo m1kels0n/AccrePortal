@@ -178,7 +178,7 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
     };
   });
 
-  // Sections: Compliance Report, PPP, Self-Survey Instrument. A section is its folder, and/or
+  // Sections: Compliance Report, PPP, Actual Self-Survey Report. A section is its folder, and/or
   // files at the program root named after it (e.g. one "Compliance Report.pdf" next to the areas).
   var secByCode = {};
   st.rows.filter(function (r) { return r.level === 'section'; }).sort(bySort).forEach(function (r) {

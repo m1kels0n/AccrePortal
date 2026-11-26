@@ -4,8 +4,9 @@
  * Expected tree:  Root › Area I … X › Parameter A, B … › S.1, S.2, I.1, O.1 …
  * Also accepted:  Parameter › "System Inputs and Processes" / "Implementation" / "Outcomes"
  *                 (or "S" / "I" / "O") › S.1 …   ← transparent "group" folders
- * Sections:       Root › "Compliance Report" / "PPP" / "Self-Survey Instrument": any folders inside,
- *                 scanned like an indicator's subfolders. A FILE at the root with one of these names
+ * Sections:       Root › "Compliance Report" / "PPP" / "Actual Self-Survey Report": any folders inside,
+ *                 scanned like an indicator's subfolders (the site shows each top-level subfolder of
+ *                 Compliance Report and PPP as a card). A FILE at the root with one of these names
  *                 joins that section too (see sectionOf_).
  *
  * Folder names are parsed tolerantly (-, –, —, :, extra spaces, any case).
@@ -21,7 +22,7 @@ var TYPE_ORDER = { S: 1, I: 2, O: 3 };
 var SECTIONS = {
   CR: { name: 'Compliance Report', order: 1 },
   PPP: { name: 'Program Performance Profile', order: 2 },
-  SSI: { name: 'Self-Survey Instrument', order: 3 },
+  SSR: { name: 'Actual Self-Survey Report', order: 3 },
 };
 
 /** Section code for a root folder or file name ("Compliance Report.pdf" → CR), or ''. */
@@ -30,7 +31,7 @@ function sectionOf_(raw) {
   if (AREA_RE.test(name)) return '';
   if (/compliance/i.test(name)) return 'CR';
   if (/\bppp\b|performance[\s\-–—_]*profile/i.test(name)) return 'PPP';
-  if (/self[\s\-–—_]*survey/i.test(name) && !/report/i.test(name)) return 'SSI';
+  if (/self[\s\-–—_]*survey/i.test(name)) return 'SSR';
   return '';
 }
 

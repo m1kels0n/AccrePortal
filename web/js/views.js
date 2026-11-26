@@ -6,7 +6,7 @@ import { isStaff, lastPlace } from './api.js';
 import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
-  realAreas, shortCode, indLabel, placeLabel, areaTitle, findSection, otherArea,
+  realAreas, shortCode, indLabel, placeLabel, areaTitle, findSection, otherArea, findGroup, groupCardsOf, SUB_SEP,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -138,13 +138,27 @@ function programTile(key, title, sub, link, meta) {
   return `<li><a class="ptile" href="${link}">${inner}<span class="ptile-meta">${esc(meta)} <span aria-hidden="true">→</span></span></a></li>`;
 }
 
+/** "2 areas", "10 areas" (or "3 folders" when they aren't all area folders). */
+function cardsLabel(cards) {
+  const folders = cards.filter((a) => a.badge !== 'GEN'); // the "General documents" card is not a folder
+  const areaCards = folders.filter((a) => a.label).length;
+  return plural(folders.length, folders.length && areaCards === folders.length ? 'area' : 'folder');
+}
+
+/** Compliance Report / PPP tile: opens that section's card page. */
+function groupTile(prog, snap, key, title, sub) {
+  const group = findGroup(snap, key);
+  if (!group) return programTile(key, title, sub, null);
+  const cards = groupCardsOf(snap, key);
+  const docs = cards.reduce((n, a) => n + countFiles(a), 0);
+  return programTile(key, title, sub, href([prog.code, key]), `${cardsLabel(cards)} · ${docCountLabel(docs)}`);
+}
+
 function programCard(prog, snap) {
-  const cr = findSection(snap, 'CR');
-  const ppp = findSection(snap, 'PPP');
-  const ssi = findSection(snap, 'SSI');
+  const actual = findSection(snap, 'SSR');
   const areas = realAreas(snap);
-  const ssrDocs = areas.reduce((n, a) => n + countFiles(a), ssi ? countFiles(ssi) : 0);
-  const ssrSub = (ssi ? 'Instrument + ' : '') + plural(areas.length, 'area');
+  const ssrDocs = areas.reduce((n, a) => n + countFiles(a), actual ? countFiles(actual) : 0);
+  const ssrSub = (actual ? 'Actual report + ' : '') + plural(areas.length, 'area');
   const other = otherArea(snap);
   const full = snap.program?.name && snap.program.name !== prog.name ? snap.program.name : '';
   return `<li><article class="card program-card">
@@ -156,9 +170,9 @@ function programCard(prog, snap) {
         </div>
       </header>
       <ul class="ptiles">
-        ${programTile('CR', 'Compliance Report', '', cr && sectionHref(prog.code, cr), cr && docCountLabel(countFiles(cr)))}
-        ${programTile('PPP', 'PPP', 'Program Performance Profile', ppp && sectionHref(prog.code, ppp), ppp && docCountLabel(countFiles(ppp)))}
-        ${programTile('SSR', 'Self-Survey Report', ssrSub, (ssi || areas.length) && href([prog.code]), docCountLabel(ssrDocs))}
+        ${groupTile(prog, snap, 'CR', 'Compliance Report', '')}
+        ${groupTile(prog, snap, 'PPP', 'PPP', 'Program Performance Profile')}
+        ${programTile('SSR', 'Self-Survey Report and Evidences', ssrSub, (actual || areas.length) && href([prog.code]), docCountLabel(ssrDocs))}
       </ul>
       ${other ? `<a class="pc-other" href="${hrefFor(prog.code, other)}">Other documents · ${countFiles(other)}</a>` : ''}
     </article></li>`;
@@ -176,7 +190,7 @@ export function renderHome(state) {
   const lastArea = lastSnap && findArea(lastSnap, last.area);
   const resume = lastArea ? `<a class="resume" href="${hrefFor(last.prog, lastArea)}">
       <span>Continue where you left off:</span>
-      <strong>${esc(programName(getProgram(last.prog), lastSnap))} › ${esc(areaLabel(lastArea))}</strong> →</a>` : '';
+      <strong>${esc(programName(getProgram(last.prog), lastSnap))} › ${esc(areaTitle(lastArea))}</strong> →</a>` : '';
 
   return `${resume}${pageHead('', 'Choose a program')}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
@@ -184,23 +198,43 @@ export function renderHome(state) {
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;
 }
 
-// ── Self-Survey Report: the instrument + Area I … X ─────────
+/** One card on a card page. Folders of documents open their only document directly. */
+function areaCard(progCode, area, label) {
+  const link = area.section ? sectionHref(progCode, area) : hrefFor(progCode, area);
+  return `<li><a class="card area-card ${area.section ? 'area-card-doc' : ''}" href="${link}">
+      <span class="badge badge-area">${esc(shortCode(area))}</span>
+      <span class="area-card-main">
+        <span class="area-card-label">${esc(label)}</span>
+        <span class="area-card-name">${esc(area.name)}</span>
+        <span class="muted small">${docCountLabel(countFiles(area))}</span>
+      </span></a></li>`;
+}
+
+function cardPage(prog, snap, title, intro, cards, empty, folderId) {
+  const add = isStaff() && folderId
+    ? `<p><a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener">＋ Add files or folders in Google Drive</a></p>` : '';
+  return crumbs([{ label: 'Programs', href: '#/' }, { label: `${programName(prog, snap)} · ${title}`, href: location.hash || '#/' }]) +
+    pageHead(esc(programName(prog, snap)), title, `<p class="muted">${esc(intro)}</p>${add}`) +
+    (cards ? `<ul class="area-grid">${cards}</ul>` : `<div class="card empty"><p>${esc(empty)}</p></div>`);
+}
+
+// ── Self-Survey Report and Evidences: the actual report + Area I … X ──
 export function renderProgram(state, route) {
   const prog = getProgram(route.prog);
   if (!prog) return notFound();
   const snap = state.snaps[prog.code];
   if (!snap) return unavailable(prog, state.status[prog.code]);
-  const ssi = findSection(snap, 'SSI');
-  const cards = [...(ssi ? [ssi] : []), ...realAreas(snap)].map((area) => `<li><a class="card area-card ${area.section ? 'area-card-ssi' : ''}" href="${hrefFor(prog.code, area)}">
-      <span class="badge badge-area">${esc(shortCode(area))}</span>
-      <span class="area-card-main">
-        <span class="area-card-label">${esc(area.section ? 'Instrument' : areaLabel(area))}</span>
-        <span class="area-card-name">${esc(area.name)}</span>
-        <span class="muted small">${docCountLabel(countFiles(area))}</span>
-      </span></a></li>`).join('');
-  return crumbs([{ label: 'Programs', href: '#/' }, { label: programName(prog, snap) + ' · Self-Survey Report', href: href([prog.code]) }]) +
-    pageHead(esc(programName(prog, snap)), 'Self-Survey Report', '<p class="muted">Choose the Self-Survey Instrument or an area.</p>') +
-    (cards ? `<ul class="area-grid">${cards}</ul>` : '<div class="card empty"><p>No areas are open for viewing.</p></div>');
+  const actual = findSection(snap, 'SSR');
+  const cards = (actual ? areaCard(prog.code, actual, 'Report') : '') +
+    realAreas(snap).map((area) => areaCard(prog.code, area, areaLabel(area))).join('');
+  return cardPage(prog, snap, 'Self-Survey Report and Evidences', 'Open the Actual Self-Survey Report, or an area to see its evidences.',
+    cards, 'No areas are open for viewing.');
+}
+
+// ── Compliance Report / PPP: one card per folder inside ─────
+function renderGroup(prog, snap, group) {
+  const cards = groupCardsOf(snap, group.code).map((area) => areaCard(prog.code, area, area.label || (area.badge === 'GEN' ? 'Files' : 'Folder'))).join('');
+  return cardPage(prog, snap, group.name, 'Choose an area to see its documents.', cards, 'No documents yet.', group.folderId);
 }
 
 // ── Workspace: tree (left) + content (right) ────────────────
@@ -211,7 +245,11 @@ export function renderWorkspace(state, route, searchHtml) {
   const snap = state.snaps[prog.code];
   if (!snap) return { html: unavailable(prog, state.status[prog.code]), workspace: false };
   const area = findArea(snap, route.area);
-  if (!area) return { html: notFound(href([prog.code]), 'This area is not available. It may not be open for viewing.'), workspace: false };
+  if (!area) {
+    const group = findGroup(snap, route.area);
+    if (group) return { html: searchHtml || renderGroup(prog, snap, group), workspace: false };
+    return { html: notFound(href([prog.code]), 'This area is not available. It may not be open for viewing.'), workspace: false };
+  }
 
   const viewer = !searchHtml && !!route.fileId;
   const content = searchHtml || renderContent(state, prog, snap, area, route);
@@ -221,7 +259,7 @@ export function renderWorkspace(state, route, searchHtml) {
         <button type="button" class="btn tree-close" data-action="tree-close">✕ Close list of files</button>
         <a class="tree-area" href="${hrefFor(prog.code, area)}" title="${esc(area.name)}">
           <span class="badge badge-area">${esc(shortCode(area))}</span>
-          <span class="tree-area-name">${esc(area.name)}</span>
+          <span class="tree-area-name">${esc(area.group ? `${area.groupName} · ${area.name}` : area.name)}</span>
         </a>
         <div class="tree-tools">
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
@@ -309,8 +347,6 @@ function addToDrive(folderId, name) {
        title="Add files to “${esc(name)}”: opens this folder in Google Drive" aria-label="Add files to ${esc(name)} (opens Google Drive)">＋</a>`;
 }
 
-/** Separator the backend puts between nested subfolder names in `file.subfolder`. */
-const SUB_SEP = ' › ';
 
 /**
  * Group an indicator's files by their Drive subfolder path: { files, folders: Map<name, node> }.

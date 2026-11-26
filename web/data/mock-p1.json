@@ -32,17 +32,65 @@
   {
    "code": "CR",
    "name": "Compliance Report",
-   "folderId": "MOCK_ROOT_p1",
+   "folderId": "MOCKCRFOLDER",
    "files": [
     {
-     "id": "f_cr01MockFileId",
-     "name": "Compliance Report 2026.pdf",
+     "id": "f_sec15MockFileId",
+     "name": "Compliance Report - Faculty.pdf",
      "mimeType": "application/pdf",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
-     "keywords": []
+     "keywords": [],
+     "subfolder": "Area 02 - Faculty"
+    },
+    {
+     "id": "f_sec16MockFileId",
+     "name": "Faculty development plan 2026-2030.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 02 - Faculty › Faculty development plan"
+    },
+    {
+     "id": "f_sec17MockFileId",
+     "name": "Training attendance.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 02 - Faculty › Faculty development plan"
+    },
+    {
+     "id": "f_sec18MockFileId",
+     "name": "Compliance Report - Library.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 07 - Library"
+    }
+   ],
+   "subfolders": [
+    {
+     "path": "Area 02 - Faculty",
+     "id": "MOCKCRA2"
+    },
+    {
+     "path": "Area 02 - Faculty › Faculty development plan",
+     "id": "MOCKCRA2a"
+    },
+    {
+     "path": "Area 07 - Library",
+     "id": "MOCKCRA7"
     }
    ]
   },
@@ -52,8 +100,8 @@
    "folderId": "MOCKPPPFOLDER",
    "files": [
     {
-     "id": "f_ppp01MockFileId",
-     "name": "PPP 2026 - Summary.pdf",
+     "id": "f_sec01MockFileId",
+     "name": "PPP cover and summary.pdf",
      "mimeType": "application/pdf",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",
@@ -62,68 +110,200 @@
      "keywords": []
     },
     {
-     "id": "f_ppp02MockFileId",
-     "name": "Enrollment 2021-2026.xlsx",
+     "id": "f_sec02MockFileId",
+     "name": "PPP Area 1 - Vision, Mission, Goals and Objectives.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 01 - Vision, Mission, Goals and Objectives"
+    },
+    {
+     "id": "f_sec03MockFileId",
+     "name": "PPP Area 2 - Faculty.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 02 - Faculty"
+    },
+    {
+     "id": "f_sec04MockFileId",
+     "name": "PPP Area 3 - Curriculum and Instruction.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 03 - Curriculum and Instruction"
+    },
+    {
+     "id": "f_sec05MockFileId",
+     "name": "PPP Area 3 - supporting table.xlsx",
      "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
      "keywords": [],
-     "subfolder": "Part I - Profile"
+     "subfolder": "Area 03 - Curriculum and Instruction"
     },
     {
-     "id": "f_ppp03MockFileId",
-     "name": "Faculty profile.pdf",
+     "id": "f_sec06MockFileId",
+     "name": "PPP Area 4 - Support to Students.pdf",
      "mimeType": "application/pdf",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
      "keywords": [],
-     "subfolder": "Part I - Profile"
+     "subfolder": "Area 04 - Support to Students"
     },
     {
-     "id": "f_ppp04MockFileId",
-     "name": "Graduate tracer study.pdf",
+     "id": "f_sec07MockFileId",
+     "name": "PPP Area 5 - Research.pdf",
      "mimeType": "application/pdf",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
      "keywords": [],
-     "subfolder": "Part II - Performance"
+     "subfolder": "Area 05 - Research"
+    },
+    {
+     "id": "f_sec08MockFileId",
+     "name": "PPP Area 6 - Extension and Community Involvement.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 06 - Extension and Community Involvement"
+    },
+    {
+     "id": "f_sec09MockFileId",
+     "name": "PPP Area 6 - supporting table.xlsx",
+     "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 06 - Extension and Community Involvement"
+    },
+    {
+     "id": "f_sec10MockFileId",
+     "name": "PPP Area 7 - Library.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 07 - Library"
+    },
+    {
+     "id": "f_sec11MockFileId",
+     "name": "PPP Area 8 - Physical Plant and Facilities.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 08 - Physical Plant and Facilities"
+    },
+    {
+     "id": "f_sec12MockFileId",
+     "name": "PPP Area 9 - Laboratories.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 09 - Laboratories"
+    },
+    {
+     "id": "f_sec13MockFileId",
+     "name": "PPP Area 9 - supporting table.xlsx",
+     "mimeType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 09 - Laboratories"
+    },
+    {
+     "id": "f_sec14MockFileId",
+     "name": "PPP Area 10 - Administration.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-20T02:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "Area 10 - Administration"
     }
    ],
    "subfolders": [
     {
-     "path": "Part I - Profile",
-     "id": "MOCKPPP1"
+     "path": "Area 01 - Vision, Mission, Goals and Objectives",
+     "id": "MOCKPPPA1"
     },
     {
-     "path": "Part II - Performance",
-     "id": "MOCKPPP2"
+     "path": "Area 02 - Faculty",
+     "id": "MOCKPPPA2"
+    },
+    {
+     "path": "Area 03 - Curriculum and Instruction",
+     "id": "MOCKPPPA3"
+    },
+    {
+     "path": "Area 04 - Support to Students",
+     "id": "MOCKPPPA4"
+    },
+    {
+     "path": "Area 05 - Research",
+     "id": "MOCKPPPA5"
+    },
+    {
+     "path": "Area 06 - Extension and Community Involvement",
+     "id": "MOCKPPPA6"
+    },
+    {
+     "path": "Area 07 - Library",
+     "id": "MOCKPPPA7"
+    },
+    {
+     "path": "Area 08 - Physical Plant and Facilities",
+     "id": "MOCKPPPA8"
+    },
+    {
+     "path": "Area 09 - Laboratories",
+     "id": "MOCKPPPA9"
+    },
+    {
+     "path": "Area 10 - Administration",
+     "id": "MOCKPPPA10"
     }
    ]
   },
   {
-   "code": "SSI",
-   "name": "Self-Survey Instrument",
-   "folderId": "MOCKSSIFOLDER",
+   "code": "SSR",
+   "name": "Actual Self-Survey Report",
+   "folderId": "MOCKSSRFOLDER",
    "files": [
     {
-     "id": "f_ssi01MockFileId",
-     "name": "Self-Survey Instrument (signed).pdf",
-     "mimeType": "application/pdf",
-     "size": 524288,
-     "modified": "2026-11-20T02:00:00Z",
-     "viewUrl": "assets/sample.pdf",
-     "previewUrl": "assets/sample.pdf",
-     "keywords": []
-    },
-    {
-     "id": "f_ssi02MockFileId",
-     "name": "Rating summary.pdf",
+     "id": "f_sec19MockFileId",
+     "name": "Actual Self-Survey Report 2026.pdf",
      "mimeType": "application/pdf",
      "size": 524288,
      "modified": "2026-11-20T02:00:00Z",

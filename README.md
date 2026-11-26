@@ -67,9 +67,9 @@ TUP's Google Workspace settings could block the two things this design needs. Fi
 Your folders already exist, one root per program:
 ```
 Program 1 - AACCUP/
-  Compliance Report 2026.pdf            ← a single file is enough (or a "Compliance Report" folder)
-  PPP - Program Performance Profile/    ← any subfolders inside
-  Self-Survey Instrument/               ← any subfolders inside
+  Compliance Report/                    ← one subfolder per area, e.g. Area 02 - Faculty/, Area 07 - Library/
+  PPP/                                  ← one subfolder per area: Area 01 - …/ … Area 10 - …/
+  Actual Self-Survey Report/            ← the report document(s)
   Area I - Vision, Mission, Goals and Objectives/
     Parameter A - Statement of Vision, Mission, Goals and Objectives/
       S.1 - The institution has a clearly stated vision and mission/   ← files go here
@@ -79,7 +79,10 @@ Program 1 - AACCUP/
 - An extra level of **S / I / O group folders** under a parameter (e.g. `System Inputs and Processes › S.1 …`) is also understood.
 - An indicator folder's **Description** (Drive → right-click → File information → Details → Description), if set, becomes the full indicator text shown on the site.
 - Subfolders inside an indicator (e.g. sub-indicators `I.1.6.1 › I.1.6.1.3. Students`) are read up to 6 levels deep. Their files are listed under the indicator, labeled with the subfolder path.
-- **Sections** at the program root: a folder or a file whose name contains `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` (without "Report") → Self-Survey Instrument. Each program card on the home page shows Compliance Report, PPP and Self-Survey Report (= the instrument + Area I–X). Inside a section folder any subfolders work (up to 6 levels). After creating a section **folder**, run **Rebuild structure**; a section **file** shows up on the next scan.
+- **Sections** at the program root, matched by name: `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` → Actual Self-Survey Report. Each program card on the home page shows **Compliance Report**, **PPP** and **Self-Survey Report and Evidences** (= the Actual Self-Survey Report + Area I–X).
+  - Compliance Report and PPP open a page with **one card per subfolder** (`Area 02 - Faculty` shows as *Area II · Faculty*, sorted by area number). A card shows that folder's files and subfolders as they are in Drive (up to 5 levels). Files directly in the Compliance Report / PPP folder show as a **General documents** card.
+  - The Actual Self-Survey Report opens its documents directly (a single document opens straight away).
+  - After creating a section **folder**, run **Rebuild structure**. New files and subfolders inside it then appear on the next scan.
 - Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
 - Folders starting with `_` are ignored.
 
