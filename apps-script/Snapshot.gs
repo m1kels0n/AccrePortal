@@ -113,20 +113,21 @@ function scan_(source, t0) {
   // A file in a subfolder is listed under its indicator, labeled with the subfolder path
   // (e.g. "I.1.6.1. Participative planning › I.1.6.1.3. Students"). One batched query per level.
   var MAX_SUB_DEPTH = 6;
+  // Reference folders (admin only) are often old archives with deep folders: practically every
+  // level is scanned (20 is only a safety cap), and nothing deeper is reported as an issue.
+  var REF_MAX_DEPTH = 20;
   var indRows = rowsOf('indicator').concat(rowsOf('section'));
   var indSet = toSet_(indRows.map(function (r) { return r.folderId; }));
   var filesByInd = {};
   var subsByInd = {};   // indicator folderId -> [{ path, id }] for every subfolder inside it, empty ones too
-  // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself) }
+  // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself), max: depth limit, ref }
   var level = {};
-  Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '' }; });
+  Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '', max: MAX_SUB_DEPTH, ref: false }; });
   // Reference folders are scanned the same way, in the same batched queries.
-  var refPath = {};
   refs.forEach(function (r) {
-    refPath[r.folderId] = 'Reference > ' + r.name;
-    if (!level[r.folderId]) level[r.folderId] = { ind: r.folderId, label: '' };
+    if (!level[r.folderId]) level[r.folderId] = { ind: r.folderId, label: '', max: REF_MAX_DEPTH, ref: true };
   });
-  for (var depth = 0; Object.keys(level).length && depth <= MAX_SUB_DEPTH; depth++) {
+  for (var depth = 0; Object.keys(level).length && depth <= REF_MAX_DEPTH; depth++) {
     var levelSet = toSet_(Object.keys(level));
     var next = {};
     listChildren_(Object.keys(level), false).forEach(function (f) {
@@ -134,13 +135,12 @@ function scan_(source, t0) {
       if (!parent) return;
       if (f.mimeType !== FOLDER_MIME) {
         (filesByInd[parent.ind] = filesByInd[parent.ind] || []).push(toFile_(f, parent.label || undefined));
-      } else if (depth < MAX_SUB_DEPTH) {
+      } else if (depth < parent.max) {
         var label = parent.label ? parent.label + ' › ' + f.name : f.name;
-        next[f.id] = { ind: parent.ind, label: label };
+        next[f.id] = { ind: parent.ind, label: label, max: parent.max, ref: parent.ref };
         (subsByInd[parent.ind] = subsByInd[parent.ind] || []).push({ path: label, id: f.id });
-      } else {
-        var top = st.byId[parent.ind] ? st.byId[parent.ind].path : (refPath[parent.ind] || parent.ind);
-        issues.push({ type: 'deepFile', path: top + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
+      } else if (!parent.ref) {
+        issues.push({ type: 'deepFile', path: st.byId[parent.ind].path + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
       }
     });
     level = next;
