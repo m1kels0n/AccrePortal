@@ -34,7 +34,7 @@ export async function handleLogin(form, app) {
   }
   clearCaches();
   setSession({ token: res.token, role: res.role, name: res.name, expiresAt: res.expiresAt });
-  // Accreditors get the welcome card on the home page instead of the toast.
+  // Accreditors get the welcome pop-up (see syncWelcome in app.js) instead of the toast.
   if (res.role !== 'accreditor') toast(`Welcome, ${res.name}!`);
   app.onLogin();
 }

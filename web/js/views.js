@@ -178,25 +178,28 @@ function programCard(prog, snap) {
     </article></li>`;
 }
 
-// ── Welcome message for accreditors (once per login; closed with ×) ──
+// ── Welcome pop-up for accreditors (once per login; closed with the Start button) ──
 const WELCOME_KEY = 'accre.welcomeClosed';
 const welcomeId = () => getSession()?.token || 'guest';
 
 export function closeWelcome() { store.set(WELCOME_KEY, welcomeId(), true); }
 
-function welcomeCard() {
+/** The pop-up's HTML, or '' when it is not due (staff, or already closed in this login). */
+export function welcomeModal() {
   const s = getSession();
   if (!s || isStaff(s) || store.get(WELCOME_KEY, true) === welcomeId()) return '';
   const who = s.name && s.name !== 'Accreditor' && s.name !== 'Guest' ? s.name : '';
-  return `<section class="welcome-card" aria-label="Welcome">
-    <button type="button" class="welcome-close" data-action="welcome-close" aria-label="Close welcome message" title="Close">×</button>
-    <h2>${who ? `Welcome, ${esc(who)}.` : 'Welcome.'}</h2>
-    <p>On behalf of the university, we warmly welcome you to the Accreditation Portal. Here you can review the Compliance Report,
-      the Program Performance Profile (PPP), and the Self-Survey Report with its supporting evidences for the program(s) made
-      available to you.</p>
-    <p>Should you need guidance, or have any questions or clarifications as you go through the documents, please do not
-      hesitate to reach out to our Accreditation Coordinator. We are glad to assist you.</p>
-  </section>`;
+  return `<div class="modal-backdrop" id="welcomeModal">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <h2 id="welcomeTitle">${who ? `Welcome, ${esc(who)}.` : 'Welcome.'}</h2>
+      <p>On behalf of the university, we warmly welcome you to the Accreditation Portal. Here you can review the Compliance Report,
+        the Program Performance Profile (PPP), and the Self-Survey Report with its supporting evidences for the program(s) made
+        available to you.</p>
+      <p>Should you need guidance, or have any questions or clarifications as you go through the documents, please do not
+        hesitate to reach out to our Accreditation Coordinator. We are glad to assist you.</p>
+      <div class="modal-actions"><button type="button" class="btn btn-primary" data-action="welcome-close" id="welcomeStart">Start</button></div>
+    </div>
+  </div>`;
 }
 
 export function renderHome(state) {
@@ -215,7 +218,7 @@ export function renderHome(state) {
 
   const allFiles = isStaff() && visible.length
     ? '<p><a class="btn btn-sm" href="#/files">≡ All files of every program in one list →</a></p>' : '';
-  return `${welcomeCard()}${resume}${pageHead('', 'Choose a program', allFiles)}
+  return `${resume}${pageHead('', 'Choose a program', allFiles)}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
       : `<div class="card empty"><p>No program is open for viewing yet. Please ask the accreditation coordinator.</p></div>`}
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;

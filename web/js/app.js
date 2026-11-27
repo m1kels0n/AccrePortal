@@ -217,6 +217,22 @@ function render(background = false) {
   if (route.name === 'login') document.getElementById('pin')?.focus();
   setTitle(route, searching);
   renderChrome();
+  syncWelcome();
+}
+
+// The accreditors' welcome pop-up: shown once per login, over whatever page they land on.
+function syncWelcome() {
+  const box = document.getElementById('welcomeModal');
+  const html = V.welcomeModal();
+  if (!html) { box?.remove(); return; }
+  if (box) return;
+  document.body.insertAdjacentHTML('beforeend', html);
+  document.getElementById('welcomeStart')?.focus();
+}
+
+function closeWelcome() {
+  V.closeWelcome();
+  document.getElementById('welcomeModal')?.remove();
 }
 
 function setTitle(route, searching) {
@@ -448,8 +464,7 @@ document.addEventListener('click', (e) => {
     const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
   } else if (action === 'welcome-close') {
-    V.closeWelcome();
-    el.closest('.welcome-card')?.remove();
+    closeWelcome();
   } else if (action === 'logout') {
     logout();
   } else if (action === 'check-now') {
@@ -523,6 +538,12 @@ document.addEventListener('submit', (e) => {
 });
 
 document.addEventListener('keydown', (e) => {
+  if (document.getElementById('welcomeModal')) {
+    // The pop-up has one button: Esc closes it, Tab stays inside it.
+    if (e.key === 'Escape') closeWelcome();
+    else if (e.key === 'Tab') { e.preventDefault(); document.getElementById('welcomeStart')?.focus(); }
+    return;
+  }
   if (e.key === 'Escape' && state.treeOpen) setTreeOpen(false);
 });
 
