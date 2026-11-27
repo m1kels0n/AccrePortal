@@ -16,6 +16,9 @@
  *      { action: 'rebuildStructure', token }    (admin)
  *      { action: 'issues', token }              (admin)
  *      { action: 'saveSettings', token, accreditorEnabled?, accreditorAreas?, watermark? }   (admin)
+ *        With accreditor: '<name>' the change is that one accreditor's own setting for this program
+ *        (reset: true removes it, back to the program-wide setting). No watermark per accreditor.
+ *      { action: 'accreditors', token }         (admin, main program: names from the Access tab)
  */
 
 function doGet(e) {
@@ -60,6 +63,7 @@ function doPost(e) {
       case 'rebuildStructure': return json_(handleRebuild_(body));
       case 'issues': return json_(handleIssues_(body));
       case 'saveSettings': return json_(handleSaveSettings_(body));
+      case 'accreditors': return json_(handleAccreditors_(body));
       default: return json_({ ok: false, error: 'invalid', message: 'Unknown action.' });
     }
   } catch (err) {
@@ -84,22 +88,26 @@ function snapshotFor_(session, since) {
   var st = readSettings_();
 
   if (session.role !== 'accreditor') {
+    // The admin also gets each accreditor's own settings (for the admin panel); coordinators don't.
+    var shown = session.role === 'admin' ? adminSettings_(st) : st;
     if (since && c.meta && c.meta.hash === since) {
-      return { ok: true, unchanged: true, hash: c.meta.hash, generatedAt: c.meta.generatedAt, settings: st };
+      return { ok: true, unchanged: true, hash: c.meta.hash, generatedAt: c.meta.generatedAt, settings: shown };
     }
     var full = JSON.parse(c.text); // Reference folders included: admin and coordinators see them in All files
-    full.settings = st;
+    full.settings = shown;
     return full;
   }
 
-  if (!st.accreditorEnabled) throw apiError_('noAccess', 'This program is not open to accreditors.');
+  // This accreditor's own settings for the program if the admin set any, else the program-wide ones.
+  var mine = settingsFor_(st, session.name);
+  if (!mine.accreditorEnabled) throw apiError_('noAccess', 'This program is not open to accreditors.');
   var pub = { watermark: st.watermark };
-  var hash = c.meta.hash + '.' + md5_(JSON.stringify(st.accreditorAreas)).slice(0, 8);
+  var hash = c.meta.hash + '.' + md5_(JSON.stringify(mine.accreditorAreas)).slice(0, 8);
   if (since && since === hash) {
     return { ok: true, unchanged: true, hash: hash, generatedAt: c.meta.generatedAt, settings: pub };
   }
   var snap = JSON.parse(c.text);
-  var allowed = st.accreditorAreas === 'ALL' ? null : toSet_(st.accreditorAreas.map(normalizeAreaCode_));
+  var allowed = mine.accreditorAreas === 'ALL' ? null : toSet_(mine.accreditorAreas.map(normalizeAreaCode_));
   return {
     schema: snap.schema,
     program: { code: snap.program.code, name: snap.program.name },
@@ -153,56 +161,157 @@ function readSettings_() {
   var raw = cache.get('settings');
   if (raw) { try { return JSON.parse(raw); } catch (e) { /* rebuild below */ } }
   var cfg = getConfig_();
-  var areasRaw = String(cfg.accreditorAreas || '').trim();
-  var areas = /^(all)?$/i.test(areasRaw) ? 'ALL'
-    : /^none$/i.test(areasRaw) ? []
-    : areasRaw.split(/[,;\s]+/).map(normalizeAreaCode_).filter(Boolean);
   var flag = function (v) { return v === undefined || String(v).trim() === '' ? true : isTrue_(v); };
-  var s = { accreditorEnabled: flag(cfg.accreditorEnabled), accreditorAreas: areas, watermark: flag(cfg.watermark) };
+  var s = { accreditorEnabled: flag(cfg.accreditorEnabled), accreditorAreas: parseAreas_(cfg.accreditorAreas), watermark: flag(cfg.watermark) };
   cache.put('settings', JSON.stringify(s), 120);
   return s;
 }
 
+/** "ALL" (or blank) → 'ALL', "NONE" → [], otherwise a list of normalized area codes. */
+function parseAreas_(raw) {
+  raw = String(raw === null || raw === undefined ? '' : raw).trim();
+  return /^(all)?$/i.test(raw) ? 'ALL'
+    : /^none$/i.test(raw) ? []
+    : raw.split(/[,;\s]+/).map(normalizeAreaCode_).filter(Boolean);
+}
+
+/** The text stored for an area choice: 'ALL', 'NONE', or the real area codes separated by commas. */
+function cleanAreasValue_(a) {
+  if (a === 'ALL') return 'ALL';
+  if (Object.prototype.toString.call(a) !== '[object Array]') throw apiError_('invalid', 'Bad area list.');
+  // Store each area's real code from the current snapshot (key → code); without one,
+  // keep plain codes. Separators are refused because parseAreas_ splits on them.
+  var real = null;
+  try {
+    var c = readSnapshot_();
+    if (c) {
+      real = {};
+      var sn = JSON.parse(c.text);
+      (sn.areas || []).concat(sn.sections || []).forEach(function (ar) { real[normalizeAreaCode_(ar.code)] = String(ar.code); });
+    }
+  } catch (e) { real = null; }
+  var seen = {};
+  return a.map(function (x) {
+    if (real) return real[normalizeAreaCode_(x)] || '';
+    x = String(x === null || x === undefined ? '' : x).trim();
+    return /^[A-Za-z0-9.\-]{1,48}$/.test(x) ? x : '';
+  }).filter(function (x) {
+    var k = normalizeAreaCode_(x);
+    if (!x || /[,;\s]/.test(x) || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  }).join(', ') || 'NONE';
+}
+
+// ── Per-accreditor overrides (AccreditorAccess tab: name, enabled, areas) ──
+// An accreditor with a row here gets that row's settings for THIS program; everyone else
+// follows the program-wide settings above. Names match the Access tab, ignoring case.
+var OVERRIDES_TAB = 'AccreditorAccess';
+
+function readOverrides_() {
+  var cache = CacheService.getScriptCache();
+  var raw = cache.get('overrides');
+  if (raw) { try { return JSON.parse(raw); } catch (e) { /* rebuild below */ } }
+  var list = [];
+  var sh = ss_().getSheetByName(OVERRIDES_TAB); // missing until the first override is saved
+  if (sh && sh.getLastRow() > 1) {
+    sh.getRange(2, 1, sh.getLastRow() - 1, 3).getValues().forEach(function (r) {
+      var name = String(r[0] || '').trim();
+      if (!name) return;
+      list.push({ name: name, enabled: String(r[1]).trim() === '' ? true : isTrue_(r[1]), areas: parseAreas_(r[2]) });
+    });
+  }
+  cache.put('overrides', JSON.stringify(list), 120);
+  return list;
+}
+
+function overrideFor_(name) {
+  var key = String(name || '').trim().toLowerCase();
+  if (!key) return null;
+  return readOverrides_().filter(function (o) { return o.name.toLowerCase() === key; })[0] || null;
+}
+
+/** The viewer settings that apply to one accreditor in this program. */
+function settingsFor_(st, name) {
+  var ov = overrideFor_(name);
+  return ov ? { accreditorEnabled: ov.enabled, accreditorAreas: ov.areas, watermark: st.watermark } : st;
+}
+
+/** Settings as the admin panel sees them: the program-wide ones plus every accreditor's own. */
+function adminSettings_(st) {
+  return { accreditorEnabled: st.accreditorEnabled, accreditorAreas: st.accreditorAreas, watermark: st.watermark,
+           overrides: readOverrides_() };
+}
+
 function handleSaveSettings_(body) {
   var s = checkToken_(body.token, 'admin');
-  if (body.accreditorEnabled !== undefined) setConfig_('accreditorEnabled', body.accreditorEnabled ? 'TRUE' : 'FALSE');
-  if (body.accreditorAreas !== undefined) {
-    var a = body.accreditorAreas;
-    var v;
-    if (a === 'ALL') v = 'ALL';
-    else if (Object.prototype.toString.call(a) === '[object Array]') {
-      // Store each area's real code from the current snapshot (key → code); without one,
-      // keep plain codes. Separators are refused because readSettings_ splits on them.
-      var real = null;
-      try {
-        var c = readSnapshot_();
-        if (c) {
-          real = {};
-          var sn = JSON.parse(c.text);
-          (sn.areas || []).concat(sn.sections || []).forEach(function (ar) { real[normalizeAreaCode_(ar.code)] = String(ar.code); });
-        }
-      } catch (e) { real = null; }
-      var seen = {};
-      v = a.map(function (x) {
-        if (real) return real[normalizeAreaCode_(x)] || '';
-        x = String(x === null || x === undefined ? '' : x).trim();
-        return /^[A-Za-z0-9.\-]{1,48}$/.test(x) ? x : '';
-      }).filter(function (x) {
-        var k = normalizeAreaCode_(x);
-        if (!x || /[,;\s]/.test(x) || seen[k]) return false;
-        seen[k] = true;
-        return true;
-      }).join(', ') || 'NONE';
-    } else {
-      throw apiError_('invalid', 'Bad area list.');
-    }
-    setConfig_('accreditorAreas', v);
+  var who = body.accreditor === undefined || body.accreditor === null ? '' : String(body.accreditor).trim();
+  var areasV = body.accreditorAreas !== undefined ? cleanAreasValue_(body.accreditorAreas) : undefined;
+  if (who) {
+    if (body.watermark !== undefined) throw apiError_('invalid', 'The watermark is not set per accreditor.');
+    saveOverride_(who, body.reset === true, body.accreditorEnabled, areasV);
+    log_('settings', 'admin:' + s.name, 'accreditor ' + who + (body.reset === true ? ': back to program default'
+      : ': ' + (body.accreditorEnabled === undefined ? '' : (body.accreditorEnabled ? 'open' : 'closed') + ' ') + (areasV || '')));
+  } else {
+    if (body.accreditorEnabled !== undefined) setConfig_('accreditorEnabled', body.accreditorEnabled ? 'TRUE' : 'FALSE');
+    if (areasV !== undefined) setConfig_('accreditorAreas', areasV);
+    if (body.watermark !== undefined) setConfig_('watermark', body.watermark ? 'TRUE' : 'FALSE');
   }
-  if (body.watermark !== undefined) setConfig_('watermark', body.watermark ? 'TRUE' : 'FALSE');
   CacheService.getScriptCache().remove('settings');
   var st = readSettings_();
-  log_('settings', 'admin:' + s.name, JSON.stringify(st));
-  return { ok: true, settings: st };
+  if (!who) log_('settings', 'admin:' + s.name, JSON.stringify(st));
+  return { ok: true, settings: adminSettings_(st) };
+}
+
+/** Add, change or (reset) remove one accreditor's row in the AccreditorAccess tab. */
+function saveOverride_(name, reset, enabled, areasV) {
+  // Names are written into a Sheet cell: refuse anything a Sheet would treat as a formula.
+  if (name.length > 100 || /^[=+\-@]/.test(name)) throw apiError_('invalid', 'Bad accreditor name.');
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
+  try {
+    var ss = ss_();
+    var sh = ss.getSheetByName(OVERRIDES_TAB);
+    if (!sh) {
+      if (reset) return;
+      sh = ss.insertSheet(OVERRIDES_TAB);
+      sh.getRange(1, 1, 1, 3).setValues([SHEET_HEADERS[OVERRIDES_TAB]]).setFontWeight('bold');
+      sh.setFrozenRows(1);
+    }
+    var n = Math.max(sh.getLastRow() - 1, 0);
+    var names = n ? sh.getRange(2, 1, n, 1).getValues().map(function (r) { return String(r[0] || '').trim().toLowerCase(); }) : [];
+    var i = names.indexOf(name.toLowerCase());
+    if (reset) {
+      if (i !== -1) sh.deleteRow(i + 2);
+    } else {
+      var st = readSettings_();
+      var cur = i === -1 ? null : sh.getRange(i + 2, 1, 1, 3).getValues()[0];
+      var curEnabled = cur ? (String(cur[1]).trim() === '' ? true : isTrue_(cur[1])) : st.accreditorEnabled;
+      var curAreas = cur ? String(cur[2] || 'ALL') : (st.accreditorAreas === 'ALL' ? 'ALL' : [].concat(st.accreditorAreas).join(', ') || 'NONE');
+      var row = [cur ? cur[0] : name,
+                 (enabled === undefined ? curEnabled : !!enabled) ? 'TRUE' : 'FALSE',
+                 areasV === undefined ? curAreas : areasV];
+      if (i === -1) sh.appendRow(row);
+      else sh.getRange(i + 2, 1, 1, 3).setValues([row]);
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  CacheService.getScriptCache().remove('overrides');
+}
+
+/** Admin only, main program only: the accreditor names from the Access tab (never their PINs). */
+function handleAccreditors_(body) {
+  checkToken_(body.token, 'admin');
+  if (!isMain_()) throw apiError_('notMain', 'The accreditor list is kept on the main program.');
+  var seen = {};
+  var names = readAccess_().map(function (r) { return r.accreditorName; }).filter(function (n) {
+    var k = n.toLowerCase();
+    if (!n || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  });
+  return { ok: true, names: names };
 }
 
 // ── Coordinator / admin actions ──────────────────────────────

@@ -185,6 +185,15 @@ async function loadMockRaw(prog) {
 
 function mockKeywordStore(code) { return store.get('aaccup:mock:kw:' + code) || {}; }
 function mockSettings(code) { return { ...MOCK_DEFAULT_SETTINGS, ...(store.get('aaccup:mock:settings:' + code) || {}) }; }
+// Per-accreditor overrides for one program: [{ name, enabled, areas }] (same shape as Api.gs readOverrides_).
+function mockOverrides(code) { return store.get('aaccup:mock:overrides:' + code) || []; }
+const sameMockName = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+/** The settings that apply to one accreditor (their own if the admin set any, else the program's). */
+function mockSettingsFor(code, name) {
+  const base = mockSettings(code);
+  const ov = mockOverrides(code).find((o) => sameMockName(o.name, name));
+  return ov ? { ...base, accreditorEnabled: ov.enabled, accreditorAreas: ov.areas } : base;
+}
 
 function mockToken(session) { return 'mock.' + btoa(JSON.stringify(session)); }
 function mockReadToken(token) {
@@ -233,12 +242,14 @@ async function mockSnapshot(prog, session) {
   for (const fileId of Object.keys(kw)) {
     for (const hit of locateFile(snap, fileId)) hit.file.keywords = kw[fileId];
   }
-  const settings = mockSettings(prog.code);
   if (s.role === 'accreditor') {
-    if (!settings.accreditorEnabled) throw apiError({ error: 'noAccess', message: 'This program is not open to accreditors.' });
-    return accreditorCopy(snap, settings);
+    const mine = mockSettingsFor(prog.code, s.name);
+    if (!mine.accreditorEnabled) throw apiError({ error: 'noAccess', message: 'This program is not open to accreditors.' });
+    return accreditorCopy(snap, mine);
   }
-  snap.settings = settings; // staff get Reference folders too (see Api.gs snapshotFor_)
+  const settings = mockSettings(prog.code);
+  // Only the admin also gets each accreditor's own settings (see Api.gs adminSettings_).
+  snap.settings = s.role === 'admin' ? { ...settings, overrides: mockOverrides(prog.code) } : settings; // staff get Reference folders too (see Api.gs snapshotFor_)
   return snap;
 }
 
@@ -283,13 +294,32 @@ async function mockPost(prog, payload) {
     const mine = all[prog.code] || { items: [] };
     return { ok: true, items: mine.items, lastScan: new Date(Date.now() - 120000).toISOString(), lastScanMs: 4200, triggerActive: true };
   }
+  if (action === 'accreditors') {
+    if (prog.code !== mainProgram().code) return { ok: false, error: 'notMain', message: 'The accreditor list is kept on the main program.' };
+    return { ok: true, names: Object.values(MOCK_PINS).filter((u) => u.role === 'accreditor').map((u) => u.name) };
+  }
+  if (action === 'saveSettings' && payload.accreditor) {
+    if (payload.watermark !== undefined) return { ok: false, error: 'invalid', message: 'The watermark is not set per accreditor.' };
+    const name = String(payload.accreditor).trim();
+    const base = mockSettings(prog.code);
+    const rest = mockOverrides(prog.code).filter((o) => !sameMockName(o.name, name));
+    const cur = mockOverrides(prog.code).find((o) => sameMockName(o.name, name))
+      || { name, enabled: base.accreditorEnabled, areas: base.accreditorAreas };
+    const list = payload.reset ? rest : [...rest, {
+      name: cur.name,
+      enabled: payload.accreditorEnabled === undefined ? cur.enabled : !!payload.accreditorEnabled,
+      areas: payload.accreditorAreas === undefined ? cur.areas : payload.accreditorAreas === 'ALL' ? 'ALL' : [...payload.accreditorAreas],
+    }];
+    store.set('aaccup:mock:overrides:' + prog.code, list);
+    return { ok: true, settings: { ...base, overrides: list } };
+  }
   if (action === 'saveSettings') {
     const next = mockSettings(prog.code);
     if (payload.accreditorEnabled !== undefined) next.accreditorEnabled = !!payload.accreditorEnabled;
     if (payload.accreditorAreas !== undefined) next.accreditorAreas = payload.accreditorAreas === 'ALL' ? 'ALL' : [...payload.accreditorAreas];
     if (payload.watermark !== undefined) next.watermark = !!payload.watermark;
     store.set('aaccup:mock:settings:' + prog.code, next);
-    return { ok: true, settings: next };
+    return { ok: true, settings: { ...next, overrides: mockOverrides(prog.code) } };
   }
   return { ok: false, error: 'invalid', message: 'Unknown action.' };
 }

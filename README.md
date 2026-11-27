@@ -27,7 +27,7 @@ Coordinators ──upload──▶ Google Drive (folder tree per program)
 |---|---|---|
 | Accreditor | **one PIN per person** | View only. Sees only the programs and areas the admin opened. No Drive links, no "Open in new tab", no right-click. A transparent cover sits over the preview's "open in new window" button. Optional watermark with **their name** and the date. |
 | Coordinator | **one shared PIN** | Every program and area, including files uploaded by others. Add keywords to any file, **＋** on each indicator and subfolder in the file tree (opens that Drive folder), **Check now**, progress and missing-document markers. |
-| Admin | one PIN | Everything a coordinator can do, plus the **Admin panel**: which programs/areas accreditors see, watermark on/off, Refresh / Rebuild / Issues. |
+| Admin | one PIN | Everything a coordinator can do, plus the **Admin panel**: which programs/areas accreditors see (for everyone, or **per accreditor**: pick a name in "Settings for"), watermark on/off, Refresh / Rebuild / Issues. |
 
 All PINs live in the **main** program's Sheet (Program 1) and work for every program. PINs are *light protection only*: the documents themselves are "anyone with the link", so someone determined (e.g. with browser developer tools) can still find a file's link.
 
@@ -203,6 +203,7 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 - [ ] Copy a deep link (e.g. `…/#/p1/I/A/S.1`), open it on another device: after login it lands on that indicator.
 - [ ] Search: multiple words, a keyword-only match ("Matched keyword: …"), accents, and the × button.
 - [ ] **Coordinator:** can open every area of both programs. The **＋** on an indicator (and on a subfolder) row opens the right Drive folder. Upload a file, tap **Check now**: it shows "1 new file" within seconds. Save a keyword on a file someone else uploaded, then search for it.
+- [ ] **Per-accreditor access:** Admin panel → "Settings for" → pick one accreditor, untick a program or area, Save. That accreditor loses it; another accreditor still has it. Per-person settings are stored per program in an `AccreditorAccess` tab (created on first save; matched to the Access tab by name, ignoring case). "Use the program default again" removes the row.
 - [ ] **Admin:** Admin panel → untick an area, Save; log in as accreditor in another browser: that area is gone. Turn the watermark off and on.
 - [ ] Put a test file directly in a Parameter folder, Check now: it shows under **General documents** at the top of that parameter, for coordinators and accreditors.
 - [ ] Ten wrong PINs in a row pause logins for 5 minutes.

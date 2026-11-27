@@ -12,6 +12,8 @@ var SHEET_HEADERS = {
               'sortKey', 'path', 'status', 'rawName', 'codeOverride', 'nameOverride', 'textOverride', 'hidden'],
   Keywords: ['fileId', 'keywords', 'updatedBy', 'updatedAt'],
   Access: ['accreditorName', 'pinHash'],
+  // Optional per-accreditor override of the program-wide viewer settings (set in the admin panel).
+  AccreditorAccess: ['accreditorName', 'enabled', 'areas'],
   Log: ['timestamp', 'action', 'user', 'details'],
 };
 var CONFIG_KEYS = ['programCode', 'programName', 'rootFolderId', 'driveId', 'systemFolderId',
@@ -228,8 +230,9 @@ function showStatus() {
         'Coordinator PIN (shared) set: ' + (cfg.coordinatorPinHash ? 'yes' : 'NO') + '\n' +
         'Accreditors with PIN: ' + readAccess_().filter(function (r) { return r.pinHash; }).length + '\n'
       : '') +
-    'Accreditors: ' + (st.accreditorEnabled ? 'open' : 'CLOSED') + ' · areas: ' +
+    'Accreditors (default): ' + (st.accreditorEnabled ? 'open' : 'CLOSED') + ' · areas: ' +
       [].concat(st.accreditorAreas).join(', ') + ' · watermark ' + (st.watermark ? 'on' : 'off') + '\n' +
+    'Accreditors with their own settings: ' + readOverrides_().length + '\n' +
     'Auto-refresh trigger: ' + (triggerActive_() ? 'ON' : 'OFF') + '\n' +
     'Last scan: ' + (p.getProperty('LAST_SCAN') || 'never') + ' (' + (p.getProperty('LAST_SCAN_MS') || '?') + ' ms)\n' +
     'Web app URL: ' + (url || 'not deployed yet') + '\n\n' +

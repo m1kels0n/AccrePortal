@@ -213,7 +213,7 @@ function render(background = false) {
     if (prog) lastPlace.set({ prog: prog.code, area: route.area });
     if (route.fileId && !searching) setupViewer();
   }
-  if (route.name === 'admin') A.loadAdminData(route.prog);
+  if (route.name === 'admin') A.loadAdminData(route.prog, state);
   if (route.name === 'login') document.getElementById('pin')?.focus();
   setTitle(route, searching);
   renderChrome();
@@ -460,6 +460,10 @@ document.addEventListener('click', (e) => {
   } else if (action === 'tree-expand' || action === 'tree-collapse') {
     const open = action === 'tree-expand';
     document.querySelectorAll('#tree details[data-node]').forEach((d) => { d.open = open; });
+  } else if (action === 'acc-pick') {
+    A.setAccreditor(el.dataset.who, app);
+  } else if (action === 'acc-reset') {
+    A.resetAccreditor(el.dataset.prog, app);
   } else if (action === 'areas-all' || action === 'areas-none') {
     el.closest('form')?.querySelectorAll('input[name=area]').forEach((c) => { c.checked = action === 'areas-all'; });
     state.touched = true;
@@ -476,6 +480,7 @@ document.addEventListener('toggle', (e) => {
 
 document.addEventListener('change', (e) => {
   if (e.target.id === 'progSelect') navigate(href([e.target.value]));
+  if (e.target.id === 'adm-who') A.setAccreditor(e.target.value, app);
   if (e.target.id === 'areaSelect') {
     const snap = getProgram(state.route?.prog) ? state.snaps[state.route.prog] : null;
     const area = snap && findArea(snap, e.target.value);

@@ -442,6 +442,11 @@ mark { background: color-mix(in srgb, var(--accent) 45%, #fff); color: inherit; 
 .switch input, .check input { width: 18px; height: 18px; margin-top: 2px; flex-shrink: 0; accent-color: var(--secondary); }
 .area-checks { border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px 4px; margin: 12px 0 0; }
 .area-checks legend { font-weight: 600; font-size: .9rem; padding: 0 4px; }
+.access-who { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 6px; }
+.access-who select { max-width: 100%; }
+.access-own { margin-top: 16px; }
+.access-own h4 { margin: 0 0 6px; font-size: .95rem; }
+.access-own li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
 .check-grid { display: grid; gap: 6px; }
 .check { display: flex; gap: 8px; align-items: flex-start; font-size: .92rem; cursor: pointer; padding: 4px 0; }
 .stat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

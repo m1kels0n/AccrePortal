@@ -2,9 +2,50 @@
 import { CONFIG } from './config.js';
 import { esc, fmtDate, toast } from './util.js';
 import { href, parseHash } from './router.js';
-import { post, isAdmin } from './api.js';
+import { post, isAdmin, mainProgram } from './api.js';
 import { crumbs, progressBadge, notFound, programName } from './views.js';
 import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realAreas, accessItems } from './model.js';
+
+// ── Per-accreditor access ──
+let accNames = null; // accreditor names from the main program's Access tab (null until loaded)
+let who = '';        // accreditor the access card is editing ('' = the program default for everyone)
+
+const sameName = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+const findOverride = (settings, name) => (settings?.overrides || []).find((o) => sameName(o.name, name)) || null;
+
+/** <option>s for the "Settings for" menu: everyone, every accreditor in the Access list, and any other name with its own settings. */
+function whoOptions(state, prog) {
+  const settings = state.settings[prog.code];
+  const names = [];
+  const add = (n) => { if (n && !names.some((x) => sameName(x, n))) names.push(n); };
+  (accNames || []).forEach(add);
+  (settings?.overrides || []).forEach((o) => add(o.name));
+  add(who);
+  const opt = (value, label) => `<option value="${esc(value)}" ${sameName(value, who) ? 'selected' : ''}>${esc(label)}</option>`;
+  return opt('', 'Everyone (program default)') + names.map((n) => opt(n, n
+    + (findOverride(settings, n) ? ' · own settings' : '')
+    + (accNames && !accNames.some((x) => sameName(x, n)) ? ' · not in the Access list' : ''))).join('');
+}
+
+/** Names that have their own settings but no PIN row in the Access tab (renamed or mistyped). */
+function unmatchedHtml(state) {
+  if (accNames === null) return '';
+  const bad = [];
+  for (const p of CONFIG.programs) {
+    for (const o of state.settings[p.code]?.overrides || []) {
+      if (!accNames.some((x) => sameName(x, o.name))) bad.push(`${o.name} (${p.name})`);
+    }
+  }
+  return bad.length ? `<p class="error small">These names have their own access settings but are not in the Access list, so no PIN uses them: ${esc(bad.join(', '))}.
+    Pick the name above and press "Use the program default again" to remove it, or fix the spelling in the Access tab.</p>` : '';
+}
+
+/** Choose who the access card edits. Called when the menu changes or a name is picked from the list. */
+export function setAccreditor(name, app) {
+  who = String(name || '');
+  app.state.touched = false;
+  app.render();
+}
 
 export function renderAdmin(state, route) {
   if (!isAdmin()) return notFound('#/', 'The admin panel needs the admin PIN.');
@@ -32,13 +73,29 @@ export function renderAdmin(state, route) {
     access = st.loading || st.fromCache ? spinner
       : `<p class="muted">Access settings are not available for this program right now. Press Refresh now below to load them.</p>`;
   } else {
-    const all = settings.accreditorAreas === 'ALL';
-    const chosen = all ? new Set(accessItems(snap).map((a) => areaKey(a.code))) : openKeys;
-    access = `<form data-form="access" data-prog="${esc(prog.code)}" class="access-form">
-      <label class="switch"><input type="checkbox" name="enabled" ${settings.accreditorEnabled ? 'checked' : ''}>
-        <span>Accreditors can open <strong>${esc(programName(prog, snap))}</strong></span></label>
+    // Settings shown in the form: the program default, or the chosen accreditor's own (when they have any).
+    const ov = who ? findOverride(settings, who) : null;
+    const view = ov ? { enabled: ov.enabled, areas: ov.areas } : { enabled: settings.accreditorEnabled, areas: settings.accreditorAreas };
+    const all = view.areas === 'ALL';
+    const chosen = all ? new Set(accessItems(snap).map((a) => areaKey(a.code))) : new Set((view.areas || []).map(areaKey));
+    const subject = who ? esc(who) : 'Accreditors';
+    const overrides = settings.overrides || [];
+    access = `
+      <div class="access-who">
+        <label for="adm-who"><strong>Settings for</strong></label>
+        <select id="adm-who" data-admin-who data-prog="${esc(prog.code)}">${whoOptions(state, prog)}</select>
+        ${accNames === null ? '<span class="muted small">Loading accreditor names…</span>' : ''}
+      </div>
+      <p class="muted small">${!who
+        ? 'These settings apply to every accreditor who has no settings of their own in this program.'
+        : ov ? `${esc(who)} has their own settings in this program. They replace the default for ${esc(who)} only.`
+          : `${esc(who)} follows the program default for now. Saving creates settings just for ${esc(who)}.`}</p>
+      <div id="adm-unmatched">${unmatchedHtml(state)}</div>
+      <form data-form="access" data-prog="${esc(prog.code)}" data-who="${esc(who)}" class="access-form">
+      <label class="switch"><input type="checkbox" name="enabled" ${view.enabled ? 'checked' : ''}>
+        <span>${subject} can open <strong>${esc(programName(prog, snap))}</strong></span></label>
       <fieldset class="area-checks">
-        <legend>What accreditors can see</legend>
+        <legend>What ${subject} can see</legend>
         <div class="btn-row tight">
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-all">Select all</button>
           <button type="button" class="btn btn-ghost btn-sm" data-action="areas-none">Select none</button>
@@ -51,9 +108,17 @@ export function renderAdmin(state, route) {
       </fieldset>
       <div class="btn-row">
         <button type="submit" class="btn btn-primary">Save access</button>
+        ${ov ? `<button type="button" class="btn" data-action="acc-reset" data-prog="${esc(prog.code)}">Use the program default again</button>` : ''}
         <span class="form-status" aria-live="polite"></span>
       </div>
-    </form>`;
+    </form>
+    ${!who && overrides.length ? `<div class="access-own">
+      <h4>Accreditors with their own settings here</h4>
+      <ul class="issue-list">${overrides.map((o) => `<li><button type="button" class="btn btn-ghost btn-sm" data-action="acc-pick" data-who="${esc(o.name)}">${esc(o.name)}</button>
+        ${!o.enabled ? '<span class="muted">cannot open this program</span>'
+          : o.areas === 'ALL' ? '<span class="ok">every area</span>'
+          : `<span>${o.areas.length ? o.areas.map((c) => esc(areaLabel({ code: c }))).join(', ') : 'no areas'}</span>`}</li>`).join('')}</ul>
+    </div>` : ''}`;
   }
 
   const areaRows = snap ? realAreas(snap).map((a) => `<tr><td><a href="${hrefFor(prog.code, a)}">${esc(areaLabel(a))}</a></td><td>${esc(a.name)}</td>
@@ -104,7 +169,7 @@ export function renderAdmin(state, route) {
     <section class="card">
       <h3>Progress by area</h3>
       <div class="table-wrap"><table class="table">
-        <thead><tr><th>Area</th><th>Name</th><th>Indicators</th><th class="num">Docs</th><th>Accreditors</th></tr></thead>
+        <thead><tr><th>Area</th><th>Name</th><th>Indicators</th><th class="num">Docs</th><th>Everyone (default)</th></tr></thead>
         <tbody>${areaRows}</tbody></table></div>
     </section>
 
@@ -124,10 +189,11 @@ const ISSUE_LABELS = {
 };
 
 /** Fetch issues + status after the admin page is in the DOM. */
-export async function loadAdminData(progCode) {
+export async function loadAdminData(progCode, state) {
   const prog = getProgram(progCode) || CONFIG.programs[0];
   const box = document.getElementById('adm-issues');
   if (!isAdmin() || !box) return;
+  if (state) loadAccreditorNames(prog, state);
   const res = await post(prog, { action: 'issues' });
   // Drop a late answer after leaving the page or switching to another program's tab.
   const cur = parseHash();
@@ -162,6 +228,19 @@ export async function loadAdminData(progCode) {
   }).join('');
 }
 
+/** Ask the main program for the accreditor names, then fill the "Settings for" menu in place (no redraw, so nothing typed is lost). */
+async function loadAccreditorNames(prog, state) {
+  const res = await post(mainProgram(), { action: 'accreditors' });
+  if (!res.ok || !Array.isArray(res.names)) return;
+  accNames = res.names;
+  const sel = document.getElementById('adm-who');
+  if (!sel || !sel.isConnected || sel.dataset.prog !== prog.code) return;
+  sel.innerHTML = whoOptions(state, prog);
+  sel.parentElement?.querySelector('.muted.small')?.remove();
+  const um = document.getElementById('adm-unmatched');
+  if (um) um.innerHTML = unmatchedHtml(state);
+}
+
 export async function adminAction(kind, progCode, button, app) {
   const prog = getProgram(progCode);
   const status = document.getElementById('adm-status');
@@ -192,7 +271,7 @@ export async function adminAction(kind, progCode, button, app) {
   status.textContent = '✓ Done. Reloading data…';
   toast(`✓ ${kind === 'rebuild' ? 'Structure rebuilt' : 'Snapshot refreshed'}${res.ms ? ' in ' + (res.ms / 1000).toFixed(1) + ' s' : ''}.`);
   await app.refresh(progCode, true);
-  loadAdminData(progCode);
+  loadAdminData(progCode, app.state);
 }
 
 /** Watermark is one setting for every program: saved to each program's backend. */
@@ -232,7 +311,9 @@ export async function saveAccess(form, app) {
   button.disabled = true;
   status.className = 'form-status';
   status.textContent = 'Saving…';
-  const res = await post(prog, { action: 'saveSettings', accreditorEnabled: enabled, accreditorAreas: areas });
+  const target = form.dataset.who || '';
+  const subject = target || 'Accreditors';
+  const res = await post(prog, { action: 'saveSettings', accreditorEnabled: enabled, accreditorAreas: areas, ...(target ? { accreditor: target } : {}) });
   button.disabled = false;
   if (!res.ok) {
     status.className = 'form-status error';
@@ -241,13 +322,31 @@ export async function saveAccess(form, app) {
   }
   app.state.settings[prog.code] = { ...app.state.settings[prog.code], ...res.settings };
   app.state.touched = false;
-  toast(`✓ Accreditor access saved for ${prog.name}.`);
+  toast(`✓ ${target ? target + "'s access" : 'Accreditor access'} saved for ${prog.name}.`);
   app.render();
   const box = document.querySelector('form[data-form="access"] .form-status');
   if (box) {
     box.className = 'form-status ok';
-    box.textContent = !enabled ? '✓ Saved. Accreditors cannot open this program.'
-      : areas === 'ALL' ? '✓ Saved. Accreditors see every area.'
-      : `✓ Saved. Accreditors see ${picked.length ? picked.map((c) => areaLabel({ code: c })).join(', ') : 'no areas'}.`;
+    box.textContent = !enabled ? `✓ Saved. ${subject} cannot open this program.`
+      : areas === 'ALL' ? `✓ Saved. ${subject} see${target ? 's' : ''} every area.`
+      : `✓ Saved. ${subject} see${target ? 's' : ''} ${picked.length ? picked.map((c) => areaLabel({ code: c })).join(', ') : 'no areas'}.`;
   }
+}
+
+/** Remove one accreditor's own settings in a program: they follow the program default again. */
+export async function resetAccreditor(progCode, app) {
+  const prog = getProgram(progCode);
+  const target = who;
+  if (!prog || !target) return;
+  const status = document.querySelector('form[data-form="access"] .form-status');
+  if (status) { status.className = 'form-status'; status.textContent = 'Saving…'; }
+  const res = await post(prog, { action: 'saveSettings', accreditor: target, reset: true });
+  if (!res.ok) {
+    if (status) { status.className = 'form-status error'; status.textContent = res.message || 'Could not save.'; }
+    return;
+  }
+  app.state.settings[prog.code] = { ...app.state.settings[prog.code], ...res.settings };
+  app.state.touched = false;
+  toast(`✓ ${target} follows the ${prog.name} default again.`);
+  app.render();
 }
