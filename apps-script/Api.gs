@@ -3,10 +3,15 @@
  * Deploy as: Web app · Execute as: Me · Who has access: Anyone.
  *
  * GET  ?action=ping
- * GET  ?action=snapshot&token=<token>[&since=<hash>]
- *        The admin and coordinators get the full snapshot, Reference folders included.
+ * GET  ?action=snapshot&token=<token>[&since=<hash>][&ref=0]
+ *        The admin and coordinators get the full snapshot. With ref=0 (the website) it comes
+ *        without the Reference folders (refLazy: true, plus refHash and refCount); the All files
+ *        page loads those with action=reference. Without ref=0 they are included, as before.
  *        Accreditors get only the areas the admin opened, without Drive folder links
- *        (error "noAccess" if the program is closed to them).
+ *        (error "noAccess" if the program is closed to them). Never any Reference folders.
+ *        since=<hash> answers { unchanged: true } when nothing changed, without the file list.
+ * GET  ?action=reference&token=<token>[&since=<refHash>]   (coordinator or admin)
+ *        { refHash, reference: [...] }: the Reference folders only.
  * POST (body = JSON text, sent as text/plain to avoid a CORS preflight)
  *      { action: 'login', pin }                 (main program only)
  *      { action: 'logout', token }
@@ -36,7 +41,11 @@ function doGet(e) {
     }
     if (!p.action || p.action === 'snapshot') {
       var session = checkToken_(p.token, 'any');
-      return json_(snapshotFor_(session, p.since));
+      return reply_(snapshotFor_(session, p.since, p.ref === '0'));
+    }
+    if (p.action === 'reference') {
+      checkToken_(p.token, 'staff');
+      return reply_(referenceFor_(p.since));
     }
     return json_({ ok: false, error: 'invalid', message: 'Unknown action.' });
   } catch (err) {
@@ -82,36 +91,57 @@ function handleLogin_(body) {
 }
 
 // ── Snapshot, filtered by role ───────────────────────────────
-function snapshotFor_(session, since) {
-  var c = readSnapshot_();
-  if (!c) return { ok: false, error: 'notReady', message: 'No snapshot yet. Run AACCUP → Build snapshot now.' };
+var NOT_READY = { ok: false, error: 'notReady', message: 'No snapshot yet. Run AACCUP → Build snapshot now.' };
+
+/**
+ * `lazyRef` (ref=0): leave the Reference folders out (the website loads them on the All files page).
+ * When `since` still matches, only the cached meta is read, not the file list itself.
+ * Returns an object, or { raw: '<json text>' } for a snapshot sent as cached (no parse / stringify).
+ */
+function snapshotFor_(session, since, lazyRef) {
   var st = readSettings_();
+  var m = snapMeta_();
 
   if (session.role !== 'accreditor') {
     // The admin also gets each accreditor's own settings (for the admin panel); coordinators don't.
     var shown = session.role === 'admin' ? adminSettings_(st) : st;
-    if (since && c.meta && c.meta.hash === since) {
-      return { ok: true, unchanged: true, hash: c.meta.hash, generatedAt: c.meta.generatedAt, settings: shown };
+    // Without ref=0 the Reference folders are in the reply, so they are part of its hash too.
+    var hashOf = function (meta) { return lazyRef ? meta.hash : meta.hash + '~' + (meta.refHash || ''); };
+    if (since && m && hashOf(m) === since) {
+      return { ok: true, unchanged: true, hash: since, generatedAt: m.generatedAt, settings: shown,
+               refHash: m.refHash, refCount: m.refCount };
     }
-    var full = JSON.parse(c.text); // Reference folders included: admin and coordinators see them in All files
-    full.settings = shown;
-    return full;
+    var c = readSnapshot_();
+    if (!c) return NOT_READY;
+    // The cached text is a JSON object: add the fields before its closing brace. A repeated
+    // key (generatedAt, hash) replaces the earlier one when the browser parses it.
+    var tail = ',"settings":' + JSON.stringify(shown) + ',"generatedAt":' + JSON.stringify(c.meta.generatedAt || '');
+    if (lazyRef) return { raw: c.text.slice(0, -1) + tail + ',"refLazy":true}' };
+    var r = readReference_(); // Reference folders included: admin and coordinators see them in All files
+    return { raw: c.text.slice(0, -1) + ',"reference":' + (r ? r.text : '[]') + tail +
+                  ',"hash":' + JSON.stringify(hashOf(c.meta)) + '}' };
   }
 
   // This accreditor's own settings for the program if the admin set any, else the program-wide ones.
   var mine = settingsFor_(st, session.name);
   if (!mine.accreditorEnabled) throw apiError_('noAccess', 'This program is not open to accreditors.');
   var pub = { watermark: st.watermark };
-  var hash = c.meta.hash + '.' + md5_(JSON.stringify(mine.accreditorAreas)).slice(0, 8);
-  if (since && since === hash) {
-    return { ok: true, unchanged: true, hash: hash, generatedAt: c.meta.generatedAt, settings: pub };
+  var areasKey = '.' + md5_(JSON.stringify(mine.accreditorAreas)).slice(0, 8);
+  if (since && m && since === m.hash + areasKey) {
+    return { ok: true, unchanged: true, hash: since, generatedAt: m.generatedAt, settings: pub };
   }
-  var snap = JSON.parse(c.text);
+  var cs = readSnapshot_();
+  if (!cs) return NOT_READY;
+  var hash = cs.meta.hash + areasKey;
+  if (since && since === hash) {
+    return { ok: true, unchanged: true, hash: hash, generatedAt: cs.meta.generatedAt, settings: pub };
+  }
+  var snap = JSON.parse(cs.text);
   var allowed = mine.accreditorAreas === 'ALL' ? null : toSet_(mine.accreditorAreas.map(normalizeAreaCode_));
   return {
     schema: snap.schema,
     program: { code: snap.program.code, name: snap.program.name },
-    generatedAt: snap.generatedAt,
+    generatedAt: cs.meta.generatedAt || snap.generatedAt,
     hash: hash,
     looseFiles: (snap.looseFiles || []).map(viewerFile_),
     // Sections (Compliance Report, PPP, Actual Self-Survey Report) are opened and hidden like areas.
@@ -122,6 +152,15 @@ function snapshotFor_(session, since) {
     areas: snap.areas.filter(function (a) { return !allowed || allowed[normalizeAreaCode_(a.code)]; }).map(viewerArea_),
     settings: pub,
   };
+}
+
+/** Reference folders for the All files page (coordinators and admin; the caller checked the token). */
+function referenceFor_(since) {
+  var m = snapMeta_();
+  if (since && m && m.refHash === since) return { ok: true, unchanged: true, refHash: since };
+  var r = readReference_();
+  if (!r) return NOT_READY;
+  return { raw: '{"ok":true,"refHash":' + JSON.stringify(r.refHash) + ',"reference":' + r.text + '}' };
 }
 
 /**
@@ -156,6 +195,10 @@ function viewerFile_(f) {
 }
 
 // ── Viewer settings (Config tab: accreditorEnabled, accreditorAreas, watermark) ──
+// Cached for 10 minutes, so most requests don't have to open the Sheet. Saving in the admin panel
+// clears the cache at once, and so does editing the Config / AccreditorAccess tab (onEdit in Code.gs).
+var SETTINGS_TTL = 600;
+
 function readSettings_() {
   var cache = CacheService.getScriptCache();
   var raw = cache.get('settings');
@@ -163,7 +206,7 @@ function readSettings_() {
   var cfg = getConfig_();
   var flag = function (v) { return v === undefined || String(v).trim() === '' ? true : isTrue_(v); };
   var s = { accreditorEnabled: flag(cfg.accreditorEnabled), accreditorAreas: parseAreas_(cfg.accreditorAreas), watermark: flag(cfg.watermark) };
-  cache.put('settings', JSON.stringify(s), 120);
+  cache.put('settings', JSON.stringify(s), SETTINGS_TTL);
   return s;
 }
 
@@ -221,7 +264,7 @@ function readOverrides_() {
       list.push({ name: name, enabled: String(r[1]).trim() === '' ? true : isTrue_(r[1]), areas: parseAreas_(r[2]) });
     });
   }
-  cache.put('overrides', JSON.stringify(list), 120);
+  cache.put('overrides', JSON.stringify(list), SETTINGS_TTL);
   return list;
 }
 
@@ -324,18 +367,21 @@ function handleSaveKeywords_(body) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
   try {
-    var c = readSnapshot_();
-    if (!c) throw apiError_('notFound', 'No snapshot yet.');
-    var snap = JSON.parse(c.text);
+    var snap = readFullSnapshot_();
+    if (!snap) throw apiError_('notFound', 'No snapshot yet.');
     // Any file in the snapshot, Reference folders included (admin and coordinators both see them).
     if (!hasFile_(snap, fileId)) throw apiError_('notFound', 'File not found. It may have been moved or deleted. Reload the page.');
     upsertKeywords_(fileId, keywords, s.name);
+    // The hashes before and after: a page that had the "before" version and made this same
+    // change itself is up to date, so it doesn't need to download the file list again.
+    var before = { hash: snap.hash, refHash: snap.refHash };
     patchSnapshotKeywords_(snap, fileId, keywords);
   } finally {
     lock.releaseLock();
   }
   log_('keywords', s.name, fileId + ': ' + keywords.join(', '));
-  return { ok: true, fileId: fileId, keywords: keywords, updatedAt: new Date().toISOString() };
+  return { ok: true, fileId: fileId, keywords: keywords, updatedAt: new Date().toISOString(),
+           hashFrom: before.hash, hashTo: snap.hash, refHashFrom: before.refHash, refHashTo: snap.refHash };
 }
 
 var CHECK_COOLDOWN_SEC = 20;   // per session, so a stuck button can't flood Drive
@@ -388,4 +434,12 @@ function handleIssues_(body) {
 
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+/** json_, or the JSON text as it is for { raw } replies (a cached snapshot is not parsed and re-encoded). */
+function reply_(res) {
+  if (res && typeof res.raw === 'string') {
+    return ContentService.createTextOutput(res.raw).setMimeType(ContentService.MimeType.JSON);
+  }
+  return json_(res);
 }

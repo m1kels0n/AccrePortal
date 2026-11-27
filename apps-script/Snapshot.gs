@@ -238,42 +238,56 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs) {
       return ref;
     });
 
-  var body = {
+  var snap = {
     schema: 1,
     program: {
       code: cfg.programCode || 'p1',
       name: cfg.programName || 'Program',
       rootFolderUrl: 'https://drive.google.com/drive/folders/' + cfg.rootFolderId,
     },
+    generatedAt: new Date().toISOString(),
+    hash: '',
+    refHash: '',
+    stats: stats,
     looseFiles: withKw(rootLoose),
     sections: sections,
     areas: areas,
     reference: reference,
   };
-  var hash = md5_(JSON.stringify(body));
-  return {
-    schema: 1,
-    program: body.program,
-    generatedAt: new Date().toISOString(),
-    hash: hash,
-    stats: stats,
-    looseFiles: body.looseFiles,
-    sections: sections,
-    areas: areas,
-    reference: reference,
-  };
+  setSnapshotHashes_(snap);
+  return snap;
 }
 
-/** Writes Drive files only when content changed; always refreshes the cache. Returns changed. */
+/**
+ * snap.hash covers everything except the Reference folders; snap.refHash covers only them.
+ * So a change in a Reference folder (seen only on the All files page) doesn't make every
+ * accreditor download the file list again, and vice versa.
+ */
+function setSnapshotHashes_(snap) {
+  snap.hash = md5_(JSON.stringify({ schema: 1, program: snap.program, looseFiles: snap.looseFiles,
+                                    sections: snap.sections || [], areas: snap.areas }));
+  snap.refHash = md5_(JSON.stringify(snap.reference || [])).slice(0, 12);
+}
+
+/**
+ * Writes the Drive files only when their content changed. The cache is rewritten only when the
+ * content changed (or its copy is getting old); otherwise just the scan time in its meta is updated,
+ * instead of re-sending the whole file list to the cache every 5 minutes. Returns changed.
+ */
 function saveSnapshot_(cfg, snap, issuesDoc) {
   var props = PropertiesService.getScriptProperties();
-  var text = JSON.stringify(snap);
-  var changed = snap.hash !== props.getProperty('SNAP_HASH');
+  var key = snap.hash + '|' + snap.refHash;
+  var changed = key !== props.getProperty('SNAP_HASH');
   if (changed) {
-    DriveApp.getFileById(cfg.snapshotFileId).setContent(text);
-    props.setProperty('SNAP_HASH', snap.hash);
+    DriveApp.getFileById(cfg.snapshotFileId).setContent(JSON.stringify(snap));
+    props.setProperty('SNAP_HASH', key);
   }
-  cachePutChunked_('snap', text, { hash: snap.hash, generatedAt: snap.generatedAt });
+  var m = snapMeta_();
+  if (m && m.hash === snap.hash && m.refHash === snap.refHash && cacheFresh_(m)) {
+    cacheTouchMeta_('snap', m, { generatedAt: snap.generatedAt });
+  } else {
+    cacheSnapshot_(snap);
+  }
 
   var issuesText = JSON.stringify(issuesDoc);
   var issuesHash = md5_(JSON.stringify(issuesDoc.items));
@@ -281,22 +295,87 @@ function saveSnapshot_(cfg, snap, issuesDoc) {
     DriveApp.getFileById(cfg.issuesFileId).setContent(issuesText);
     props.setProperty('ISSUES_HASH', issuesHash);
   }
-  cachePutChunked_('issues', issuesText, { hash: issuesHash, generatedAt: issuesDoc.generatedAt });
+  var im = cacheMeta_('issues');
+  if (!(im && im.hash === issuesHash && cacheFresh_(im))) {
+    cachePutChunked_('issues', issuesText, { hash: issuesHash, generatedAt: issuesDoc.generatedAt });
+  }
   return changed;
 }
 
-/** Returns { text, meta: { hash, generatedAt } } or null. Cache first, then the Drive file. */
-function readSnapshot_() {
-  var c = cacheGetChunked_('snap');
-  if (c) return c;
+// ── Cached snapshot, in two parts ────────────────────────────
+// 'snap': the snapshot WITHOUT the Reference folders (plus refHash and refCount): what every
+//         page needs, and all accreditors ever get.
+// 'ref':  the Reference folders only (often large old archives): loaded by the All files page.
+// The Drive file snapshot.json keeps everything in one piece (backup, Plan B).
+var SNAP_FMT = 2;
+var CACHE_REWRITE_MS = 5 * 3600 * 1000; // rewrite the cached copy before its 6 h lifetime runs out
+
+/** Meta of the cached snapshot { hash, refHash, refCount, generatedAt, v, n, at, f } or null. Reads no chunks. */
+function snapMeta_() {
+  var m = cacheMeta_('snap');
+  return m && m.f === SNAP_FMT && m.hash ? m : null;
+}
+
+/** Split a full snapshot (Reference folders included) into the two cached parts and cache them. */
+function cacheSnapshot_(snap) {
+  var reference = snap.reference || [];
+  var refText = JSON.stringify(reference);
+  var refHash = snap.refHash || md5_(refText).slice(0, 12);
+  var main = {};
+  Object.keys(snap).forEach(function (k) { if (k !== 'reference') main[k] = snap[k]; });
+  main.refHash = refHash;
+  main.refCount = reference.length;
+  var mainText = JSON.stringify(main);
+  var meta = { f: SNAP_FMT, hash: snap.hash, refHash: refHash, refCount: reference.length, generatedAt: snap.generatedAt };
+  // The Reference part first: a reader that sees the new 'snap' meta then finds the matching 'ref'.
+  // Unchanged and still fresh: kept as it is (it is usually the biggest part).
+  var oldRm = cacheMeta_('ref');
+  var rm = oldRm && oldRm.hash === refHash && cacheFresh_(oldRm) ? oldRm : cachePutChunked_('ref', refText, { hash: refHash });
+  var sm = rm ? cachePutChunked_('snap', mainText, meta) : null;
+  if (!sm) { try { CacheService.getScriptCache().remove('snap:meta'); } catch (e) { /* the Drive file is used */ } }
+  return { mainText: mainText, refText: refText, meta: meta };
+}
+
+/** The Drive file, split and cached again. Null when there is no snapshot yet. */
+function loadSnapshotFile_() {
   var cfg = getConfig_();
   if (!cfg.snapshotFileId) return null;
   var text = DriveApp.getFileById(cfg.snapshotFileId).getBlob().getDataAsString('UTF-8');
   if (!text || text.length < 10) return null;
   var snap = JSON.parse(text);
-  var meta = { hash: snap.hash, generatedAt: snap.generatedAt };
-  cachePutChunked_('snap', text, meta);
-  return { text: text, meta: meta };
+  if (!snap || !snap.areas) return null;
+  return cacheSnapshot_(snap);
+}
+
+/** The snapshot without Reference folders: { text, meta } or null. Cache first, then the Drive file. */
+function readSnapshot_() {
+  var m = snapMeta_();
+  var text = m ? cacheGetChunks_('snap', m) : null;
+  if (text !== null) return { text: text, meta: m };
+  var c = loadSnapshotFile_();
+  return c ? { text: c.mainText, meta: c.meta } : null;
+}
+
+/** The Reference folders: { text (a JSON array), refHash } or null. */
+function readReference_() {
+  var m = snapMeta_();
+  var rm = m ? cacheMeta_('ref') : null;
+  var text = rm && rm.hash === m.refHash ? cacheGetChunks_('ref', rm) : null;
+  if (text !== null) return { text: text, refHash: m.refHash };
+  var c = loadSnapshotFile_();
+  return c ? { text: c.refText, refHash: c.meta.refHash } : null;
+}
+
+/** The whole snapshot as an object, Reference folders included (keyword saves). Null if none yet. */
+function readFullSnapshot_() {
+  var c = readSnapshot_();
+  if (!c) return null;
+  var snap = JSON.parse(c.text);
+  var r = readReference_();
+  snap.reference = r ? JSON.parse(r.text) : [];
+  snap.generatedAt = c.meta.generatedAt || snap.generatedAt;
+  delete snap.refCount;
+  return snap;
 }
 
 function readIssues_() {
@@ -309,15 +388,13 @@ function readIssues_() {
 }
 
 /**
- * After a keyword save: update the keywords of fileId in the cached snapshot
- * (the caller holds the script lock). The next scan rewrites the Drive file.
+ * After a keyword save: update the keywords of fileId in the cached snapshot (a full one, from
+ * readFullSnapshot_; the caller holds the script lock). The next scan rewrites the Drive file.
  */
 function patchSnapshotKeywords_(snap, fileId, keywords) {
   eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) f.keywords = keywords; });
-  var body = { schema: 1, program: snap.program, looseFiles: snap.looseFiles, sections: snap.sections || [], areas: snap.areas,
-               reference: snap.reference || [] };
-  snap.hash = md5_(JSON.stringify(body));
-  cachePutChunked_('snap', JSON.stringify(snap), { hash: snap.hash, generatedAt: snap.generatedAt });
+  setSnapshotHashes_(snap);
+  cacheSnapshot_(snap);
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
 }
 
@@ -498,34 +575,80 @@ function releaseScan_() {
   CacheService.getScriptCache().remove('scanRunning');
 }
 
+/**
+ * Cache `text` in 30 000-character chunks under a new version, plus `<key>:meta` (the fields of
+ * `meta` with v, n and at). The previous version's chunks are removed. Returns the meta, or null.
+ */
 function cachePutChunked_(key, text, meta) {
   var cache = CacheService.getScriptCache();
-  var version = Date.now().toString(36);
-  var n = Math.ceil(text.length / CACHE_CHUNK);
+  var old = cacheMeta_(key);
+  var version = Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
+  var n = Math.max(1, Math.ceil(text.length / CACHE_CHUNK));
   var values = {};
   for (var i = 0; i < n; i++) values[key + ':' + version + ':' + i] = text.substr(i * CACHE_CHUNK, CACHE_CHUNK);
-  values[key + ':meta'] = JSON.stringify({ v: version, n: n, hash: meta.hash, generatedAt: meta.generatedAt });
+  var m = {};
+  Object.keys(meta || {}).forEach(function (k) { m[k] = meta[k]; });
+  m.v = version;
+  m.n = n;
+  m.at = Date.now();
+  values[key + ':meta'] = JSON.stringify(m);
   try {
     cache.putAll(values, CACHE_TTL);
   } catch (e) {
     console.warn('Cache write failed (the Drive file will be used): ' + e);
     // Drop the old meta too, or readers keep getting the previous version for hours.
     try { cache.remove(key + ':meta'); } catch (e2) { console.warn('Cache meta remove failed: ' + e2); }
+    return null;
   }
+  // Free the old chunks now instead of leaving them for 6 hours. A reader that still holds the
+  // old meta simply falls back to the Drive file.
+  if (old && old.v && old.v !== version) {
+    try { cache.removeAll(chunkKeys_(key, old)); } catch (e3) { console.warn('Old cache chunks not removed: ' + e3); }
+  }
+  return m;
 }
 
-function cacheGetChunked_(key) {
-  var cache = CacheService.getScriptCache();
-  var rawMeta = cache.get(key + ':meta');
-  if (!rawMeta) return null;
-  var meta = JSON.parse(rawMeta);
+/** Update fields of a cached meta (e.g. the scan time) without rewriting its chunks. */
+function cacheTouchMeta_(key, meta, fields) {
+  var m = {};
+  Object.keys(meta).forEach(function (k) { m[k] = meta[k]; });
+  Object.keys(fields).forEach(function (k) { m[k] = fields[k]; });
+  try { CacheService.getScriptCache().put(key + ':meta', JSON.stringify(m), CACHE_TTL); } catch (e) { console.warn('Cache meta update failed: ' + e); }
+  return m;
+}
+
+/** Was this cached copy written recently enough to keep (chunks live 6 h; rewritten after 5 h)? */
+function cacheFresh_(meta) {
+  return !!meta && !!meta.at && Date.now() - meta.at < CACHE_REWRITE_MS;
+}
+
+function cacheMeta_(key) {
+  var raw = CacheService.getScriptCache().get(key + ':meta');
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch (e) { return null; }
+}
+
+function chunkKeys_(key, meta) {
   var keys = [];
   for (var i = 0; i < meta.n; i++) keys.push(key + ':' + meta.v + ':' + i);
-  var got = cache.getAll(keys);
+  return keys;
+}
+
+/** The text of a cached version, or null if any chunk is gone. */
+function cacheGetChunks_(key, meta) {
+  if (!meta || !meta.v || !(meta.n > 0)) return null;
+  var keys = chunkKeys_(key, meta);
+  var got = CacheService.getScriptCache().getAll(keys);
   var parts = [];
   for (var j = 0; j < keys.length; j++) {
     if (got[keys[j]] === undefined || got[keys[j]] === null) return null;
     parts.push(got[keys[j]]);
   }
-  return { text: parts.join(''), meta: meta };
+  return parts.join('');
+}
+
+function cacheGetChunked_(key) {
+  var meta = cacheMeta_(key);
+  var text = meta ? cacheGetChunks_(key, meta) : null;
+  return text === null ? null : { text: text, meta: meta };
 }
