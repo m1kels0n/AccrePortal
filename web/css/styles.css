@@ -156,17 +156,59 @@ body.is-login .site-footer .updated { display: none; }
 .modal-backdrop {
   position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center;
   padding: max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  background: rgba(20, 10, 14, .55); overflow-y: auto;
+  background: radial-gradient(ellipse at top, rgba(122, 0, 25, .55), rgba(20, 10, 14, .72));
+  overflow-y: auto; animation: modal-fade .25s ease-out;
 }
 .modal-box {
-  width: 100%; max-width: 520px; max-height: 100%; overflow-y: auto;
-  background: var(--card); border-radius: var(--radius); box-shadow: 0 18px 50px rgba(0, 0, 0, .35);
-  border-top: 5px solid var(--accent); padding: 24px 26px 22px;
+  width: 100%; max-width: 560px; max-height: 100%; overflow-y: auto;
+  background: var(--card); border-radius: 16px; box-shadow: 0 24px 60px rgba(0, 0, 0, .4);
+  animation: modal-rise .35s cubic-bezier(.2, .8, .2, 1);
 }
-.modal-box h2 { margin: 0 0 12px; color: var(--primary); font-size: 1.35rem; }
-.modal-box p { margin: 0 0 12px; line-height: 1.6; }
-.modal-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
-.modal-actions .btn { min-width: 120px; }
+.modal-actions { display: flex; justify-content: flex-end; margin-top: 20px; }
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-rise { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .modal-backdrop, .modal-box { animation: none; } }
+
+/* Welcome pop-up for accreditors */
+.wm-head {
+  text-align: center; color: #fff; padding: 22px 20px 18px;
+  background: linear-gradient(120deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 72%, var(--secondary)) 100%);
+  border-bottom: 4px solid var(--accent);
+}
+.wm-logos { display: flex; justify-content: center; gap: 14px; }
+.wm-logos img {
+  width: 56px; height: 56px; object-fit: contain; padding: 4px; background: #fff; border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .25);
+}
+.wm-eyebrow { margin: 12px 0 0; font-size: .75rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); }
+.wm-body { padding: 22px 26px 24px; }
+.wm-body h2 { margin: 0 0 8px; color: var(--ink); font-size: 1.7rem; line-height: 1.2; }
+.wm-name { color: var(--primary); }
+.wm-lead { margin: 0 0 14px; color: var(--ink-2); line-height: 1.6; }
+.wm-list { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 8px; }
+.wm-list li {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 10px;
+}
+.wm-list strong { display: block; line-height: 1.25; }
+.wm-list small { display: block; color: var(--muted); margin-top: 1px; }
+.wm-ico {
+  flex: none; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
+  border-radius: 50%; color: var(--primary); background: color-mix(in srgb, var(--accent) 22%, #fff);
+}
+.wm-help {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px;
+  background: color-mix(in srgb, var(--secondary) 7%, #fff); border-left: 4px solid var(--secondary); border-radius: 8px;
+}
+.wm-help p { margin: 0; line-height: 1.55; color: var(--ink-2); font-size: .94rem; }
+.wm-ico-help { width: 34px; height: 34px; color: var(--secondary); background: color-mix(in srgb, var(--secondary) 14%, #fff); }
+.wm-start { min-width: 150px; padding: 11px 22px; font-size: 1rem; font-weight: 600; border-radius: 999px; }
+.wm-start:hover { background: var(--primary); border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); filter: none; }
+@media (max-width: 480px) {
+  .wm-body { padding: 18px 18px 20px; }
+  .wm-body h2 { font-size: 1.45rem; }
+  .wm-start { width: 100%; }
+}
 .program-grid { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 16px; }
 .program-card { margin: 0; height: 100%; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .pc-head {

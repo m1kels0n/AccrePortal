@@ -184,20 +184,45 @@ const welcomeId = () => getSession()?.token || 'guest';
 
 export function closeWelcome() { store.set(WELCOME_KEY, welcomeId(), true); }
 
+// Line icons for the three things an accreditor can review (stroke colour comes from CSS).
+const WELCOME_ICONS = {
+  doc: '<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  chart: '<path d="M4 20h16M7 20v-6M12 20V8M17 20v-9"/>',
+  folder: '<path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>',
+  help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01"/>',
+};
+const welcomeIcon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WELCOME_ICONS[k]}</svg>`;
+
 /** The pop-up's HTML, or '' when it is not due (staff, or already closed in this login). */
 export function welcomeModal() {
   const s = getSession();
   if (!s || isStaff(s) || store.get(WELCOME_KEY, true) === welcomeId()) return '';
   const who = s.name && s.name !== 'Accreditor' && s.name !== 'Guest' ? s.name : '';
+  const logos = CONFIG.logos.map((l) => `<img src="${esc(l.src)}" alt="${esc(l.alt)}" width="56" height="56">`).join('');
+  const item = (icon, title, sub) => `<li><span class="wm-ico">${welcomeIcon(icon)}</span>
+      <span><strong>${title}</strong>${sub ? `<small>${sub}</small>` : ''}</span></li>`;
   return `<div class="modal-backdrop" id="welcomeModal">
-    <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
-      <h2 id="welcomeTitle">${who ? `Welcome, ${esc(who)}.` : 'Welcome.'}</h2>
-      <p>On behalf of the university, we warmly welcome you to the Accreditation Portal. Here you can review the Compliance Report,
-        the Program Performance Profile (PPP), and the Self-Survey Report with its supporting evidences for the program(s) made
-        available to you.</p>
-      <p>Should you need guidance, or have any questions or clarifications as you go through the documents, please do not
-        hesitate to reach out to our Accreditation Coordinator. We are glad to assist you.</p>
-      <div class="modal-actions"><button type="button" class="btn btn-primary" data-action="welcome-close" id="welcomeStart">Start</button></div>
+    <div class="modal-box welcome-box" role="dialog" aria-modal="true" aria-labelledby="welcomeTitle">
+      <header class="wm-head">
+        <div class="wm-logos">${logos}</div>
+        <p class="wm-eyebrow">Accreditation Portal</p>
+      </header>
+      <div class="wm-body">
+        <h2 id="welcomeTitle">${who ? `Welcome, <span class="wm-name">${esc(who)}</span>.` : 'Welcome.'}</h2>
+        <p class="wm-lead">On behalf of the university, we warmly welcome you to the Accreditation Portal.
+          Here you can review, for the program(s) made available to you:</p>
+        <ul class="wm-list">
+          ${item('doc', 'Compliance Report')}
+          ${item('chart', 'Program Performance Profile', 'PPP')}
+          ${item('folder', 'Self-Survey Report', 'with its supporting evidences')}
+        </ul>
+        <div class="wm-help">
+          <span class="wm-ico wm-ico-help">${welcomeIcon('help')}</span>
+          <p>Should you need guidance, or have any questions or clarifications as you go through the documents,
+            please do not hesitate to reach out to our Accreditation Coordinator. We are glad to assist you.</p>
+        </div>
+        <div class="modal-actions"><button type="button" class="btn btn-primary wm-start" data-action="welcome-close" id="welcomeStart">Start <span aria-hidden="true">→</span></button></div>
+      </div>
     </div>
   </div>`;
 }
