@@ -447,6 +447,9 @@ document.addEventListener('click', (e) => {
   } else if (action === 'kw-toggle') {
     const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
+  } else if (action === 'welcome-close') {
+    V.closeWelcome();
+    el.closest('.welcome-card')?.remove();
   } else if (action === 'logout') {
     logout();
   } else if (action === 'check-now') {

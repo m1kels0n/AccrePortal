@@ -1,8 +1,8 @@
 // Screens: login, choose program, choose area, workspace (file tree + content), search.
 import { CONFIG } from './config.js';
-import { esc, highlight, fileKind, fmtSize, fmtDate, plural } from './util.js';
+import { esc, highlight, fileKind, fmtSize, fmtDate, plural, store } from './util.js';
 import { href } from './router.js';
-import { isStaff, lastPlace } from './api.js';
+import { isStaff, lastPlace, getSession } from './api.js';
 import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
@@ -178,6 +178,27 @@ function programCard(prog, snap) {
     </article></li>`;
 }
 
+// ── Welcome message for accreditors (once per login; closed with ×) ──
+const WELCOME_KEY = 'accre.welcomeClosed';
+const welcomeId = () => getSession()?.token || 'guest';
+
+export function closeWelcome() { store.set(WELCOME_KEY, welcomeId(), true); }
+
+function welcomeCard() {
+  const s = getSession();
+  if (!s || isStaff(s) || store.get(WELCOME_KEY, true) === welcomeId()) return '';
+  const who = s.name && s.name !== 'Accreditor' && s.name !== 'Guest' ? s.name : '';
+  return `<section class="welcome-card" aria-label="Welcome">
+    <button type="button" class="welcome-close" data-action="welcome-close" aria-label="Close welcome message" title="Close">×</button>
+    <h2>${who ? `Welcome, ${esc(who)}.` : 'Welcome.'}</h2>
+    <p>On behalf of the university, we warmly welcome you to the Accreditation Portal. Here you can review the Compliance Report,
+      the Program Performance Profile (PPP), and the Self-Survey Report with its supporting evidences for the program(s) made
+      available to you.</p>
+    <p>Should you need guidance, or have any questions or clarifications as you go through the documents, please do not
+      hesitate to reach out to our Accreditation Coordinator. We are glad to assist you.</p>
+  </section>`;
+}
+
 export function renderHome(state) {
   const visible = CONFIG.programs.filter((p) => !state.status[p.code]?.noAccess);
   const cards = visible.map((prog) => {
@@ -194,7 +215,7 @@ export function renderHome(state) {
 
   const allFiles = isStaff() && visible.length
     ? '<p><a class="btn btn-sm" href="#/files">≡ All files of every program in one list →</a></p>' : '';
-  return `${resume}${pageHead('', 'Choose a program', allFiles)}
+  return `${welcomeCard()}${resume}${pageHead('', 'Choose a program', allFiles)}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
       : `<div class="card empty"><p>No program is open for viewing yet. Please ask the accreditation coordinator.</p></div>`}
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;
