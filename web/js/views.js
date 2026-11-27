@@ -48,6 +48,7 @@ function unavailable(prog, status) {
   return `<div class="card error-card">
     <h3>${esc(prog.name)} is not available right now</h3>
     <p>${esc(status.error || 'The evidence list could not be loaded.')}</p>
+    <p><button type="button" class="btn btn-sm" data-action="retry" data-prog="${esc(prog.code)}">↻ Try again</button></p>
   </div>`;
 }
 
@@ -265,7 +266,7 @@ function areaCard(progCode, area, label) {
 function cardPage(prog, snap, title, intro, cards, empty, folderId) {
   const add = isStaff() && folderId
     ? `<p><a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(folderId)}" target="_blank" rel="noopener">＋ Add files or folders in Google Drive</a></p>` : '';
-  return crumbs([{ label: 'Programs', href: '#/' }, { label: `${programName(prog, snap)} · ${title}`, href: location.hash || '#/' }]) +
+  return crumbs([{ label: 'Programs', href: '#/' }, { label: `${programName(prog, snap)} · ${title}`, href: esc(location.hash || '#/') }]) +
     pageHead(esc(programName(prog, snap)), title, `<p class="muted">${esc(intro)}</p>${add}`) +
     (cards ? `<ul class="area-grid">${cards}</ul>` : `<div class="card empty"><p>${esc(empty)}</p></div>`);
 }

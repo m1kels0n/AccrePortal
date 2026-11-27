@@ -3,7 +3,7 @@ import { CONFIG } from './config.js';
 import { esc, fmtDate, debounce, toast } from './util.js';
 import { parseHash, href, replaceQuery, navigate } from './router.js';
 import {
-  readCache, writeCache, removeCache, clearCaches, fetchSnapshot, isMock, post, getSession, clearSession,
+  readCache, writeCache, removeCache, clearCaches, fetchSnapshot, fetchReference, isMock, getSession, clearSession,
   isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
@@ -20,7 +20,7 @@ const state = {
   index: null,
   route: null,
   searchLimit: 200,
-  navDepth: 0,
+  refStatus: {},    // programCode → { loading } | { error } while its Reference folders load (All files page)
   touched: false,   // user typed into a form on the current screen
   openNodes: new Set(),    // tree branches the user opened
   closedNodes: new Set(),  // branches on the current path the user closed
@@ -199,7 +199,6 @@ function render(background = false) {
   document.body.classList.toggle('is-workspace', workspace);
   document.body.classList.toggle('is-login', route.name === 'login');
   document.body.classList.toggle('is-files', workspace && route.name === 'files');
-  document.body.classList.toggle('is-files', workspace && route.name === 'files');
   document.body.classList.toggle('tree-open', workspace && state.treeOpen);
   // A document is open: the tree tucks away into a drawer so the document gets the full width.
   document.body.classList.toggle('has-doc', workspace && !!route.fileId && !searching);
@@ -214,6 +213,7 @@ function render(background = false) {
     if (route.fileId && !searching) setupViewer();
   }
   if (route.name === 'admin') A.loadAdminData(route.prog, state);
+  if (route.name === 'files') CONFIG.programs.forEach((p) => ensureReference(p.code));
   if (route.name === 'login') document.getElementById('pin')?.focus();
   setTitle(route, searching);
   renderChrome();
@@ -304,12 +304,21 @@ async function refresh(code, force = false) {
     if (stale()) return;
     if (data && data.unchanged && had) {
       if (data.generatedAt) had.generatedAt = data.generatedAt;
+      // Saved again only when something kept in it changed (not every 5 minutes for the scan time).
+      const keep = JSON.stringify([had.settings, had.refHash]);
       if (data.settings) had.settings = data.settings;
-      writeCache(code, had);
+      if (data.refHash !== undefined) { had.refHash = data.refHash; had.refCount = data.refCount; }
+      if (JSON.stringify([had.settings, had.refHash]) !== keep) writeCache(code, had);
     } else if (data && Array.isArray(data.areas)) {
       changed = !had || had.hash !== data.hash || !data.hash || isMock();
-      state.snaps[code] = prepareSnapshot(data);
-      writeCache(code, data);
+      const snap = prepareSnapshot(data);
+      // Reference folders loaded earlier and still current: keep them instead of loading them again.
+      if (snap.refLazy && had?.refLoaded && had.refLoaded === snap.refHash) {
+        snap.referenceAreas = had.referenceAreas;
+        snap.refLoaded = had.refLoaded;
+      }
+      state.snaps[code] = snap;
+      writeCache(code, snap);
       reindex();
     } else {
       throw new Error('Unexpected response from the server.');
@@ -338,6 +347,39 @@ async function refresh(code, force = false) {
   if (JSON.stringify(state.settings[code] || null) !== settingsBefore) changed = true;
   if (changed || before !== statusKey(state.status[code])) render(true);
   else renderChrome();
+  if (state.route?.name === 'files') ensureReference(code);
+}
+
+/**
+ * All files page: load a program's Reference folders if this snapshot came without them
+ * (they are often big old archives, and no other page uses them). Shown as soon as they arrive.
+ */
+async function ensureReference(code) {
+  const snap = state.snaps[code];
+  const prog = getProgram(code);
+  if (!prog || !snap?.refLazy || !snap.refCount || snap.refLoaded === snap.refHash || !isStaff()) return;
+  if (state.refStatus[code]?.loading) return;
+  const tok = getSession().token;
+  state.refStatus[code] = { loading: true };
+  if (state.route?.name === 'files') F.redrawList(app);
+  try {
+    const res = await fetchReference(prog);
+    if (!getSession() || getSession().token !== tok) return;
+    if (!res || !Array.isArray(res.reference)) throw new Error('Unexpected response from the server.');
+    const cur = state.snaps[code];
+    if (!cur) return;
+    cur.reference = res.reference;
+    cur.referenceAreas = null;
+    prepareSnapshot(cur); // turns `reference` into referenceAreas; the rest is already prepared
+    cur.refLoaded = cur.refHash = res.refHash;
+    delete state.refStatus[code];
+    writeCache(code, cur);
+    reindex();
+  } catch (err) {
+    if (!getSession() || getSession().token !== tok) return;
+    state.refStatus[code] = { error: err.name === 'AbortError' ? 'The server took too long to respond.' : err.message || 'Network error' };
+  }
+  if (state.route?.name === 'files') { F.redrawList(app); F.redrawFilters(app); }
 }
 
 function refreshAll(force = false) {
@@ -369,10 +411,12 @@ function resetData() {
   state.snaps = {};
   state.status = {};
   state.settings = {};
+  state.refStatus = {};
   state.openNodes.clear();
   state.closedNodes.clear();
   state.treeOpen = false;
   state.files = F.defaultFilters();
+  A.resetAdminCache();
   reindex();
 }
 
@@ -386,7 +430,7 @@ function onLogin() {
 }
 
 function logout() {
-  post(mainProgram(), { action: 'logout' });
+  // Nothing to tell the server (tokens just run out), so no request: logging out is instant.
   clearSession();
   clearCaches();
   nextHash.clear();
@@ -427,7 +471,6 @@ function clearSearch() {
 }
 
 window.addEventListener('hashchange', () => {
-  state.navDepth++;
   const r = parseHash();
   // Navigating to a node opens it again even if it was closed by hand earlier.
   if (r.prog && r.area && r.param) {
@@ -470,6 +513,17 @@ document.addEventListener('click', (e) => {
   } else if (action === 'kw-toggle') {
     const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
+  } else if (action === 'retry') {
+    // "Try again" on a program that could not be loaded.
+    const code = el.dataset.prog;
+    if (getProgram(code) && !state.status[code]?.loading) {
+      state.status[code] = { loading: true };
+      render();
+      refresh(code, true);
+    }
+  } else if (action === 'ref-retry') {
+    for (const p of CONFIG.programs) if (state.refStatus[p.code]?.error) delete state.refStatus[p.code];
+    CONFIG.programs.forEach((p) => ensureReference(p.code));
   } else if (action === 'welcome-close') {
     closeWelcome();
   } else if (action === 'logout') {
@@ -517,7 +571,12 @@ main.addEventListener('input', (e) => {
   if (e.target.name === 'pin') {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 6);
     if (digits !== e.target.value) e.target.value = digits;
-    if (digits.length === 6) e.target.form.requestSubmit();
+    if (digits.length === 6) {
+      const form = e.target.form;
+      // requestSubmit is missing on older iPads/iPhones (Safari before 16): press the button instead.
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.querySelector('button[type=submit]')?.click();
+    }
     return;
   }
   // All files filters (menus fire `input` too): redraw just the list. Not "touched": the list
@@ -552,6 +611,15 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if (e.key === 'Escape' && state.treeOpen) setTreeOpen(false);
+  // "/" jumps to the search box (unless typing somewhere already).
+  if (e.key === '/' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.target.closest?.('input, textarea, select, [contenteditable]')) {
+    const form = document.getElementById('searchForm');
+    if (!document.getElementById('toolbar').hidden && !form.hidden) {
+      e.preventDefault();
+      input.focus();
+      input.select();
+    }
+  }
 });
 
 // Accreditors: no right-click menu and no dragging (stops the easy "copy link" routes).

@@ -70,6 +70,13 @@ export async function handleSaveKeywords(form, app) {
   const snap = app.state.snaps[progCode];
   if (snap) {
     for (const hit of locateFile(snap, fileId)) hit.file.keywords = res.keywords;
+    // This copy now matches the server's new version, if it matched the one just before the save:
+    // take the new hashes, so the next refresh doesn't download the whole file list again.
+    if (res.hashFrom && snap.hash === res.hashFrom) snap.hash = res.hashTo;
+    if (res.refHashFrom && snap.refHash === res.refHashFrom) {
+      if (snap.refLoaded === res.refHashFrom) snap.refLoaded = res.refHashTo;
+      snap.refHash = res.refHashTo;
+    }
     writeCache(progCode, snap);
     app.reindex();
   }

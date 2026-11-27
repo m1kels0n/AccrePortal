@@ -8,7 +8,23 @@ import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realArea
 
 // ── Per-accreditor access ──
 let accNames = null; // accreditor names from the main program's Access tab (null until loaded)
+let accNamesAt = 0;  // when they were loaded
+let accNamesLoading = null;
 let who = '';        // accreditor the access card is editing ('' = the program default for everyone)
+
+// The admin page redraws often (picking a name, saving, background updates). Issues and names
+// are kept for a short while instead of asking the server again on every redraw.
+const KEEP_MS = 60000;
+const issuesCache = new Map(); // programCode → { at, res }
+
+/** Forget everything loaded for the admin page (logout / new login). */
+export function resetAdminCache() {
+  accNames = null;
+  accNamesAt = 0;
+  accNamesLoading = null;
+  who = '';
+  issuesCache.clear();
+}
 
 const sameName = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 const findOverride = (settings, name) => (settings?.overrides || []).find((o) => sameName(o.name, name)) || null;
@@ -188,13 +204,20 @@ const ISSUE_LABELS = {
   deepFile: ['Folders nested too deep', 'Only 6 levels of subfolders inside an indicator are scanned. Move these files up a few levels.'],
 };
 
-/** Fetch issues + status after the admin page is in the DOM. */
-export async function loadAdminData(progCode, state) {
+/** Fetch issues + status after the admin page is in the DOM (`force`: after Refresh now / Rebuild). */
+export async function loadAdminData(progCode, state, force = false) {
   const prog = getProgram(progCode) || CONFIG.programs[0];
   const box = document.getElementById('adm-issues');
   if (!isAdmin() || !box) return;
   if (state) loadAccreditorNames(prog, state);
-  const res = await post(prog, { action: 'issues' });
+  const hit = issuesCache.get(prog.code);
+  let res;
+  if (!force && hit && Date.now() - hit.at < KEEP_MS) {
+    res = hit.res;
+  } else {
+    res = await post(prog, { action: 'issues' });
+    if (res.ok) issuesCache.set(prog.code, { at: Date.now(), res });
+  }
   // Drop a late answer after leaving the page or switching to another program's tab.
   const cur = parseHash();
   const curCode = (getProgram(cur.prog) || CONFIG.programs[0]).code;
@@ -230,9 +253,16 @@ export async function loadAdminData(progCode, state) {
 
 /** Ask the main program for the accreditor names, then fill the "Settings for" menu in place (no redraw, so nothing typed is lost). */
 async function loadAccreditorNames(prog, state) {
-  const res = await post(mainProgram(), { action: 'accreditors' });
+  // Already loaded: renderAdmin used them, nothing to fill in.
+  if (accNames !== null && Date.now() - accNamesAt < KEEP_MS) return;
+  if (!accNamesLoading) {
+    accNamesLoading = post(mainProgram(), { action: 'accreditors' }).finally(() => { accNamesLoading = null; });
+  }
+  const res = await accNamesLoading;
   if (!res.ok || !Array.isArray(res.names)) return;
+  if (!isAdmin()) return; // logged out meanwhile
   accNames = res.names;
+  accNamesAt = Date.now();
   const sel = document.getElementById('adm-who');
   if (!sel || !sel.isConnected || sel.dataset.prog !== prog.code) return;
   sel.innerHTML = whoOptions(state, prog);
@@ -271,7 +301,7 @@ export async function adminAction(kind, progCode, button, app) {
   status.textContent = '✓ Done. Reloading data…';
   toast(`✓ ${kind === 'rebuild' ? 'Structure rebuilt' : 'Snapshot refreshed'}${res.ms ? ' in ' + (res.ms / 1000).toFixed(1) + ' s' : ''}.`);
   await app.refresh(progCode, true);
-  loadAdminData(progCode, app.state);
+  loadAdminData(progCode, app.state, true);
 }
 
 /** Watermark is one setting for every program: saved to each program's backend. */

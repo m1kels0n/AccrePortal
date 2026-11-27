@@ -8,8 +8,8 @@ export const CONFIG = {
   title: 'MAIE-AS and MAT-THE Program Accreditation',
 
   logos: [
-    { src: 'assets/tup-logo.png', alt: 'TUP logo' },
-    { src: 'assets/cie-logo.png', alt: 'CIE logo' },
+    { src: 'assets/tup-logo-128.png', alt: 'TUP logo' },
+    { src: 'assets/cie-logo-128.png', alt: 'CIE logo' },
   ],
 
   colors: {

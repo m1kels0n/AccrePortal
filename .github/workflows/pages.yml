@@ -31,6 +31,8 @@ jobs:
           V="${GITHUB_SHA::8}"
           sed -i -E "s#(from '\./[A-Za-z0-9_-]+\.js)'#\1?v=$V'#g" web/js/*.js
           sed -i -E "s#\.(css|js)\?v=[0-9A-Za-z]+#.\1?v=$V#g" web/index.html
+          # <link rel="modulepreload" href="js/x.js">: same URL as the stamped import, or it would download twice.
+          sed -i -E "s#(rel=\"modulepreload\" href=\"js/[A-Za-z0-9_-]+\.js)\"#\1?v=$V\"#g" web/index.html
           grep -c "?v=$V" web/index.html web/js/*.js
       - uses: actions/upload-pages-artifact@v3
         with:

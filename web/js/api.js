@@ -5,6 +5,7 @@ import { store } from './util.js';
 import { locateFile, areaKey } from './model.js';
 
 const CACHE_PREFIX = 'aaccup:v2:snap:';
+const REF_PREFIX = 'aaccup:v2:ref:';   // Reference folders, kept apart (big; a full storage loses only them)
 const SESSION_KEY = 'aaccup:v2:session';
 const NEXT_KEY = 'aaccup:v2:next';
 const LAST_KEY = 'aaccup:v2:last';
@@ -58,34 +59,89 @@ export const lastPlace = {
 
 // ── Snapshot cache (per tab: nothing stays on a shared computer after logout) ──
 function cacheKey(code) { return CACHE_PREFIX + (isMock() ? 'mock:' : '') + code; }
+function refKey(code) { return REF_PREFIX + (isMock() ? 'mock:' : '') + code; }
+const refWritten = {}; // programCode → refLoaded last saved (the Reference copy is rewritten only when it changes)
+
 export function readCache(code) {
   const c = store.get(cacheKey(code), true);
-  return c && c.data && c.data.areas ? c : null;
+  if (!c || !c.data || !c.data.areas) return null;
+  const r = c.data.refLazy ? store.get(refKey(code), true) : null;
+  if (r && r.refLoaded && Array.isArray(r.referenceAreas)) {
+    c.data.referenceAreas = r.referenceAreas;
+    c.data.refLoaded = r.refLoaded;
+    refWritten[code] = r.refLoaded;
+  }
+  return c;
 }
+/**
+ * Save a (prepared) snapshot for this tab. Reference folders loaded on their own (refLazy) go in
+ * a separate entry, written only when they change.
+ */
 export function writeCache(code, data) {
-  store.set(cacheKey(code), { fetchedAt: new Date().toISOString(), data }, true);
+  if (!data.refLazy) {
+    store.set(cacheKey(code), { fetchedAt: new Date().toISOString(), data }, true);
+    return;
+  }
+  const { referenceAreas, refLoaded, ...main } = data;
+  store.set(cacheKey(code), { fetchedAt: new Date().toISOString(), data: main }, true);
+  if (refLoaded && referenceAreas && refWritten[code] !== refLoaded) {
+    if (store.set(refKey(code), { refLoaded, referenceAreas }, true)) refWritten[code] = refLoaded;
+  }
 }
 export function removeCache(code) {
-  store.remove(CACHE_PREFIX + code, true);
-  store.remove(CACHE_PREFIX + 'mock:' + code, true);
+  for (const m of ['', 'mock:']) {
+    store.remove(CACHE_PREFIX + m + code, true);
+    store.remove(REF_PREFIX + m + code, true);
+  }
+  delete refWritten[code];
 }
 export function clearCaches() {
-  for (const p of CONFIG.programs) {
-    store.remove(CACHE_PREFIX + p.code, true);
-    store.remove(CACHE_PREFIX + 'mock:' + p.code, true);
-  }
+  for (const p of CONFIG.programs) removeCache(p.code);
 }
 
 // ── Low level fetch with timeout ────────────────────────────
+function netError(message, retryable) {
+  const e = new Error(message);
+  e.code = 'network';
+  e.retryable = retryable;
+  return e;
+}
+
 async function fetchJson(url, options = {}, timeoutMs = CONFIG.requestTimeoutMs) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
   try {
-    const res = await fetch(url, { ...options, signal: ctrl.signal, redirect: 'follow' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.json();
+    let res;
+    try {
+      res = await fetch(url, { ...options, signal: ctrl.signal, redirect: 'follow' });
+    } catch (err) {
+      if (err.name === 'AbortError') throw err;
+      throw netError('Cannot reach the server. Check your internet connection.', true);
+    }
+    if (!res.ok) {
+      throw netError(`The server is not answering properly right now (error ${res.status}). Please try again in a minute.`,
+        res.status >= 500 || res.status === 429);
+    }
+    const text = await res.text();
+    try {
+      return JSON.parse(text);
+    } catch {
+      // e.g. a Google error page instead of JSON ("Service invoked too many times", a sign-in page…)
+      throw netError('The server sent an unexpected reply. Please try again in a minute.', true);
+    }
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/** GET with one quiet retry after a short pause (Apps Script sometimes fails once, then works). */
+async function getJson(url) {
+  try {
+    return await fetchJson(url);
+  } catch (err) {
+    if (!err.retryable) throw err; // a timeout has already waited long enough
+    await delay(1500);
+    return fetchJson(url);
   }
 }
 
@@ -115,13 +171,30 @@ export async function fetchSnapshot(prog, sinceHash) {
   const s = getSession();
   if (isMock()) return mockSnapshot(prog, s);
   if (prog.source === 'static') {
-    return fetchJson(prog.staticUrl + (prog.staticUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
+    return getJson(prog.staticUrl + (prog.staticUrl.includes('?') ? '&' : '?') + 't=' + Date.now());
   }
   if (!prog.apiUrl) throw new Error('No apiUrl set in config.js for ' + prog.name);
   const params = new URLSearchParams({ action: 'snapshot' });
   if (s?.token) params.set('token', s.token);
   if (sinceHash) params.set('since', sinceHash);
-  const data = await fetchJson(prog.apiUrl + '?' + params);
+  // Staff: without the Reference folders, which only the All files page needs (fetchReference).
+  // An older backend ignores this and sends them anyway, which still works.
+  if (isStaff(s)) params.set('ref', '0');
+  const data = await getJson(prog.apiUrl + '?' + params);
+  if (data && data.ok === false) {
+    if (data.error === 'expired' && endsSession(prog, s)) onExpired();
+    throw apiError(data);
+  }
+  return data;
+}
+
+/** Coordinators and admin: a program's Reference folders, { refHash, reference: [...] }. */
+export async function fetchReference(prog) {
+  const s = getSession();
+  if (isMock()) return mockReference(prog, s);
+  const params = new URLSearchParams({ action: 'reference' });
+  if (s?.token) params.set('token', s.token);
+  const data = await getJson(prog.apiUrl + '?' + params);
   if (data && data.ok === false) {
     if (data.error === 'expired' && endsSession(prog, s)) onExpired();
     throw apiError(data);
@@ -142,7 +215,7 @@ export async function post(prog, payload, opts = {}) {
     try {
       res = await fetchJson(prog.apiUrl, { method: 'POST', body: JSON.stringify(body) }, opts.timeoutMs);
     } catch (err) {
-      res = { ok: false, error: 'network', message: err.name === 'AbortError' ? 'The server took too long. Try again.' : 'Cannot reach the server. Check your connection.' };
+      res = { ok: false, error: 'network', message: err.name === 'AbortError' ? 'The server took too long. Try again.' : err.message || 'Cannot reach the server. Check your connection.' };
     }
   }
   if (res && res.error === 'expired' && payload.action !== 'login' && endsSession(prog, s)) onExpired();
@@ -249,8 +322,28 @@ async function mockSnapshot(prog, session) {
   }
   const settings = mockSettings(prog.code);
   // Only the admin also gets each accreditor's own settings (see Api.gs adminSettings_).
-  snap.settings = s.role === 'admin' ? { ...settings, overrides: mockOverrides(prog.code) } : settings; // staff get Reference folders too (see Api.gs snapshotFor_)
+  snap.settings = s.role === 'admin' ? { ...settings, overrides: mockOverrides(prog.code) } : settings;
+  // Staff: Reference folders are loaded separately by the All files page (see Api.gs snapshotFor_ with ref=0).
+  const refs = snap.reference || [];
+  snap.refHash = mockRefHash(refs);
+  snap.refCount = refs.length;
+  snap.refLazy = true;
+  delete snap.reference;
   return snap;
+}
+
+const mockRefHash = (refs) => 'r' + JSON.stringify(refs).length.toString(36);
+
+async function mockReference(prog, session) {
+  await delay(400);
+  const s = mockReadToken(session?.token);
+  if (!s) { onExpired(); throw apiError({ error: 'expired', message: 'Your session expired. Please log in again.' }); }
+  if (s.role !== 'coordinator' && s.role !== 'admin') throw apiError({ error: 'forbidden', message: 'Coordinators only.' });
+  const snap = await loadMockRaw(prog);
+  const kw = mockKeywordStore(prog.code);
+  const refs = snap.reference || [];
+  for (const r of refs) for (const f of r.files || []) if (kw[f.id]) f.keywords = kw[f.id];
+  return { ok: true, refHash: mockRefHash(refs), reference: refs };
 }
 
 async function mockPost(prog, payload) {

@@ -172,6 +172,7 @@ body.is-login .site-footer .updated { display: none; }
 /* Welcome pop-up for accreditors */
 .wm-head {
   text-align: center; color: #fff; padding: 22px 20px 18px;
+  background: var(--primary); /* older browsers without color-mix() */
   background: linear-gradient(120deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 72%, var(--secondary)) 100%);
   border-bottom: 4px solid var(--accent);
 }
@@ -194,14 +195,14 @@ body.is-login .site-footer .updated { display: none; }
 .wm-list small { display: block; color: var(--muted); margin-top: 1px; }
 .wm-ico {
   flex: none; display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px;
-  border-radius: 50%; color: var(--primary); background: color-mix(in srgb, var(--accent) 22%, #fff);
+  border-radius: 50%; color: var(--primary); background: #f3ebd0; background: color-mix(in srgb, var(--accent) 22%, #fff);
 }
 .wm-help {
   display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px;
-  background: color-mix(in srgb, var(--secondary) 7%, #fff); border-left: 4px solid var(--secondary); border-radius: 8px;
+  background: #eff3f8; background: color-mix(in srgb, var(--secondary) 7%, #fff); border-left: 4px solid var(--secondary); border-radius: 8px;
 }
 .wm-help p { margin: 0; line-height: 1.55; color: var(--ink-2); font-size: .94rem; }
-.wm-ico-help { width: 34px; height: 34px; color: var(--secondary); background: color-mix(in srgb, var(--secondary) 14%, #fff); }
+.wm-ico-help { width: 34px; height: 34px; color: var(--secondary); background: #e0e6f1; background: color-mix(in srgb, var(--secondary) 14%, #fff); }
 .wm-start { min-width: 150px; padding: 11px 22px; font-size: 1rem; font-weight: 600; border-radius: 999px; }
 .wm-start:hover { background: var(--primary); border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 45%, transparent); filter: none; }
 @media (max-width: 480px) {
@@ -213,6 +214,7 @@ body.is-login .site-footer .updated { display: none; }
 .program-card { margin: 0; height: 100%; padding: 0; overflow: hidden; display: flex; flex-direction: column; }
 .pc-head {
   display: flex; align-items: center; gap: 14px; padding: 18px 18px 16px; color: #fff;
+  background: var(--primary);
   background: linear-gradient(110deg, var(--primary) 0%, color-mix(in srgb, var(--primary) 70%, var(--secondary)) 100%);
   border-bottom: 3px solid var(--accent);
 }
@@ -233,7 +235,7 @@ a.ptile:hover, a.ptile:focus-visible { transform: translateY(-2px); border-color
 .ptile-icon {
   grid-row: 1 / span 2; width: 40px; height: 40px; padding: 8px; border-radius: 10px;
   fill: none; stroke: var(--primary); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
-  background: color-mix(in srgb, var(--primary) 9%, #fff);
+  background: #f3e8ea; background: color-mix(in srgb, var(--primary) 9%, #fff);
 }
 .ptile-text { display: flex; flex-direction: column; min-width: 0; }
 .ptile-title { font-weight: 700; line-height: 1.25; }
@@ -277,10 +279,10 @@ a.ptile:hover, a.ptile:focus-visible { transform: translateY(-2px); border-color
   font-variant-numeric: tabular-nums;
 }
 .badge-area { background: var(--primary); color: #fff; min-width: 46px; }
-.badge-param { background: color-mix(in srgb, var(--accent) 25%, #fff); color: #5a4400; }
-.badge-S { background: color-mix(in srgb, var(--s) 12%, #fff); color: var(--s); }
-.badge-I { background: color-mix(in srgb, var(--i) 12%, #fff); color: var(--i); }
-.badge-O { background: color-mix(in srgb, var(--o) 12%, #fff); color: var(--o); }
+.badge-param { background: #f2e8c9; background: color-mix(in srgb, var(--accent) 25%, #fff); color: #5a4400; }
+.badge-S { background: #e2eff1; background: color-mix(in srgb, var(--s) 12%, #fff); color: var(--s); }
+.badge-I { background: #efe8f4; background: color-mix(in srgb, var(--i) 12%, #fff); color: var(--i); }
+.badge-O { background: #e4efe7; background: color-mix(in srgb, var(--o) 12%, #fff); color: var(--o); }
 .eyebrow .badge { height: 22px; min-width: 0; font-size: .75rem; text-transform: none; letter-spacing: 0; }
 
 /* Progress (coordinators/admin) */
@@ -323,14 +325,14 @@ body.is-workspace .site-footer { display: none; }
   padding: 4px 6px; border-radius: 6px; text-decoration: none; color: var(--ink); font-size: .84rem; line-height: 1.3;
 }
 .tn-link:hover { background: var(--bg); }
-.tn-link.active { background: color-mix(in srgb, var(--secondary) 10%, #fff); color: var(--secondary); font-weight: 600; box-shadow: inset 3px 0 0 var(--secondary); }
+.tn-link.active { background: #e9edf5; background: color-mix(in srgb, var(--secondary) 10%, #fff); color: var(--secondary); font-weight: 600; box-shadow: inset 3px 0 0 var(--secondary); }
 .tn-text { flex: 1; min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
 .tn-param > details > summary .tn-text { font-weight: 600; }
 .tn-code { flex-shrink: 0; font-weight: 700; font-size: .75rem; min-width: 30px; padding: 1px 4px; border-radius: 4px; text-align: center; background: #f1ece4; color: var(--primary); }
-.tn-param-code { background: color-mix(in srgb, var(--accent) 25%, #fff); color: #5a4400; }
-.tn-S { background: color-mix(in srgb, var(--s) 12%, #fff); color: var(--s); }
-.tn-I { background: color-mix(in srgb, var(--i) 12%, #fff); color: var(--i); }
-.tn-O { background: color-mix(in srgb, var(--o) 12%, #fff); color: var(--o); }
+.tn-param-code { background: #f2e8c9; background: color-mix(in srgb, var(--accent) 25%, #fff); color: #5a4400; }
+.tn-S { background: #e2eff1; background: color-mix(in srgb, var(--s) 12%, #fff); color: var(--s); }
+.tn-I { background: #efe8f4; background: color-mix(in srgb, var(--i) 12%, #fff); color: var(--i); }
+.tn-O { background: #e4efe7; background: color-mix(in srgb, var(--o) 12%, #fff); color: var(--o); }
 .tn-count { flex-shrink: 0; font-size: .72rem; color: var(--muted); padding-top: 1px; font-variant-numeric: tabular-nums; }
 .tn-missing { flex-shrink: 0; color: var(--err); font-size: .7rem; padding-top: 2px; }
 .tn-ind.empty > details > summary .tn-text { color: var(--muted); }
@@ -378,7 +380,7 @@ body.is-workspace .site-footer { display: none; }
 .fl { list-style: none; margin: 0; padding: 0; }
 .fl-item { display: flex; align-items: center; gap: 2px; padding-right: 4px; border-radius: 6px; }
 .fl-item:hover { background: var(--bg); }
-.fl-item.active { background: color-mix(in srgb, var(--secondary) 10%, #fff); box-shadow: inset 3px 0 0 var(--secondary); }
+.fl-item.active { background: #e9edf5; background: color-mix(in srgb, var(--secondary) 10%, #fff); box-shadow: inset 3px 0 0 var(--secondary); }
 .fl-link { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 8px; padding: 6px; border-radius: 6px; text-decoration: none; color: var(--ink); line-height: 1.3; }
 .fl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .fl-name { font-size: .85rem; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
@@ -391,6 +393,9 @@ body.is-workspace .site-footer { display: none; }
 .fl-pager .btn:disabled { opacity: .45; cursor: default; }
 .fl + .fl-pager { margin-top: 10px; }
 .fl-empty { margin: 12px 8px; color: var(--muted); font-size: .9rem; }
+.fl-note { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 8px 8px; font-size: .8rem; color: var(--muted); }
+.fl-note.error { color: var(--err); }
+.spinner-sm { width: 14px; height: 14px; border-width: 2px; }
 .files-bar { flex-wrap: wrap; }
 .viewer-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .files-bar .viewer-actions { flex-shrink: 1; min-width: 0; }
@@ -483,7 +488,7 @@ body.role-viewer .viewer-name, body.role-viewer .tn-link { -webkit-user-select: 
 .result-ind .result-path { color: var(--muted); }
 a.result-path:hover { text-decoration: underline; }
 .match-kw { font-size: .82rem; color: var(--ink-2); padding-left: 46px; }
-mark { background: color-mix(in srgb, var(--accent) 45%, #fff); color: inherit; border-radius: 3px; padding: 0 1px; }
+mark { background: #e7d59e; background: color-mix(in srgb, var(--accent) 45%, #fff); color: inherit; border-radius: 3px; padding: 0 1px; }
 
 /* Forms (login, admin) */
 .form { display: grid; gap: 12px; margin-top: 12px; }

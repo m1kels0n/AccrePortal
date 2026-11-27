@@ -8,8 +8,25 @@
   <meta property="og:title" content="TUP-CIE Accreditation 2026">
   <meta property="og:description" content="TUP-CIE Accreditation 2026">
   <meta name="robots" content="noindex">
-  <link rel="icon" type="image/png" href="assets/tup-logo.png">
+  <link rel="icon" type="image/png" href="assets/tup-logo-128.png">
+  <!-- Open the connections early: the backend (its reply comes from googleusercontent.com) and the document previews. -->
+  <link rel="preconnect" href="https://script.google.com" crossorigin>
+  <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
+  <link rel="preconnect" href="https://drive.google.com">
+  <link rel="preconnect" href="https://docs.google.com">
   <link rel="stylesheet" href="css/styles.css?v=10">
+  <!-- Fetch every module at once instead of one import level at a time.
+       The deploy workflow adds the same ?v= to these as to the imports. -->
+  <link rel="modulepreload" href="js/config.js">
+  <link rel="modulepreload" href="js/util.js">
+  <link rel="modulepreload" href="js/router.js">
+  <link rel="modulepreload" href="js/model.js">
+  <link rel="modulepreload" href="js/api.js">
+  <link rel="modulepreload" href="js/search.js">
+  <link rel="modulepreload" href="js/views.js">
+  <link rel="modulepreload" href="js/staff.js">
+  <link rel="modulepreload" href="js/admin.js">
+  <link rel="modulepreload" href="js/files.js">
 </head>
 <body>
   <header class="site-header">

@@ -132,15 +132,30 @@ function pager(page, pages) {
   </nav>`;
 }
 
+/** A line above the list while Reference folders are still loading (or failed to). */
+function refNote(state) {
+  const loading = CONFIG.programs.filter((p) => state.refStatus?.[p.code]?.loading);
+  const failed = CONFIG.programs.filter((p) => state.refStatus?.[p.code]?.error);
+  if (loading.length) {
+    return `<p class="fl-note"><span class="spinner spinner-sm"></span> Loading the Reference folders${loading.length < CONFIG.programs.length ? ' of ' + esc(loading.map((p) => p.name).join(', ')) : ''}…</p>`;
+  }
+  if (failed.length) {
+    return `<p class="fl-note error">Reference folders of ${esc(failed.map((p) => p.name).join(', '))} could not be loaded
+      (${esc(state.refStatus[failed[0].code].error)}). <button type="button" class="linklike" data-action="ref-retry">Try again</button></p>`;
+  }
+  return '';
+}
+
 /** The list, its pager and the count line (redrawn on their own while the user types in the filter). */
 function listParts(state, route) {
   const all = state.index?.files || [];
+  const note = refNote(state);
   if (!all.length) {
     const loading = CONFIG.programs.some((p) => state.status[p.code]?.loading);
     return {
       count: '',
       list: loading ? '<div class="loading-block"><span class="spinner"></span> Loading…</div>'
-        : '<p class="fl-empty">No documents yet.</p>',
+        : note + '<p class="fl-empty">No documents yet.</p>',
     };
   }
   const { hits, tokens } = filtered(state);
@@ -156,20 +171,28 @@ function listParts(state, route) {
   if (!hits.length) {
     return {
       count: countText,
-      list: `<p class="fl-empty">No files match these filters.
+      list: `${note}<p class="fl-empty">No files match these filters.
         <button type="button" class="linklike" data-action="files-reset">Clear filters</button></p>`,
     };
   }
   const rows = shown.map((e) => row(e, sameEntry(e, route), tokens, names, multi)).join('');
   const nav = pager(page, pages);
-  return { count: countText, list: `${nav}<ul class="fl">${rows}</ul>${nav}` };
+  return { count: countText, list: `${note}${nav}<ul class="fl">${rows}</ul>${nav}` };
 }
+
+const optionsHtml = (options, value) =>
+  options.map(([v, text]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(text)}</option>`).join('');
 
 function select(name, label, options, value) {
   return `<label><span class="sr-only">${esc(label)}</span>
-    <select data-files-filter="${name}" aria-label="${esc(label)}">
-      ${options.map(([v, text]) => `<option value="${esc(v)}" ${v === value ? 'selected' : ''}>${esc(text)}</option>`).join('')}
-    </select></label>`;
+    <select data-files-filter="${name}" aria-label="${esc(label)}">${optionsHtml(options, value)}</select></label>`;
+}
+
+/** Refill the Section menu in place (e.g. once Reference folders arrive), unless it is open right now. */
+export function redrawFilters(app) {
+  const sel = document.querySelector('select[data-files-filter="section"]');
+  if (!sel || document.activeElement === sel) return;
+  sel.innerHTML = optionsHtml([['all', 'All sections'], ...sectionOptions(app.state)], app.state.files.section);
 }
 
 function filtersHtml(state) {
