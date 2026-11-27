@@ -84,7 +84,7 @@ Program 1 - AACCUP/
   - The Actual Self-Survey Report opens its documents directly (a single document opens straight away).
   - A new section **folder** is picked up on the next scan (no Rebuild structure needed), and so are new files and subfolders inside it.
 - Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
-- A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin only**, in **All files** (not on the program cards, in the search box, in counts, or to coordinators and accreditors). Use it for material kept outside the program folder.
+- A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin and coordinators**, in **All files** only (not on the program cards, in the search box or in counts, and never to accreditors). Use it for material kept outside the program folder.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):

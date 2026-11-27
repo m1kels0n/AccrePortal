@@ -80,7 +80,7 @@ function scan_(source, t0) {
     } else if (parent === cfg.rootFolderId && f.mimeType === SHORTCUT_MIME && f.shortcutDetails &&
                f.shortcutDetails.targetMimeType === FOLDER_MIME) {
       // A shortcut to a folder at the program root is a Reference folder: scanned with its
-      // subfolders in step 3, shown to the admin only (All files), not counted as evidence.
+      // subfolders in step 3, shown to the admin and coordinators (All files only), not counted as evidence.
       var target = f.shortcutDetails.targetId;
       if (!refs.some(function (r) { return r.folderId === target; })) refs.push({ name: f.name, folderId: target });
     } else {
@@ -113,7 +113,7 @@ function scan_(source, t0) {
   // A file in a subfolder is listed under its indicator, labeled with the subfolder path
   // (e.g. "I.1.6.1. Participative planning › I.1.6.1.3. Students"). One batched query per level.
   var MAX_SUB_DEPTH = 6;
-  // Reference folders (admin only) are often old archives with deep folders: practically every
+  // Reference folders are often old archives with deep folders: practically every
   // level is scanned (20 is only a safety cap), and nothing deeper is reported as an issue.
   var REF_MAX_DEPTH = 20;
   var indRows = rowsOf('indicator').concat(rowsOf('section'));
@@ -229,7 +229,7 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs) {
     return sec;
   });
 
-  // Reference folders (admin only, see snapshotFor_): not counted in stats. Sorted by name so the
+  // Reference folders (admin and coordinators, never accreditors; see snapshotFor_): not counted in stats. Sorted by name so the
   // hash doesn't change just because Drive listed the shortcuts in another order.
   var reference = (refs || []).slice().sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; })
     .map(function (r) {
@@ -321,18 +321,16 @@ function patchSnapshotKeywords_(snap, fileId, keywords) {
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
 }
 
-/** Is this file id anywhere in the snapshot (program root files included; Reference folders only when asked)? */
-function hasFile_(snap, fileId, withReference) {
+/** Is this file id anywhere in the snapshot (program root files and Reference folders included)? */
+function hasFile_(snap, fileId) {
   var found = false;
-  eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) found = true; }, withReference);
+  eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) found = true; });
   return found;
 }
 
-/** fn(file, area) for every file. Files of Reference folders are included unless withReference === false. */
-function eachFileInSnapshot_(snap, fn, withReference) {
-  if (withReference !== false) {
-    (snap.reference || []).forEach(function (r) { (r.files || []).forEach(function (f) { fn(f, null); }); });
-  }
+/** fn(file, area) for every file, Reference folders included. */
+function eachFileInSnapshot_(snap, fn) {
+  (snap.reference || []).forEach(function (r) { (r.files || []).forEach(function (f) { fn(f, null); }); });
   (snap.looseFiles || []).forEach(function (f) { fn(f, null); });
   (snap.sections || []).forEach(function (s) { s.files.forEach(function (f) { fn(f, null); }); });
   (snap.areas || []).forEach(function (a) {

@@ -234,7 +234,7 @@ export function locateFile(snap, fileId) {
       for (const f of param.looseFiles || []) if (f.id === fileId) hits.push({ file: f, area, param });
     }
   }
-  // Reference folders (admin only): prepared ones, and raw mock snapshots that still have `reference`.
+  // Reference folders (admin and coordinators): prepared ones, and raw mock snapshots that still have `reference`.
   for (const area of snap?.referenceAreas || []) {
     for (const param of area.parameters) {
       for (const ind of param.indicators) for (const f of ind.files) if (f.id === fileId) hits.push({ file: f, area, param, ind, reference: true });

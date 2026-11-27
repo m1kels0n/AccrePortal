@@ -65,6 +65,7 @@ Tap **≡ All files** in the bar at the top (or on the Home page). It lists ever
 - Tap a file to open it **beside the list**. On a phone it fills the screen; tap **Show files** to get the list back.
 - **📁↗** on a row (or **📁 Open folder in Drive** above the open file) opens the Google Drive folder that file is in.
 - **✎ Keywords** above the open file works the same as in the area pages.
+- Older reference material, such as **Previous Accre Docs**, is listed here too. Pick it in the **section** menu (it starts with "Reference:"). These files appear only in this list, not in the top search box or on the area cards.
 
 Only coordinators and the admin see this list. Accreditors don't.
 

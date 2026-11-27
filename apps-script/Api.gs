@@ -4,7 +4,7 @@
  *
  * GET  ?action=ping
  * GET  ?action=snapshot&token=<token>[&since=<hash>]
- *        The admin gets the full snapshot; coordinators the same without the Reference folders.
+ *        The admin and coordinators get the full snapshot, Reference folders included.
  *        Accreditors get only the areas the admin opened, without Drive folder links
  *        (error "noAccess" if the program is closed to them).
  * POST (body = JSON text, sent as text/plain to avoid a CORS preflight)
@@ -87,8 +87,7 @@ function snapshotFor_(session, since) {
     if (since && c.meta && c.meta.hash === since) {
       return { ok: true, unchanged: true, hash: c.meta.hash, generatedAt: c.meta.generatedAt, settings: st };
     }
-    var full = JSON.parse(c.text);
-    if (session.role !== 'admin') delete full.reference; // Reference folders: admin only
+    var full = JSON.parse(c.text); // Reference folders included: admin and coordinators see them in All files
     full.settings = st;
     return full;
   }
@@ -219,8 +218,8 @@ function handleSaveKeywords_(body) {
     var c = readSnapshot_();
     if (!c) throw apiError_('notFound', 'No snapshot yet.');
     var snap = JSON.parse(c.text);
-    // Reference folders are the admin's only, so coordinators can't key them by id either.
-    if (!hasFile_(snap, fileId, s.role === 'admin')) throw apiError_('notFound', 'File not found. It may have been moved or deleted. Reload the page.');
+    // Any file in the snapshot, Reference folders included (admin and coordinators both see them).
+    if (!hasFile_(snap, fileId)) throw apiError_('notFound', 'File not found. It may have been moved or deleted. Reload the page.');
     upsertKeywords_(fileId, keywords, s.name);
     patchSnapshotKeywords_(snap, fileId, keywords);
   } finally {
