@@ -84,7 +84,7 @@ Program 1 - AACCUP/
   - The Actual Self-Survey Report opens its documents directly (a single document opens straight away).
   - A new section **folder** is picked up on the next scan (no Rebuild structure needed), and so are new files and subfolders inside it.
 - Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
-- A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin and coordinators**, in **All files** only (not on the program cards, in the search box or in counts, and never to accreditors). Use it for material kept outside the program folder.
+- A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin and coordinators**, in **All files** only (not on the program cards, in the search box or in counts, and never to accreditors). Use it for material kept outside the program folder. Reference folders are often big, so the site downloads them only when **All files** is opened, not at every login.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):
@@ -174,7 +174,7 @@ programs: [
 The **first** program in the list must be the main one (Program 1), because logins are sent to it.
 Don't put Drive folder links in `config.js`: it is public. Coordinators and the admin get each program's Drive root link from the server after they log in.
 
-Also set `school`, `college`, `colors` and `logos`. Put logo files in `web/assets/` (PNG or SVG, square), e.g. `{ src: 'assets/tup-logo.png', alt: 'TUP logo' }`.
+Also set `school`, `college`, `colors` and `logos`. Put logo files in `web/assets/` (PNG or SVG, square), e.g. `{ src: 'assets/tup-logo-128.png', alt: 'TUP logo' }`. About 128 × 128 px is plenty: logos are shown at most 64 px wide, and a larger file only costs phone data (the original 256/512 px files are kept next to the 128 px copies).
 
 `viewerShield` sets the size of the transparent cover over the Drive preview's "open in new window" button (top-right corner), shown to accreditors only. After going live, open a PDF as an accreditor. If the button is still clickable, make `width` / `height` a little bigger. Scrolling, page number and zoom in the rest of the preview stay usable.
 
@@ -199,7 +199,7 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 
 - [ ] Incognito, on a phone **and** a laptop, outside the TUP network: the site opens on the PIN screen. An accreditor's PIN, the coordinator PIN and the admin PIN each log in.
 - [ ] **Accreditor:** home shows only the programs you opened; area selection shows only the areas you ticked. Open a PDF, a Google Doc, a Sheet, Slides and an image. Scrolling and the page number work, the preview's top-right "open in new window" button does **not** respond, there is no "Open in new tab", right-click does nothing, and the watermark shows (when on).
-- [ ] Prev / Next and the ← / → keys move through the area's documents. The tree's filter box finds a file by name or keyword.
+- [ ] Picking a document in the tree opens it beside the tree. The search box finds a file by name, keyword or indicator (press **/** to jump to it).
 - [ ] Copy a deep link (e.g. `…/#/p1/I/A/S.1`), open it on another device: after login it lands on that indicator.
 - [ ] Search: multiple words, a keyword-only match ("Matched keyword: …"), accents, and the × button.
 - [ ] **Coordinator:** can open every area of both programs. The **＋** on an indicator (and on a subfolder) row opens the right Drive folder. Upload a file, tap **Check now**: it shows "1 new file" within seconds. Save a keyword on a file someone else uploaded, then search for it.
@@ -225,6 +225,8 @@ The `data/mock-*.json` files are harmless to publish; they are only used in mock
 |---|---|
 | "No apiUrl set in config.js" | Paste the `/exec` URL into `config.js` and set `mode: 'live'`. |
 | Site shows old data | Admin panel → Refresh now. Check AACCUP → Status that the trigger is ON. |
+| A hand edit in the Config or AccreditorAccess tab doesn't show | Settings saved in the Admin panel apply at once. Hand edits in the Sheet apply on the next page load too (an edit trigger clears the cache); if not, within 10 minutes. |
+| "Program … is not available right now" | The program's server didn't answer properly (the site already tried twice). Press **Try again**; if it keeps failing, check AACCUP → Status in that program's Sheet. |
 | New folder not showing | Admin → Rebuild structure (or Sheet menu → Build structure, then Build snapshot). |
 | A document says "You need access" | That file isn't "Anyone with the link". Fix it in Drive (usually files uploaded before the folder was shared, or moved in from elsewhere). |
 | Login: "Too many wrong PINs" | Wait 5 minutes. (Ten wrong PINs from anyone pause all logins briefly.) |
