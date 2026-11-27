@@ -57,7 +57,18 @@ Keywords help accreditors find a file even when its name doesn't contain the wor
 
 You can add keywords to any file in any area.
 
-## 5. Please do NOT
+## 5. See every file in one list
+
+Tap **≡ All files** in the bar at the top (or on the Home page). It lists every file of **both programs** in one place, so you don't have to open each folder.
+
+- Type in the **filter** box to narrow the list by file name, keyword, area, parameter or indicator. The menus narrow it by **program**, **section** (Compliance Report, PPP, Self-Survey Report, Area I … X), and **file type**, and change the **order** (folder order, name, newest first).
+- Tap a file to open it **beside the list**. On a phone it fills the screen; tap **Show files** to get the list back.
+- **📁↗** on a row (or **📁 Open folder in Drive** above the open file) opens the Google Drive folder that file is in.
+- **✎ Keywords** above the open file works the same as in the area pages.
+
+Only coordinators and the admin see this list. Accreditors don't.
+
+## 6. Please do NOT
 
 - ❌ Rename, move or delete **folders**. The website relies on them.
 - ❌ Create your own Area, Parameter or indicator folders. Ask Ariel instead.
@@ -66,7 +77,7 @@ You can add keywords to any file in any area.
 
 If you uploaded something to the wrong place, tell Ariel. Moving files is easy.
 
-## 6. Make scanned PDFs smaller
+## 7. Make scanned PDFs smaller
 
 Large scans load slowly for accreditors. Aim for **under 20 MB** per file.
 

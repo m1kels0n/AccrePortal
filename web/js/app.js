@@ -11,6 +11,7 @@ import { getProgram, findArea, findParam, findIndicator, findGroup, areaTitle, i
 import * as V from './views.js';
 import * as S from './staff.js';
 import * as A from './admin.js';
+import * as F from './files.js';
 
 const state = {
   snaps: {},        // programCode → snapshot (already filtered by the server for accreditors)
@@ -24,6 +25,7 @@ const state = {
   openNodes: new Set(),    // tree branches the user opened
   closedNodes: new Set(),  // branches on the current path the user closed
   treeOpen: false,         // tree drawer on small screens
+  files: F.defaultFilters(), // All files page: filter box, menus, how many rows are shown
   get watermark() {
     const s = this.settings[mainProgram().code] || Object.values(this.settings)[0];
     return s ? s.watermark !== false : true;
@@ -80,6 +82,10 @@ function renderChrome() {
   }
 
   document.getElementById('toolbar').hidden = !loggedIn;
+  const allFilesBtn = document.getElementById('allFilesBtn');
+  allFilesBtn.hidden = !loggedIn || !isStaff(session);
+  if (route.name === 'files') allFilesBtn.setAttribute('aria-current', 'page');
+  else allFilesBtn.removeAttribute('aria-current');
   document.getElementById('treeToggle').hidden = !inWs;
   document.getElementById('treeToggle').setAttribute('aria-expanded', String(state.treeOpen));
 
@@ -109,7 +115,8 @@ function renderChrome() {
     document.getElementById('areaSelect').innerHTML = siblings.map((a) =>
       `<option value="${esc(a.code)}" ${a.code === route.area ? 'selected' : ''}>${esc(a.group ? areaTitle({ ...a, groupName: '' }) : areaTitle(a))}</option>`).join('');
   }
-  document.getElementById('searchForm').hidden = route.name === 'admin';
+  // The All files page has its own filter box.
+  document.getElementById('searchForm').hidden = route.name === 'admin' || route.name === 'files';
   input.placeholder = route.prog && snap ? `Search ${V.programName(getProgram(route.prog), snap)}…` : 'Search documents, keywords, indicators…';
 
   const updated = loggedIn ? CONFIG.programs
@@ -145,6 +152,7 @@ function render(background = false) {
   }
   if (session && route.name === 'login') { replaceTo('#/'); return; }
   if (route.name === 'admin' && !isAdmin(session)) { replaceTo('#/'); return; }
+  if (route.name === 'files' && !isStaff(session)) { replaceTo('#/'); return; }
 
   state.route = route;
   if (document.activeElement !== input) input.value = route.q;
@@ -152,6 +160,11 @@ function render(background = false) {
 
   // Background data updates must not wipe a form the user has started filling in,
   // or reload an open document.
+  if (background && route.name === 'files' && main.querySelector('.workspace[data-area="files"]')) {
+    // All files: refresh only the list, so the filter box keeps focus and the open document stays.
+    const open = !route.fileId || main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
+    if (open) { F.redrawList(app); renderChrome(); return; }
+  }
   if (background) {
     const viewing = route.fileId && route.q.trim().length < 2 && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
     if (state.touched || viewing) { renderChrome(); return; }
@@ -163,7 +176,8 @@ function render(background = false) {
     ? V.renderSearch(state, route, search(state.index, route.q, scopeOf(route), state.searchLimit), scopeOf(route)) : '';
 
   const oldScroll = document.getElementById('treeScroll');
-  const sameArea = route.name === 'workspace' && main.querySelector(`.workspace[data-area="${CSS.escape(route.prog + '/' + route.area)}"]`);
+  const wsKey = route.name === 'files' ? 'files' : route.prog + '/' + route.area;
+  const sameArea = (route.name === 'workspace' || route.name === 'files') && main.querySelector(`.workspace[data-area="${CSS.escape(wsKey)}"]`);
   const treeTop = sameArea && oldScroll ? oldScroll.scrollTop : 0;
 
   let html;
@@ -174,6 +188,7 @@ function render(background = false) {
     case 'program': html = searching ? searchHtml : V.renderProgram(state, route); break;
     case 'workspace': ({ html, workspace } = V.renderWorkspace(state, route, searchHtml)); break;
     case 'admin': html = A.renderAdmin(state, route); break;
+    case 'files': ({ html, workspace } = F.renderFiles(state, route)); break;
     default: html = V.notFound();
   }
   main.innerHTML = html;
@@ -183,6 +198,8 @@ function render(background = false) {
   main.classList.toggle('wrap', !workspace);
   document.body.classList.toggle('is-workspace', workspace);
   document.body.classList.toggle('is-login', route.name === 'login');
+  document.body.classList.toggle('is-files', workspace && route.name === 'files');
+  document.body.classList.toggle('is-files', workspace && route.name === 'files');
   document.body.classList.toggle('tree-open', workspace && state.treeOpen);
   // A document is open: the tree tucks away into a drawer so the document gets the full width.
   document.body.classList.toggle('has-doc', workspace && !!route.fileId && !searching);
@@ -206,6 +223,11 @@ function setTitle(route, searching) {
   const base = 'TUP-CIE Accreditation 2026';
   if (route.name === 'login') { document.title = 'Log in · ' + base; return; }
   if (searching) { document.title = `Search: ${route.q} · ${base}`; return; }
+  if (route.name === 'files') {
+    const e = F.currentEntry(state, route);
+    document.title = (e ? e.file.name + ' · ' : '') + 'All files · ' + base;
+    return;
+  }
   const snap = getProgram(route.prog) ? state.snaps[route.prog] : null;
   const area = snap && findArea(snap, route.area);
   const ind = area && findIndicator(findParam(area, route.param), route.ind);
@@ -237,7 +259,7 @@ function setTreeOpen(open) {
   document.body.classList.toggle('tree-open', open && document.body.classList.contains('is-workspace'));
   document.getElementById('treeToggle').setAttribute('aria-expanded', String(open));
   if (open) {
-    document.querySelector('#treeScroll .tn-link.active')?.scrollIntoView({ block: 'center' });
+    document.querySelector('#treeScroll .tn-link.active, #treeScroll .fl-item.active')?.scrollIntoView({ block: 'center' });
   }
 }
 
@@ -327,6 +349,7 @@ function resetData() {
   state.openNodes.clear();
   state.closedNodes.clear();
   state.treeOpen = false;
+  state.files = F.defaultFilters();
   reindex();
 }
 
@@ -415,6 +438,12 @@ document.addEventListener('click', (e) => {
   } else if (action === 'show-more') {
     state.searchLimit += 200;
     render();
+  } else if (action === 'files-more') {
+    F.showMore(state);
+    F.redrawList(app);
+  } else if (action === 'files-reset') {
+    F.resetFilters(state);
+    render();
   } else if (action === 'kw-toggle') {
     const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
@@ -461,9 +490,17 @@ main.addEventListener('input', (e) => {
     if (digits.length === 6) e.target.form.requestSubmit();
     return;
   }
+  // All files filters (menus fire `input` too): redraw just the list. Not "touched": the list
+  // still updates in the background, without a full redraw (see render).
+  const filterKey = e.target.dataset?.filesFilter;
+  if (filterKey) {
+    F.setFilter(state, filterKey, e.target.value);
+    F.redrawList(app, true);
+    return;
+  }
   state.touched = true;
 });
-main.addEventListener('change', (e) => { if (e.target.name !== 'pin') state.touched = true; });
+main.addEventListener('change', (e) => { if (e.target.name !== 'pin' && !e.target.dataset?.filesFilter) state.touched = true; });
 
 document.addEventListener('submit', (e) => {
   const form = e.target;

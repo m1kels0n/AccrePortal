@@ -192,7 +192,9 @@ export function renderHome(state) {
       <span>Continue where you left off:</span>
       <strong>${esc(programName(getProgram(last.prog), lastSnap))} › ${esc(areaTitle(lastArea))}</strong> →</a>` : '';
 
-  return `${resume}${pageHead('', 'Choose a program')}
+  const allFiles = isStaff() && visible.length
+    ? '<p><a class="btn btn-sm" href="#/files">≡ All files of every program in one list →</a></p>' : '';
+  return `${resume}${pageHead('', 'Choose a program', allFiles)}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
       : `<div class="card empty"><p>No program is open for viewing yet. Please ask the accreditation coordinator.</p></div>`}
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;
@@ -432,20 +434,7 @@ function renderViewer(state, prog, snap, area, route) {
   }
   const { param, ind, file } = list[idx];
   const staff = isStaff();
-  const sh = CONFIG.viewerShield || {};
-  const shield = staff ? '' : `<div class="viewer-shield" aria-hidden="true"
-      style="top:${Number(sh.top) || 0}px;right:${Number(sh.right) || 0}px;width:${Number(sh.width) || 80}px;height:${Number(sh.height) || 64}px"></div>`;
-  const watermark = !staff && state.watermark ? '<div class="watermark" aria-hidden="true"></div>' : '';
-  const body = file.previewUrl
-    ? `<div class="viewer-frame" data-file="${esc(file.id)}">
-        <div class="viewer-loading"><span class="spinner"></span><span>Loading document…</span>
-          <span class="viewer-slow" hidden>Large files can take a while.${staff && file.viewUrl ? ` <a href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab</a>` : ''}</span></div>
-        <iframe src="${esc(file.previewUrl)}" title="${esc(file.name)}" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
-        ${shield}${watermark}
-      </div>`
-    : `<div class="card empty viewer-frame viewer-none" data-file="${esc(file.id)}"><p>This type of file cannot be previewed here.</p>
-        ${staff && file.viewUrl ? `<p><a class="btn btn-primary" href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab ↗</a></p>`
-          : '<p class="muted">Please ask the area coordinator to show it to you.</p>'}</div>`;
+  const body = viewerFrame(state, file);
   return `<div class="viewer">
     <div class="viewer-bar">
       <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
@@ -457,6 +446,28 @@ function renderViewer(state, prog, snap, area, route) {
     </div>
     ${body}
   </div>`;
+}
+
+/**
+ * The document itself: Google's preview (with the accreditor cover and watermark), or a
+ * "cannot be previewed" box. Used by the area page and the All files page.
+ */
+export function viewerFrame(state, file) {
+  const staff = isStaff();
+  const sh = CONFIG.viewerShield || {};
+  const shield = staff ? '' : `<div class="viewer-shield" aria-hidden="true"
+      style="top:${Number(sh.top) || 0}px;right:${Number(sh.right) || 0}px;width:${Number(sh.width) || 80}px;height:${Number(sh.height) || 64}px"></div>`;
+  const watermark = !staff && state.watermark ? '<div class="watermark" aria-hidden="true"></div>' : '';
+  return file.previewUrl
+    ? `<div class="viewer-frame" data-file="${esc(file.id)}">
+        <div class="viewer-loading"><span class="spinner"></span><span>Loading document…</span>
+          <span class="viewer-slow" hidden>Large files can take a while.${staff && file.viewUrl ? ` <a href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab</a>` : ''}</span></div>
+        <iframe src="${esc(file.previewUrl)}" title="${esc(file.name)}" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
+        ${shield}${watermark}
+      </div>`
+    : `<div class="card empty viewer-frame viewer-none" data-file="${esc(file.id)}"><p>This type of file cannot be previewed here.</p>
+        ${staff && file.viewUrl ? `<p><a class="btn btn-primary" href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab ↗</a></p>`
+          : '<p class="muted">Please ask the area coordinator to show it to you.</p>'}</div>`;
 }
 
 /** Repeating diagonal text, as a CSS background-image value. */

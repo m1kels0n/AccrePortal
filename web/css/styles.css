@@ -308,6 +308,34 @@ body.is-workspace .site-footer { display: none; }
 .tree-loose ul { margin: 0; padding-left: 16px; max-height: 9em; overflow: auto; }
 .tree-loose a { word-break: break-word; }
 
+/* ── All files (coordinators and admin): same layout as the area page, a flat list instead of the tree ── */
+.files-ws .tree-area { flex-wrap: wrap; }
+.files-count { margin-left: auto; font-size: .75rem; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+.files-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+.files-filters label { flex: 1 1 110px; min-width: 0; }
+.files-filters .ff-q { flex-basis: 100%; }
+.files-filters input, .files-filters select {
+  width: 100%; min-width: 0; font: inherit; font-size: .84rem; padding: 6px 8px;
+  border: 1.5px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink);
+}
+.files-filters input:focus, .files-filters select:focus { outline: none; border-color: var(--secondary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--secondary) 18%, transparent); }
+.fl { list-style: none; margin: 0; padding: 0; }
+.fl-item { display: flex; align-items: center; gap: 2px; padding-right: 4px; border-radius: 6px; }
+.fl-item:hover { background: var(--bg); }
+.fl-item.active { background: color-mix(in srgb, var(--secondary) 10%, #fff); box-shadow: inset 3px 0 0 var(--secondary); }
+.fl-link { flex: 1; min-width: 0; display: flex; align-items: flex-start; gap: 8px; padding: 6px; border-radius: 6px; text-decoration: none; color: var(--ink); line-height: 1.3; }
+.fl-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.fl-name { font-size: .85rem; font-weight: 600; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; word-break: break-word; }
+.fl-item.active .fl-name { color: var(--secondary); }
+.fl-meta { font-size: .74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-meta b { font-weight: 600; color: var(--ink-2); }
+.tn-add.fl-drive { width: auto; padding: 0 4px; font-size: .7rem; white-space: nowrap; }
+.fl-more { text-align: center; margin: 10px 0; }
+.fl-empty { margin: 12px 8px; color: var(--muted); font-size: .9rem; }
+.files-bar { flex-wrap: wrap; }
+.viewer-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.files-bar .viewer-actions { flex-shrink: 1; min-width: 0; }
+
 /* File lists */
 .file-list { list-style: none; padding: 0; margin: 0 0 16px; display: grid; gap: 8px; }
 .file-item { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
@@ -493,6 +521,14 @@ mark { background: color-mix(in srgb, var(--accent) 45%, #fff); color: inherit; 
   body.has-doc.tree-open .tree-backdrop { display: block; position: fixed; inset: 0; z-index: 44; background: rgba(0,0,0,.35); }
   body.has-doc .tree-toggle { display: none !important; }
   body.has-doc:not(.tree-open) .tree-pane { visibility: hidden; transition: transform .2s ease, visibility 0s .2s; }
+}
+
+/* All files on a phone: the list fills the screen until a document is picked (then it is the usual drawer). */
+@media (max-width: 899px) {
+  body.is-files:not(.has-doc) .tree-pane { position: static; width: auto; transform: none; box-shadow: none; border-right: 0; padding-top: 0; }
+  body.is-files:not(.has-doc) .content-pane,
+  body.is-files:not(.has-doc) .tree-close { display: none; }
+  body.is-files:not(.has-doc) .tree-toggle { display: none !important; }
 }
 
 /* ── Larger screens ─────────────────────────────── */

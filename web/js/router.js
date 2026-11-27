@@ -7,6 +7,8 @@
 //   #/p1/II/A/S.1               workspace + indicator (its documents)
 //   #/p1/II/A/S.1/f/<fileId>    workspace + document viewer
 //   #/admin[/p1]                admin panel
+//   #/files                     all files of every program in one list (coordinators and admin)
+//   #/files/p1/II/A/S.1/<id>    that list + the document beside it
 //   …any route…?q=words         search results
 
 export function parseHash(hash = location.hash) {
@@ -22,6 +24,11 @@ export function parseHash(hash = location.hash) {
   if (segs[0] === 'admin') {
     route.name = 'admin';
     route.prog = segs[1] || null;
+    return route;
+  }
+  if (segs[0] === 'files') {
+    route.name = 'files';
+    if (segs.length === 6 && segs[5]) [route.prog, route.area, route.param, route.ind, route.fileId] = segs.slice(1);
     return route;
   }
   [route.prog, route.area, route.param, route.ind] = [segs[0] || null, segs[1] || null, segs[2] || null, segs[3] || null];

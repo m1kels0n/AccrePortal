@@ -282,3 +282,20 @@ export function hrefFor(prog, area, param, ind, fileId, q) {
 export function docCountLabel(n) {
   return n === 0 ? 'No documents yet' : n === 1 ? '1 document' : n + ' documents';
 }
+
+/** A document opened from the All files page: #/files/<prog>/<area>/<param>/<ind>/<fileId>. */
+export function filesHref(prog, area, param, ind, fileId) {
+  return href(['files', prog, area.code, param.code, ind.code, fileId]);
+}
+
+/**
+ * The Drive folder a file sits in: its subfolder when it is in one (staff snapshots carry the
+ * subfolder ids), otherwise the indicator's folder. Null for accreditors (no folder ids).
+ */
+export function fileFolderId(ind, file) {
+  if (file.subfolder) {
+    const sf = (ind.subfolders || []).find((s) => s && typeof s === 'object' && s.path === file.subfolder);
+    if (sf?.id) return sf.id;
+  }
+  return ind.folderId || null;
+}
