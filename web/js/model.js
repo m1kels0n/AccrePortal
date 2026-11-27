@@ -125,6 +125,13 @@ export function prepareSnapshot(snap) {
     snap.areas.unshift(...made);
   }
   snap.sections = [];
+  // Reference folders (folder shortcuts at the program root; only the admin's snapshot has them):
+  // kept out of snap.areas, so cards, counts, access settings and the top search ignore them.
+  if (snap.reference?.length || !snap.referenceAreas) {
+    snap.referenceAreas = (snap.reference || []).map((r, i) =>
+      docArea(`REF-${i + 1}`, r.name, r.folderId, r.files || [], r.subfolders || [], { reference: true, badge: 'REF' }));
+  }
+  snap.reference = [];
   if (snap.looseFiles?.length) {
     snap.areas.push({ code: GENERAL, badge: 'GEN', name: 'Other documents', general: true, folderId: rootId, looseFiles: [],
       parameters: [param(snap.looseFiles, rootId)] });
@@ -227,6 +234,13 @@ export function locateFile(snap, fileId) {
       for (const f of param.looseFiles || []) if (f.id === fileId) hits.push({ file: f, area, param });
     }
   }
+  // Reference folders (admin only): prepared ones, and raw mock snapshots that still have `reference`.
+  for (const area of snap?.referenceAreas || []) {
+    for (const param of area.parameters) {
+      for (const ind of param.indicators) for (const f of ind.files) if (f.id === fileId) hits.push({ file: f, area, param, ind, reference: true });
+    }
+  }
+  for (const r of snap?.reference || []) for (const f of r.files || []) if (f.id === fileId) hits.push({ file: f, reference: true });
   return hits;
 }
 

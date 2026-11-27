@@ -3,25 +3,29 @@ import { CONFIG } from './config.js';
 import { normalize, tokenize } from './util.js';
 import { areaTitle, paramLabel } from './model.js';
 
-/** Pre-normalize everything once per snapshot load. */
+/**
+ * Pre-normalize everything once per snapshot load. Files of the admin's Reference folders are
+ * in `files` too (for the All files page), marked `reference: true`; search() skips them.
+ */
 export function buildIndex(snapshots) {
   const files = [];
   const indicators = [];
   CONFIG.programs.forEach((prog, progOrder) => {
     const snap = snapshots[prog.code];
     if (!snap) return;
-    snap.areas.forEach((area, areaOrder) => {
-      const areaCtx = normalize(`${areaTitle(area)} ${area.name}`);
+    const addArea = (area, areaOrder, reference) => {
+      const areaCtx = normalize(`${reference ? 'reference ' : ''}${areaTitle(area)} ${area.name}`);
       for (const param of area.parameters) {
         const paramCtx = normalize(`${paramLabel(param)} ${param.name}`);
         for (const ind of param.indicators) {
           const indText = normalize(`${ind.code} ${ind.text}`);
           const base = { prog: prog.code, progOrder, areaOrder, area, param, ind };
           // "General documents" rows are found through their files, not as indicator results.
-          if (!ind.general) indicators.push({ ...base, nText: indText, nCtx: areaCtx + ' ' + paramCtx });
+          if (!ind.general && !reference) indicators.push({ ...base, nText: indText, nCtx: areaCtx + ' ' + paramCtx });
           for (const file of ind.files) {
             files.push({
               ...base,
+              ...(reference ? { reference: true } : {}),
               file,
               nName: normalize(file.name),
               nKw: (file.keywords || []).map(normalize),
@@ -30,7 +34,9 @@ export function buildIndex(snapshots) {
           }
         }
       }
-    });
+    };
+    snap.areas.forEach((area, i) => addArea(area, i, false));
+    (snap.referenceAreas || []).forEach((area, i) => addArea(area, snap.areas.length + i, true));
   });
   return { files, indicators };
 }
@@ -46,7 +52,7 @@ export function search(index, query, scope = 'all', limit = 200) {
 
   const fileHits = [];
   for (const e of index.files) {
-    if (!inScope(e)) continue;
+    if (e.reference || !inScope(e)) continue; // Reference folders: only on the All files page
     const kwJoined = e.nKw.join(' | ');
     let score = 0;
     const kwMatched = new Set();

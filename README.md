@@ -82,8 +82,9 @@ Program 1 - AACCUP/
 - **Sections** at the program root, matched by name: `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` → Actual Self-Survey Report. Each program card on the home page shows **Compliance Report**, **PPP** and **Self-Survey Report and Evidences** (= the Actual Self-Survey Report + Area I–X).
   - Compliance Report and PPP open a page with **one card per subfolder** (`Area 02 - Faculty` shows as *Area II · Faculty*, sorted by area number). A card shows that folder's files and subfolders as they are in Drive (up to 5 levels). Files directly in the Compliance Report / PPP folder show as a **General documents** card.
   - The Actual Self-Survey Report opens its documents directly (a single document opens straight away).
-  - After creating a section **folder**, run **Rebuild structure**. New files and subfolders inside it then appear on the next scan.
+  - A new section **folder** is picked up on the next scan (no Rebuild structure needed), and so are new files and subfolders inside it.
 - Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
+- A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin only**, in **All files** (not on the program cards, in the search box, in counts, or to coordinators and accreditors). Use it for material kept outside the program folder.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):

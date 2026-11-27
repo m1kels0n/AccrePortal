@@ -54,13 +54,35 @@ function scan_(source, t0) {
   var containerSet = toSet_(containers);
   var seenParent = {};   // folderId → parent it was found in
   var loose = {};        // container folderId → [file]
+  var refs = [];         // Reference folders: shortcuts to folders at the program root → [{ name, folderId }]
+  // Section codes the Structure tab already has (hidden ones too, so hiding one is respected).
+  var knownSections = {};
+  Object.keys(st.allById).forEach(function (id) { if (st.allById[id].level === 'section') knownSections[st.allById[id].code] = true; });
   listChildren_(containers, false).forEach(function (f) {
     var parent = firstIn_(f.parents, containerSet);
     if (f.mimeType === FOLDER_MIME) {
       seenParent[f.id] = parent;
       if (!st.allById[f.id] && f.name.charAt(0) !== '_' && f.id !== cfg.systemFolderId) {
+        // A new Compliance Report / PPP / Actual Self-Survey Report folder at the root is used
+        // right away, without Rebuild structure (scanned in step 3 like a known section).
+        var sc = parent === cfg.rootFolderId ? sectionOf_(f.name) : '';
+        if (sc && !knownSections[sc]) {
+          knownSections[sc] = true;
+          var row = { level: 'section', code: sc, name: SECTIONS[sc].name, text: '', folderId: f.id, parentFolderId: parent,
+                      areaCode: '', parameterCode: '', sortKey: '0-' + SECTIONS[sc].order, path: SECTIONS[sc].name,
+                      status: 'ok', rawName: f.name, hidden: false };
+          st.rows.push(row);
+          st.byId[f.id] = row;
+          return;
+        }
         issues.push({ type: 'newFolder', path: containerPath_(parent, st, cfg), folderId: f.id, name: f.name, hint: 'Run Rebuild structure' });
       }
+    } else if (parent === cfg.rootFolderId && f.mimeType === SHORTCUT_MIME && f.shortcutDetails &&
+               f.shortcutDetails.targetMimeType === FOLDER_MIME) {
+      // A shortcut to a folder at the program root is a Reference folder: scanned with its
+      // subfolders in step 3, shown to the admin only (All files), not counted as evidence.
+      var target = f.shortcutDetails.targetId;
+      if (!refs.some(function (r) { return r.folderId === target; })) refs.push({ name: f.name, folderId: target });
     } else {
       // Not an issue: the site lists these as "General documents" of that area / parameter / program.
       (loose[parent] = loose[parent] || []).push(toFile_(f));
@@ -98,6 +120,12 @@ function scan_(source, t0) {
   // folderId -> { ind: indicator folderId, label: subfolder path ('' for the indicator itself) }
   var level = {};
   Object.keys(indSet).forEach(function (id) { level[id] = { ind: id, label: '' }; });
+  // Reference folders are scanned the same way, in the same batched queries.
+  var refPath = {};
+  refs.forEach(function (r) {
+    refPath[r.folderId] = 'Reference > ' + r.name;
+    if (!level[r.folderId]) level[r.folderId] = { ind: r.folderId, label: '' };
+  });
   for (var depth = 0; Object.keys(level).length && depth <= MAX_SUB_DEPTH; depth++) {
     var levelSet = toSet_(Object.keys(level));
     var next = {};
@@ -111,7 +139,8 @@ function scan_(source, t0) {
         next[f.id] = { ind: parent.ind, label: label };
         (subsByInd[parent.ind] = subsByInd[parent.ind] || []).push({ path: label, id: f.id });
       } else {
-        issues.push({ type: 'deepFile', path: st.byId[parent.ind].path + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
+        var top = st.byId[parent.ind] ? st.byId[parent.ind].path : (refPath[parent.ind] || parent.ind);
+        issues.push({ type: 'deepFile', path: top + ' > ' + parent.label + ' > ' + f.name, folderId: f.id, name: f.name, hint: 'Only ' + MAX_SUB_DEPTH + ' subfolder levels are scanned' });
       }
     });
     level = next;
@@ -122,7 +151,7 @@ function scan_(source, t0) {
   if (!lock.tryLock(30000)) throw new Error('Could not get the lock to save the snapshot.');
   try {
     var kw = readKeywords_();
-    var snap = assemble_(cfg, st, loose, filesByInd, kw, subsByInd);
+    var snap = assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs);
     var issuesDoc = { generatedAt: snap.generatedAt, items: issues };
     var changed = saveSnapshot_(cfg, snap, issuesDoc);
     if (changed) log_('snapshot', source, snap.stats.files + ' files, ' + issues.length + ' issues, ' + (Date.now() - t0) + ' ms');
@@ -132,7 +161,7 @@ function scan_(source, t0) {
   }
 }
 
-function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
+function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs) {
   subsByInd = subsByInd || {};
   var bySub = function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1; };
   var bySort = function (a, b) { return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0; };
@@ -200,6 +229,15 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
     return sec;
   });
 
+  // Reference folders (admin only, see snapshotFor_): not counted in stats. Sorted by name so the
+  // hash doesn't change just because Drive listed the shortcuts in another order.
+  var reference = (refs || []).slice().sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; })
+    .map(function (r) {
+      var ref = { name: r.name, folderId: r.folderId, files: withKw(filesByInd[r.folderId]) };
+      if (subsByInd[r.folderId]) ref.subfolders = subsByInd[r.folderId].slice().sort(bySub);
+      return ref;
+    });
+
   var body = {
     schema: 1,
     program: {
@@ -210,6 +248,7 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
     looseFiles: withKw(rootLoose),
     sections: sections,
     areas: areas,
+    reference: reference,
   };
   var hash = md5_(JSON.stringify(body));
   return {
@@ -221,6 +260,7 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd) {
     looseFiles: body.looseFiles,
     sections: sections,
     areas: areas,
+    reference: reference,
   };
 }
 
@@ -274,20 +314,25 @@ function readIssues_() {
  */
 function patchSnapshotKeywords_(snap, fileId, keywords) {
   eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) f.keywords = keywords; });
-  var body = { schema: 1, program: snap.program, looseFiles: snap.looseFiles, sections: snap.sections || [], areas: snap.areas };
+  var body = { schema: 1, program: snap.program, looseFiles: snap.looseFiles, sections: snap.sections || [], areas: snap.areas,
+               reference: snap.reference || [] };
   snap.hash = md5_(JSON.stringify(body));
   cachePutChunked_('snap', JSON.stringify(snap), { hash: snap.hash, generatedAt: snap.generatedAt });
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
 }
 
-/** Is this file id anywhere in the snapshot (program root files included)? */
-function hasFile_(snap, fileId) {
+/** Is this file id anywhere in the snapshot (program root files included; Reference folders only when asked)? */
+function hasFile_(snap, fileId, withReference) {
   var found = false;
-  eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) found = true; });
+  eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) found = true; }, withReference);
   return found;
 }
 
-function eachFileInSnapshot_(snap, fn) {
+/** fn(file, area) for every file. Files of Reference folders are included unless withReference === false. */
+function eachFileInSnapshot_(snap, fn, withReference) {
+  if (withReference !== false) {
+    (snap.reference || []).forEach(function (r) { (r.files || []).forEach(function (f) { fn(f, null); }); });
+  }
   (snap.looseFiles || []).forEach(function (f) { fn(f, null); });
   (snap.sections || []).forEach(function (s) { s.files.forEach(function (f) { fn(f, null); }); });
   (snap.areas || []).forEach(function (a) {

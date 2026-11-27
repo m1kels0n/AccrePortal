@@ -238,6 +238,7 @@ async function mockSnapshot(prog, session) {
     if (!settings.accreditorEnabled) throw apiError({ error: 'noAccess', message: 'This program is not open to accreditors.' });
     return accreditorCopy(snap, settings);
   }
+  if (s.role !== 'admin') delete snap.reference; // Reference folders: admin only (see Api.gs snapshotFor_)
   snap.settings = settings;
   return snap;
 }
@@ -260,7 +261,8 @@ async function mockPost(prog, payload) {
   if (action === 'saveKeywords') {
     if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
     const snap = await loadMockRaw(prog);
-    if (!locateFile(snap, payload.fileId).length) return { ok: false, error: 'notFound', message: 'File not found. It may have been moved or deleted.' };
+    const hits = locateFile(snap, payload.fileId).filter((h) => s.role === 'admin' || !h.reference);
+    if (!hits.length) return { ok: false, error: 'notFound', message: 'File not found. It may have been moved or deleted.' };
     const keywords = cleanKeywords(payload.keywords);
     const kw = mockKeywordStore(prog.code);
     if (keywords.length) kw[payload.fileId] = keywords; else delete kw[payload.fileId];

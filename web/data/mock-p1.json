@@ -6519,5 +6519,50 @@
     }
    ]
   }
+ ],
+ "reference": [
+  {
+   "name": "Reference - CHED Memos",
+   "folderId": "MOCKREF1",
+   "files": [
+    {
+     "id": "f_ref01MockFileId",
+     "name": "CHED Memorandum Order No. 15, s. 2019.pdf",
+     "mimeType": "application/pdf",
+     "size": 262144,
+     "modified": "2026-10-02T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    },
+    {
+     "id": "f_ref02MockFileId",
+     "name": "AACCUP Survey Instrument (Level II).pdf",
+     "mimeType": "application/pdf",
+     "size": 262144,
+     "modified": "2026-09-15T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    },
+    {
+     "id": "f_ref03MockFileId",
+     "name": "CMO 2025 Guidelines.pdf",
+     "mimeType": "application/pdf",
+     "size": 262144,
+     "modified": "2026-11-01T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "subfolder": "2025"
+    }
+   ],
+   "subfolders": [
+    {
+     "path": "2025",
+     "id": "MOCKREF1a"
+    }
+   ]
+  }
  ]
 }

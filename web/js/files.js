@@ -22,8 +22,9 @@ const kindKey = (mime) => {
 
 const SORTS = [['tree', 'Folder order'], ['name', 'Name A–Z'], ['new', 'Newest first']];
 
-/** Compliance Report / PPP cards → their group, the Actual Self-Survey Report, Area I … X, Other documents. */
+/** Compliance Report / PPP cards → their group, the Actual Self-Survey Report, Area I … X, Other documents, Reference folders. */
 function sectionKey(area) {
+  if (area.reference) return 'R:' + area.name;
   if (area.group) return 'G:' + area.group;
   if (area.section) return 'S:' + area.code;
   if (area.general) return 'OTHER';
@@ -32,12 +33,13 @@ function sectionKey(area) {
 
 /** Section menu entries in the order the programs show them, merged across programs. */
 function sectionOptions(state) {
-  const groups = new Map(), sections = new Map(), areas = new Map();
+  const groups = new Map(), sections = new Map(), areas = new Map(), refs = new Map();
   let other = false;
   for (const prog of CONFIG.programs) {
     const snap = state.snaps[prog.code];
     if (!snap) continue;
     for (const g of snap.groups || []) if (!groups.has('G:' + g.code)) groups.set('G:' + g.code, g.name);
+    for (const r of snap.referenceAreas || []) if (!refs.has(sectionKey(r))) refs.set(sectionKey(r), 'Reference: ' + r.name);
     for (const a of snap.areas || []) {
       const key = sectionKey(a);
       if (a.group) continue;
@@ -48,13 +50,13 @@ function sectionOptions(state) {
   }
   const out = [...groups, ...sections, ...areas];
   if (other) out.push(['OTHER', 'Other documents']);
-  return out;
+  return out.concat([...refs]);
 }
 
-/** "Area I › Parameter A › S.1 › Students", "Compliance Report › Area II", "Actual Self-Survey Report". */
+/** "Area I › Parameter A › S.1 › Students", "Compliance Report › Area II", "Actual Self-Survey Report", "Reference › CHED Memos". */
 function placeOf(e) {
   const a = e.area;
-  const parts = [a.group ? `${a.groupName} › ${areaLabel(a)}` : areaLabel(a)];
+  const parts = [a.reference ? `Reference › ${a.name}` : a.group ? `${a.groupName} › ${areaLabel(a)}` : areaLabel(a)];
   if (!e.ind.inline && !a.general) parts.push(placeLabel(e.param, e.ind));
   if (e.file.subfolder) parts.push(e.file.subfolder);
   return parts.join(' › ');
@@ -195,8 +197,10 @@ function previewHtml(state, route) {
   return `<div class="viewer">
     <div class="viewer-bar files-bar">
       <span class="viewer-name" title="${esc(e.file.name)}">${esc(e.file.name)}</span>
-      <a class="viewer-path" href="${hrefFor(e.prog, e.area, e.param, e.ind, e.file.id)}"
-         title="Open in its area page">${esc(name + ' · ' + placeOf(e))}</a>
+      ${e.reference // Reference folders have no area page
+        ? `<span class="viewer-path">${esc(name + ' · ' + placeOf(e))}</span>`
+        : `<a class="viewer-path" href="${hrefFor(e.prog, e.area, e.param, e.ind, e.file.id)}"
+            title="Open in its area page">${esc(name + ' · ' + placeOf(e))}</a>`}
       <div class="viewer-kw viewer-actions" data-kw-scope>
         ${folder ? `<a class="btn btn-ghost btn-sm" href="${driveFolder(folder)}" target="_blank" rel="noopener"
             title="Open the Google Drive folder this file is in">📁 Open folder in Drive ↗</a>` : ''}
