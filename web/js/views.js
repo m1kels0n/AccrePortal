@@ -30,7 +30,7 @@ function codeBadge(code, type) {
 
 function pageHead(eyebrow, title, extra = '') {
   return `<header class="page-head">${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}
-    <h2 class="page-title">${esc(title)}</h2>${extra}</header>`;
+    ${title ? `<h2 class="page-title">${esc(title)}</h2>` : ''}${extra}</header>`;
 }
 
 export function programName(prog, snap) { return snap?.program?.name || prog.name; }
@@ -243,7 +243,8 @@ export function renderHome(state) {
 
   const allFiles = isStaff() && visible.length
     ? '<p><a class="btn btn-sm" href="#/files">≡ All files of every program in one list →</a></p>' : '';
-  return `${resume}${pageHead('', 'Choose a program', allFiles)}
+  // With only one program open to this person there is nothing to choose, so no heading.
+  return `${resume}${pageHead('', visible.length > 1 ? 'Choose a program' : '', allFiles)}
     ${visible.length ? `<ul class="program-grid">${cards}</ul>`
       : `<div class="card empty"><p>No program is open for viewing yet. Please ask the accreditation coordinator.</p></div>`}
     <p class="muted small">Tip: use the search box above to find any document by name, keyword, or indicator.</p>`;
