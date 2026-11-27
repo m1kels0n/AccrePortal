@@ -330,7 +330,10 @@ body.is-workspace .site-footer { display: none; }
 .fl-meta { font-size: .74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fl-meta b { font-weight: 600; color: var(--ink-2); }
 .tn-add.fl-drive { width: auto; padding: 0 4px; font-size: .7rem; white-space: nowrap; }
-.fl-more { text-align: center; margin: 10px 0; }
+.fl-pager { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 6px 4px 8px; font-size: .8rem; color: var(--muted); }
+.fl-pager .btn { padding: 4px 10px; }
+.fl-pager .btn:disabled { opacity: .45; cursor: default; }
+.fl + .fl-pager { margin-top: 10px; }
 .fl-empty { margin: 12px 8px; color: var(--muted); font-size: .9rem; }
 .files-bar { flex-wrap: wrap; }
 .viewer-actions { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }

@@ -8,8 +8,8 @@ import { programName, kwEditor, viewerFrame, notFound } from './views.js';
 
 const PAGE = 200;
 
-/** Filter state, kept in memory for the tab so coming back to the list keeps it. */
-export const defaultFilters = () => ({ q: '', prog: 'all', section: 'all', kind: 'all', sort: 'tree', limit: PAGE });
+/** Filter state and page (0 = first), kept in memory for the tab so coming back to the list keeps them. */
+export const defaultFilters = () => ({ q: '', prog: 'all', section: 'all', kind: 'all', sort: 'tree', page: 0 });
 
 const KINDS = [
   ['PDF', 'PDF'], ['DOC', 'Documents'], ['XLS', 'Spreadsheets'], ['PPT', 'Presentations'],
@@ -118,7 +118,19 @@ function row(e, active, tokens, names, multi) {
   </li>`;
 }
 
-/** The list and the count line (redrawn on their own while the user types in the filter). */
+/** ‹ Previous · Page 2 of 7 · Next › (only when there is more than one page). */
+function pager(page, pages) {
+  if (pages < 2) return '';
+  const btn = (to, text, label) => `<button type="button" class="btn btn-sm" data-action="files-page" data-page="${to}"
+      aria-label="${label}" ${to < 0 || to >= pages ? 'disabled' : ''}>${text}</button>`;
+  return `<nav class="fl-pager" aria-label="Pages of files">
+    ${btn(page - 1, '‹ Previous', 'Previous page')}
+    <span>Page ${count(page + 1)} of ${count(pages)}</span>
+    ${btn(page + 1, 'Next ›', 'Next page')}
+  </nav>`;
+}
+
+/** The list, its pager and the count line (redrawn on their own while the user types in the filter). */
 function listParts(state, route) {
   const all = state.index?.files || [];
   if (!all.length) {
@@ -130,11 +142,15 @@ function listParts(state, route) {
     };
   }
   const { hits, tokens } = filtered(state);
-  const shown = hits.slice(0, state.files.limit);
+  const pages = Math.max(1, Math.ceil(hits.length / PAGE));
+  // Fewer files than before (new filter, or files removed in Drive): stay within the last page.
+  const page = state.files.page = Math.min(Math.max(0, state.files.page), pages - 1);
+  const start = page * PAGE;
+  const shown = hits.slice(start, start + PAGE);
   const names = progNames(state);
   const multi = state.files.prog === 'all' && CONFIG.programs.filter((p) => state.snaps[p.code]).length > 1;
   const word = hits.length === 1 ? 'file' : 'files';
-  const countText = `${count(hits.length)} ${word}` + (hits.length > shown.length ? ` · showing ${count(shown.length)}` : '');
+  const countText = `${count(hits.length)} ${word}` + (pages > 1 ? ` · ${count(start + 1)}–${count(start + shown.length)}` : '');
   if (!hits.length) {
     return {
       count: countText,
@@ -143,9 +159,8 @@ function listParts(state, route) {
     };
   }
   const rows = shown.map((e) => row(e, sameEntry(e, route), tokens, names, multi)).join('');
-  const more = hits.length > shown.length
-    ? `<p class="fl-more"><button type="button" class="btn btn-sm" data-action="files-more">Show more (${count(hits.length - shown.length)} left)</button></p>` : '';
-  return { count: countText, list: `<ul class="fl">${rows}</ul>${more}` };
+  const nav = pager(page, pages);
+  return { count: countText, list: `${nav}<ul class="fl">${rows}</ul>${nav}` };
 }
 
 function select(name, label, options, value) {
@@ -198,6 +213,11 @@ function previewHtml(state, route) {
 /** Same layout (and class names) as the area page: list on the left, document on the right. */
 export function renderFiles(state, route) {
   const viewer = !!route.fileId;
+  // A document opened from a link or with Back: show the page of the list it is on.
+  if (viewer) {
+    const at = filtered(state).hits.findIndex((e) => sameEntry(e, route));
+    if (at >= 0) state.files.page = Math.floor(at / PAGE);
+  }
   const { list, count: countText } = listParts(state, route);
   const html = `<div class="workspace files-ws" data-area="files">
     <aside class="tree-pane" id="treePane" aria-label="All files">
@@ -234,12 +254,14 @@ export function redrawList(app, toTop = false) {
 }
 
 export function setFilter(state, key, value) {
-  if (!(key in state.files) || key === 'limit') return;
+  if (!(key in state.files) || key === 'page') return;
   state.files[key] = value;
-  state.files.limit = PAGE;
+  state.files.page = 0;
 }
 
-export function showMore(state) { state.files.limit += PAGE; }
+export function setPage(state, page) {
+  if (Number.isInteger(page) && page >= 0) state.files.page = page; // listParts clamps it to the last page
+}
 
 export function resetFilters(state) {
   state.files = { ...defaultFilters(), sort: state.files.sort };

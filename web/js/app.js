@@ -438,9 +438,9 @@ document.addEventListener('click', (e) => {
   } else if (action === 'show-more') {
     state.searchLimit += 200;
     render();
-  } else if (action === 'files-more') {
-    F.showMore(state);
-    F.redrawList(app);
+  } else if (action === 'files-page') {
+    F.setPage(state, Number(el.dataset.page));
+    F.redrawList(app, true);
   } else if (action === 'files-reset') {
     F.resetFilters(state);
     render();
