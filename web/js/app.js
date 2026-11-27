@@ -252,14 +252,21 @@ function setTitle(route, searching) {
   document.title = (bits.length ? bits.join(' · ') + ' · ' : '') + base;
 }
 
+/** "Maria S. Reyes" → "MSR". A leading title (Dr., Engr., Prof.…) is skipped when at least two other words remain. */
+function initials(fullName) {
+  let words = String(fullName).replace(/[.,]/g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length > 2 && /^(dr|engr|prof|mr|mrs|ms|atty|rev|sir)$/i.test(words[0])) words = words.slice(1);
+  return words.map((w) => w[0].toUpperCase()).join('') || 'Accreditor view';
+}
+
 function setupViewer() {
   const frameBox = main.querySelector('.viewer-frame');
   const wm = frameBox?.querySelector('.watermark');
   if (wm) {
     const date = new Intl.DateTimeFormat('en-PH', { timeZone: CONFIG.timezone, day: 'numeric', month: 'short', year: 'numeric' }).format(new Date());
-    // Each accreditor has their own PIN, so the watermark carries their name.
+    // Each accreditor has their own PIN, so the watermark carries their initials (never the full name).
     const who = getSession()?.name;
-    const name = who && who !== 'Accreditor' && who !== 'Guest' ? who : 'Accreditor view';
+    const name = who && who !== 'Accreditor' && who !== 'Guest' ? initials(who) : 'Accreditor view';
     wm.style.backgroundImage = V.watermarkImage(`AACCUP · ${name} · ${date}`);
   }
   const frame = frameBox?.querySelector('iframe');

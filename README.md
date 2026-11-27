@@ -25,7 +25,7 @@ Coordinators ──upload──▶ Google Drive (folder tree per program)
 
 | Role | PIN | Can do |
 |---|---|---|
-| Accreditor | **one PIN per person** | View only. Sees only the programs and areas the admin opened. No Drive links, no "Open in new tab", no right-click. A transparent cover sits over the preview's "open in new window" button. Optional watermark with **their name** and the date. |
+| Accreditor | **one PIN per person** | View only. Sees only the programs and areas the admin opened. No Drive links, no "Open in new tab", no right-click. A transparent cover sits over the preview's "open in new window" button. Optional watermark with **their initials** and the date. |
 | Coordinator | **one shared PIN** | Every program and area, including files uploaded by others. Add keywords to any file, **＋** on each indicator and subfolder in the file tree (opens that Drive folder), **Check now**, progress and missing-document markers. |
 | Admin | one PIN | Everything a coordinator can do, plus the **Admin panel**: which programs/areas accreditors see (for everyone, or **per accreditor**: pick a name in "Settings for"), watermark on/off, Refresh / Rebuild / Issues. |
 
@@ -129,7 +129,7 @@ AACCUP → **3. Build snapshot now**. It reports documents, indicators and issue
 Every PIN is exactly **6 digits** and must be unique, because the PIN alone decides who is logging in. The menu refuses a PIN that is already in use. Leave a PIN prompt blank to get a random one.
 - AACCUP → **Set admin PIN**.
 - AACCUP → **Set coordinator PIN (shared)**. Give this one PIN to all area coordinators.
-- Fill the **Access** tab: one row per accreditor, with their name in `accreditorName` (e.g. `Dr. Reyes`). Leave `pinHash` blank. The name appears on the site, in the watermark and in the Log.
+- Fill the **Access** tab: one row per accreditor, with their name in `accreditorName` (e.g. `Dr. Reyes`). Leave `pinHash` blank. The name appears on the site and in the Log; the watermark shows only their initials.
 - AACCUP → **Generate accreditor PINs (Access list)**. A dialog shows each new PIN **once**: copy them now and give each accreditor their own. Only hashes are stored (salted SHA-256, with the salt in Script Properties).
 - To add one accreditor or change one PIN later: AACCUP → **Set one accreditor PIN**. To remove an accreditor, delete their row.
 - A login lasts 12 hours. After the visit, delete the accreditors' rows (or regenerate their PINs) and change the coordinator PIN; existing sessions end within 12 hours.

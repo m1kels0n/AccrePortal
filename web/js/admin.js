@@ -135,7 +135,7 @@ export function renderAdmin(state, route) {
       <h3>Accreditor screens (all programs)</h3>
       <form data-form="watermark">
         <label class="switch"><input type="checkbox" name="watermark" ${state.watermark ? 'checked' : ''}>
-          <span>Show a watermark over documents (the accreditor's name and today's date)</span></label>
+          <span>Show a watermark over documents (the accreditor's initials and today's date)</span></label>
         <div class="btn-row">
           <button type="submit" class="btn btn-primary btn-sm">Save</button>
           <span class="form-status" aria-live="polite"></span>
