@@ -298,7 +298,29 @@ function setTreeOpen(open) {
 }
 
 // ── Data refresh ────────────────────────────────────────────
-async function refresh(code, force = false) {
+// One snapshot request per program at a time (code -> promise), so tab switches and polls
+// during a slow load don't pile up requests, and an older reply can't overwrite a newer one.
+const inflight = {};
+// Programs whose first load failed and were already retried once automatically.
+const autoRetried = {};
+
+/**
+ * Load a program's snapshot. The browser's hash is always sent, so an unchanged list comes back tiny.
+ * `fresh`: the caller needs data from after this moment (Check now, admin Refresh, Try again), so wait
+ * for a request already running and then send a new one; otherwise join the running one.
+ */
+async function refresh(code, fresh = false) {
+  // A request from an earlier login is never joined or waited for: its reply is dropped anyway.
+  const mine = () => inflight[code] && inflight[code].tok === getSession()?.token;
+  if (mine() && !fresh) return inflight[code].p;
+  while (mine()) await inflight[code].p.catch(() => {});
+  const tok = getSession()?.token;
+  const p = doRefresh(code).finally(() => { if (inflight[code]?.p === p) delete inflight[code]; });
+  inflight[code] = { tok, p };
+  return p;
+}
+
+async function doRefresh(code) {
   const prog = getProgram(code);
   if (!prog || !getSession()) return;
   // A reply that arrives after logout or a new login belongs to the old session: drop it.
@@ -311,7 +333,7 @@ async function refresh(code, force = false) {
   let changed = false;
   if (!had) state.status[code] = { loading: true };
   try {
-    const data = await fetchSnapshot(prog, force ? null : had?.hash);
+    const data = await fetchSnapshot(prog, had?.hash);
     if (stale()) return;
     if (data && data.unchanged && had) {
       if (data.generatedAt) had.generatedAt = data.generatedAt;
@@ -340,6 +362,7 @@ async function refresh(code, force = false) {
     }
     if (data.settings) state.settings[code] = data.settings;
     state.status[code] = { ok: true, fetchedAt: Date.now() };
+    delete autoRetried[code];
   } catch (err) {
     if (stale()) return; // old session, or sessionExpired() already logged out
     if (err.code === 'noAccess') {
@@ -357,6 +380,11 @@ async function refresh(code, force = false) {
         offline: !!state.snaps[code],
         fetchedAt: Date.now(),
       };
+      // Nothing to show yet (no saved copy): try once more by itself after 10 s.
+      if (!state.snaps[code] && !autoRetried[code]) {
+        autoRetried[code] = true;
+        setTimeout(() => { if (!stale() && state.status[code]?.error) refresh(code); }, 10000);
+      }
     }
   }
   if (JSON.stringify(state.settings[code] || null) !== settingsBefore) changed = true;
@@ -374,6 +402,8 @@ async function ensureReference(code) {
   const prog = getProgram(code);
   if (!prog || !snap?.refLazy || !snap.refCount || snap.refLoaded === snap.refHash || !isStaff()) return;
   if (state.refStatus[code]?.loading) return;
+  // Failed for this list already: wait for "Try again" or the connection coming back, not every click.
+  if (state.refStatus[code]?.error && state.refStatus[code].refHash === snap.refHash) return;
   const tok = getSession().token;
   state.refStatus[code] = { loading: true };
   if (state.route?.name === 'files') F.redrawList(app);
@@ -392,18 +422,20 @@ async function ensureReference(code) {
     reindex();
   } catch (err) {
     if (!getSession() || getSession().token !== tok) return;
-    state.refStatus[code] = { error: err.name === 'AbortError' ? 'The server took too long to respond.' : err.message || 'Network error' };
+    state.refStatus[code] = { refHash: snap.refHash, error: err.name === 'AbortError' ? 'The server took too long to respond.' : err.message || 'Network error' };
   }
   if (state.route?.name === 'files') { F.redrawList(app); F.redrawFilters(app); }
 }
 
-function refreshAll(force = false) {
+function refreshAll() {
   if (!getSession()) return Promise.resolve();
-  return Promise.all(CONFIG.programs.map((p) => refresh(p.code, force)));
+  return Promise.all(CONFIG.programs.map((p) => refresh(p.code)));
 }
 
 function staleMs() {
-  const times = CONFIG.programs.map((p) => state.status[p.code]?.fetchedAt || 0);
+  // A program still loading counts as fresh, so switching tabs doesn't send another request.
+  const tok = getSession()?.token;
+  const times = CONFIG.programs.map((p) => (inflight[p.code]?.tok === tok ? Date.now() : state.status[p.code]?.fetchedAt || 0));
   return Date.now() - Math.min(...times);
 }
 
@@ -434,6 +466,7 @@ function resetData() {
   state.accNames = null;
   state.accNamesAt = 0;
   state.reqSetup = {};
+  for (const k in autoRetried) delete autoRetried[k];
   A.resetAdminCache();
   reindex();
 }
@@ -669,6 +702,17 @@ document.addEventListener('visibilitychange', () => {
   if (!document.hidden && getSession() && staleMs() > CONFIG.refreshMinutes * 60000) refreshAll();
 });
 setInterval(() => { if (!document.hidden && getSession()) refreshAll(); }, CONFIG.refreshMinutes * 60000);
+
+// Connection back: reload what failed now, instead of waiting for the next 5-minute check.
+window.addEventListener('online', () => {
+  if (!getSession()) return;
+  for (const p of CONFIG.programs) {
+    const refFailed = !!state.refStatus[p.code]?.error;
+    if (refFailed) delete state.refStatus[p.code];
+    if (state.status[p.code]?.error) refresh(p.code); // also reloads Reference folders on All files
+    else if (refFailed && state.route?.name === 'files') ensureReference(p.code);
+  }
+});
 
 // ── Start ───────────────────────────────────────────────────
 function start() {

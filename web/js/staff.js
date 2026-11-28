@@ -176,6 +176,8 @@ export async function prepareRequestsPage(progCode, app) {
   const prog = getProgram(progCode);
   if (!prog || !isStaff()) return;
   const rerender = () => { if (onRequestsPage(app, progCode)) { st.touched = false; app.render(); } };
+  // The names could not be loaded: wait for "Try again" (each redraw runs this again, so no loop).
+  if (!st.accNames && st.reqSetup[progCode]?.error) return;
   if (!st.accNames || Date.now() - (st.accNamesAt || 0) >= NAMES_TTL_MS) {
     let list;
     try {

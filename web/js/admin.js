@@ -337,7 +337,7 @@ export async function saveAccess(form, app) {
   const enabled = form.querySelector('input[name=enabled]').checked;
   const picked = [...form.querySelectorAll('input[name=area]:checked')].map((i) => i.value);
   const pickedKeys = new Set(picked.map(areaKey));
-  const areas = snap.areas.every((a) => pickedKeys.has(areaKey(a.code))) ? 'ALL' : picked;
+  const areas = accessItems(snap).every((a) => pickedKeys.has(areaKey(a.code))) ? 'ALL' : picked;
   button.disabled = true;
   status.className = 'form-status';
   status.textContent = 'Saving…';
