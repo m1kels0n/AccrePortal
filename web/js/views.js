@@ -102,7 +102,7 @@ export function renderLogin() {
   return `<div class="login-wrap">
     <div class="card login-card">
       <div class="login-logos">${CONFIG.logos.map((l) => `<img src="${esc(l.src)}" alt="${esc(l.alt)}" width="64" height="64">`).join('')}</div>
-      <p class="muted">Enter your 6-pin to open</p>
+      <p class="muted">Enter your 6-PIN to open</p>
       <form data-form="login" class="form" autocomplete="off">
         <label class="sr-only" for="pin">PIN</label>
         <input id="pin" name="pin" class="pin-input" type="password" inputmode="numeric" pattern="[0-9]{6}"
