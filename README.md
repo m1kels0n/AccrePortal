@@ -140,6 +140,7 @@ Every PIN is exactly **6 digits** and must be unique, because the PIN alone deci
 
 ### 3.6 Auto-refresh
 AACCUP → **Install 5-minute auto-refresh**. Each run only lists files in the known folders (about 15–25 Drive API calls), so it fits easily in Workspace quotas.
+It also adds a Sheet change trigger (`onSheetChange`), so deleting or inserting a row (e.g. removing an accreditor from the Access tab) takes effect at once. Running it again replaces both triggers, never doubles them. *Updating from an older version?* Run it (or ★ Quick setup) once more in each Sheet to add the change trigger.
 
 ### 3.7 Deploy the web app
 1. In the Apps Script editor: **Deploy → New deployment** → ⚙️ **Web app**.

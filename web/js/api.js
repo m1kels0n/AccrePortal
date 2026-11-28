@@ -40,6 +40,13 @@ export function clearSession() { store.remove(SESSION_KEY, true); }
 function storedSession() { return CONFIG.requireLogin === false ? GUEST : store.get(SESSION_KEY, true); }
 export const hasStoredSession = () => !!storedSession();
 
+/**
+ * The token to send. A renewed accreditor token goes in `auth`, and `token` stays the one from
+ * the login: the rest of the site compares `token` to tell one login from another (and to show
+ * the welcome pop-up once per login), so renewing must not change it.
+ */
+const authToken = (s) => s?.auth || s?.token;
+
 export const isStaff = (s = getSession()) => !!s && (s.role === 'coordinator' || s.role === 'admin');
 export const isAdmin = (s = getSession()) => !!s && s.role === 'admin';
 export const roleLabel = (role) => ({ accreditor: 'Accreditor', coordinator: 'Coordinator', admin: 'Admin' }[role] || role);
@@ -192,7 +199,7 @@ export async function fetchSnapshot(prog, sinceHash) {
   }
   if (!prog.apiUrl) throw new Error('No apiUrl set in config.js for ' + prog.name);
   const params = new URLSearchParams({ action: 'snapshot' });
-  if (s?.token) params.set('token', s.token);
+  if (s?.token) params.set('token', authToken(s));
   if (sinceHash) params.set('since', sinceHash);
   // Staff: without the Reference folders, which only the All files page needs (fetchReference).
   // An older backend ignores this and sends them anyway, which still works.
@@ -210,7 +217,7 @@ export async function fetchReference(prog) {
   const s = getSession();
   if (isMock()) return mockReference(prog, s);
   const params = new URLSearchParams({ action: 'reference' });
-  if (s?.token) params.set('token', s.token);
+  if (s?.token) params.set('token', authToken(s));
   const data = await getJson(prog.apiUrl + '?' + params);
   if (data && data.ok === false) {
     if (data.error === 'expired' && endsSession(prog, s)) onExpired(data.message);
@@ -222,7 +229,7 @@ export async function fetchReference(prog) {
 /** POST an action to a program's Apps Script (text/plain avoids a CORS preflight). The token is added automatically. */
 export async function post(prog, payload, opts = {}) {
   const s = getSession();
-  const body = s?.token && payload.action !== 'login' ? { token: s.token, ...payload } : payload;
+  const body = s?.token && payload.action !== 'login' ? { token: authToken(s), ...payload } : payload;
   let res;
   if (isMock()) {
     res = await mockPost(prog, body);
@@ -239,8 +246,71 @@ export async function post(prog, payload, opts = {}) {
   return res;
 }
 
+/**
+ * The server's expiresAt is by the server's clock. When it also says how many seconds are left
+ * (expiresIn), turn that into a time by this device's clock, so a phone whose clock is off still
+ * keeps the session the right length. An older backend sends only expiresAt: kept as it is.
+ */
+function localExpiry(res) {
+  const secs = Number(res && res.expiresIn);
+  if (!res || !res.ok || !res.expiresAt || !(secs > 0)) return res;
+  return { ...res, expiresAt: new Date(Date.now() + secs * 1000).toISOString() };
+}
+
 export function login(pin) {
-  return post(mainProgram(), { action: 'login', pin });
+  return post(mainProgram(), { action: 'login', pin }).then(localExpiry);
+}
+
+// ── Accreditor session renewal ──────────────────────────────
+// An accreditor's token lasts 2 hours (ACC_TOKEN_SEC in Security.gs), because only the main program
+// can see that someone was removed from the Access tab. Before it runs out, the main program swaps
+// it for a new one (after checking the Access tab), up to 12 hours from login. Checked every
+// minute, when the tab is shown again and when the connection comes back.
+const RENEW_BEFORE_MS = 45 * 60000; // renew when less than this is left
+const RENEW_RETRY_MS = 60000;       // after a network or server error, wait this long
+const RENEW_GAP_MS = 10 * 60000;    // never renew again sooner than this after a renewal
+let renewing = null;                // one renewal at a time
+let renewRetryAt = 0;
+
+const renewDue = (s) => !!s && !s.guest && s.role === 'accreditor' && !s.noRenew && !!s.expiresAt
+  && new Date(s.expiresAt) - Date.now() < RENEW_BEFORE_MS
+  && !(Date.now() - (s.renewedAt || 0) < RENEW_GAP_MS); // a safety net, so a renewal can never repeat every minute
+
+/** Renew the accreditor's token if it is due (does nothing otherwise). Never throws. */
+export function renewSession() {
+  if (renewing) return renewing;
+  const s = getSession();
+  if (!renewDue(s) || Date.now() < renewRetryAt) return Promise.resolve();
+  const prog = mainProgram();
+  if (!isMock() && (prog.source !== 'api' || !prog.apiUrl)) return Promise.resolve();
+  renewing = post(prog, { action: 'renew' }).then(localExpiry).then((res) => {
+    // Logged out, or someone else logged in, while it was on its way: the reply is not for them.
+    const cur = storedSession();
+    if (!cur || cur.token !== s.token) return;
+    if (res && res.ok && res.token && res.expiresAt) {
+      // No later than before (12 hours from login are up): keep it until it runs out.
+      const last = res.final || !(new Date(res.expiresAt) > new Date(cur.expiresAt));
+      setSession({ ...cur, auth: res.token, expiresAt: res.expiresAt, renewedAt: Date.now(), ...(last ? { noRenew: true } : {}) });
+      return;
+    }
+    const err = res && res.error;
+    if (err === 'expired') return; // post() has already ended the session (onExpired)
+    if (!err || err === 'invalid' || err === 'notMain' || err === 'forbidden' || err === 'offline') {
+      // An older main program ("Unknown action"): its 12-hour token simply runs out, as before.
+      setSession({ ...cur, noRenew: true });
+      return;
+    }
+    renewRetryAt = Date.now() + RENEW_RETRY_MS; // network or server trouble: try again later
+  }).catch(() => { renewRetryAt = Date.now() + RENEW_RETRY_MS; })
+    .finally(() => { renewing = null; });
+  return renewing;
+}
+
+if (typeof window !== 'undefined') {
+  setTimeout(renewSession, 0); // a page reloaded close to the end of the token
+  setInterval(renewSession, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) renewSession(); });
+  window.addEventListener('online', () => { renewRetryAt = 0; renewSession(); });
 }
 
 export function cleanKeywords(input) {
@@ -411,7 +481,7 @@ function accreditorCopy(snap, settings, name) {
 
 async function mockSnapshot(prog, session) {
   await delay(250);
-  const s = session?.guest ? session : mockReadToken(session?.token);
+  const s = session?.guest ? session : mockReadToken(authToken(session));
   if (!s) { onExpired(); throw apiError({ error: 'expired', message: 'Your session expired. Please log in again.' }); }
   const snap = await loadMockRaw(prog);
   const kw = mockKeywordStore(prog.code);
@@ -441,7 +511,7 @@ const mockRefHash = (refs) => 'r' + JSON.stringify(refs).length.toString(36);
 
 async function mockReference(prog, session) {
   await delay(400);
-  const s = mockReadToken(session?.token);
+  const s = mockReadToken(authToken(session));
   if (!s) { onExpired(); throw apiError({ error: 'expired', message: 'Your session expired. Please log in again.' }); }
   if (s.role !== 'coordinator' && s.role !== 'admin') throw apiError({ error: 'forbidden', message: 'Coordinators only.' });
   const snap = await loadMockRaw(prog);
@@ -458,12 +528,22 @@ async function mockPost(prog, payload) {
     if (prog.code !== mainProgram().code) return { ok: false, error: 'notMain', message: 'Logins go through the main program.' };
     const user = MOCK_PINS[String(payload.pin || '').trim()];
     if (!user) return { ok: false, error: 'badPin', message: 'Wrong PIN. Please try again.' };
-    const session = { ...user, expiresAt: new Date(Date.now() + 12 * 3600 * 1000).toISOString() };
-    return { ok: true, ...session, token: mockToken(session) };
+    // Like Security.gs: accreditors 2 hours (renewed), staff 12 hours.
+    const loginAt = Date.now();
+    const session = { ...user, loginAt, expiresAt: new Date(loginAt + (user.role === 'accreditor' ? 2 : 12) * 3600 * 1000).toISOString() };
+    return { ok: true, ...session, token: mockToken(session), expiresIn: (Date.parse(session.expiresAt) - loginAt) / 1000 };
   }
   if (action === 'logout') return { ok: true };
   const s = mockReadToken(payload.token);
   if (!s) return { ok: false, error: 'expired', message: 'Your session expired. Please log in again.' };
+  if (action === 'renew') {
+    if (prog.code !== mainProgram().code) return { ok: false, error: 'notMain', message: 'Sessions are renewed by the main program.' };
+    if (s.role !== 'accreditor') return { ok: false, error: 'invalid', message: 'Only accreditor sessions are renewed.' };
+    const cap = (s.loginAt || Date.now()) + 12 * 3600 * 1000;
+    const exp = Math.min(Date.now() + 2 * 3600 * 1000, cap);
+    const session = { ...s, expiresAt: new Date(exp).toISOString() };
+    return { ok: true, role: s.role, name: s.name, token: mockToken(session), expiresAt: session.expiresAt, expiresIn: Math.round((exp - Date.now()) / 1000), final: exp >= cap };
+  }
   const staff = s.role === 'coordinator' || s.role === 'admin';
 
   if (action === 'saveKeywords') {

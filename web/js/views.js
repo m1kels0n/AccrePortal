@@ -31,7 +31,7 @@ function codeBadge(code, type) {
 
 function pageHead(eyebrow, title, extra = '') {
   return `<header class="page-head">${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}
-    ${title ? `<h2 class="page-title">${esc(title)}</h2>` : ''}${extra}</header>`;
+    ${title ? `<h2 class="page-title" tabindex="-1">${esc(title)}</h2>` : ''}${extra}</header>`;
 }
 
 export function programName(prog, snap) { return snap?.program?.name || prog.name; }
@@ -370,22 +370,26 @@ function renderRequestsPage(state, prog, snap) {
 }
 
 // ── Workspace: tree (left) + content (right) ────────────────
-/** Returns { html, workspace } — workspace=false when the area can't be shown (plain page instead). */
-export function renderWorkspace(state, route, searchHtml) {
+/**
+ * Returns { html, workspace } — workspace=false when the area can't be shown (plain page instead).
+ * Search results are not drawn here: app.js fills the empty #searchResults box over the content pane,
+ * so typing a search never rebuilds (and reloads) the open document.
+ */
+export function renderWorkspace(state, route) {
   const prog = getProgram(route.prog);
   if (!prog) return { html: notFound(), workspace: false };
   const snap = state.snaps[prog.code];
   if (!snap) return { html: unavailable(prog, state.status[prog.code]), workspace: false };
   const area = findArea(snap, route.area);
   if (!area) {
-    if (route.area === REQUEST && isStaff()) return { html: searchHtml || renderRequestsPage(state, prog, snap), workspace: false };
+    if (route.area === REQUEST && isStaff()) return { html: renderRequestsPage(state, prog, snap), workspace: false };
     const group = findGroup(snap, route.area);
-    if (group) return { html: searchHtml || renderGroup(prog, snap, group), workspace: false };
+    if (group) return { html: renderGroup(prog, snap, group), workspace: false };
     return { html: notFound(href([prog.code]), 'This area is not available. It may not be open for viewing.'), workspace: false };
   }
 
-  const viewer = !searchHtml && !!route.fileId;
-  const content = searchHtml || renderContent(state, prog, snap, area, route);
+  const viewer = !!route.fileId;
+  const content = renderContent(state, prog, snap, area, route);
   const html = `<div class="workspace" data-area="${esc(prog.code + '/' + area.code)}">
     <aside class="tree-pane" id="treePane" aria-label="Documents in ${esc(areaLabel(area))}">
       <div class="tree-head">
@@ -412,7 +416,7 @@ export function renderWorkspace(state, route, searchHtml) {
             title="Show the list of files" aria-label="Show the list of files">
       <span class="rail-icon" aria-hidden="true">☰</span><span class="rail-text">Show files</span>
     </button>
-    <section class="content-pane ${viewer ? 'has-viewer' : ''} ${!viewer && !searchHtml ? 'is-empty' : ''}" id="contentPane">${content}</section>
+    <section class="content-pane ${viewer ? 'has-viewer' : 'is-empty'}" id="contentPane">${content}${searchBox()}</section>
   </div>`;
   return { html, workspace: true };
 }
@@ -614,7 +618,7 @@ function renderViewer(state, prog, snap, area, route) {
   const req = staff && area.request;
   return `<div class="viewer">
     <div class="viewer-bar">
-      <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
+      <span class="viewer-name" role="heading" aria-level="2" tabindex="-1" title="${esc(file.name)}">${esc(file.name)}</span>
       ${req ? requestForLine(file)
         : area.request ? (file.desc ? `<span class="viewer-path req-desc-line" title="${esc(file.desc)}">${esc(file.desc)}</span>` : '')
         : `<span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>`}
@@ -664,13 +668,23 @@ export function watermarkImage(text) {
 }
 
 // ── Search results ──────────────────────────────────────────
+/** The empty box search results are drawn into (shown over the page; the page itself stays as it is). */
+export function searchBox() {
+  return '<div class="search-results" id="searchResults" hidden></div>';
+}
+
+/** Programs in the search scope that are still loading for the first time (nothing to search in yet). */
+export function pendingPrograms(state, scope) {
+  return CONFIG.programs.filter((p) => (scope === 'all' || p.code === scope) && state.status[p.code]?.loading && !state.snaps[p.code]);
+}
+
 export function renderSearch(state, route, results, scope) {
   const q = route.q.trim();
   const multi = scope === 'all' && CONFIG.programs.length > 1;
   const scopeName = scope !== 'all' ? programName(getProgram(scope), state.snaps[scope]) : '';
   const where = scopeName ? ` in ${esc(scopeName)}` : '';
   // Programs not loaded yet (first login, slow connection): their documents can't be searched yet.
-  const pending = CONFIG.programs.filter((p) => (scope === 'all' || p.code === scope) && state.status[p.code]?.loading && !state.snaps[p.code]);
+  const pending = pendingPrograms(state, scope);
   const pendingNote = pending.length
     ? `<p class="search-pending"><span class="spinner spinner-sm"></span> Still loading ${esc(pending.map((p) => p.name).join(' and '))}… results will appear here by themselves.</p>` : '';
   if (!results.total && pending.length) {

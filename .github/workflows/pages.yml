@@ -34,6 +34,22 @@ jobs:
           # <link rel="modulepreload" href="js/x.js">: same URL as the stamped import, or it would download twice.
           sed -i -E "s#(rel=\"modulepreload\" href=\"js/[A-Za-z0-9_-]+\.js)\"#\1?v=$V\"#g" web/index.html
           grep -c "?v=$V" web/index.html web/js/*.js
+      # Shrink the JS and CSS for faster loading on phones. Only this build copy changes: the files
+      # in the repo stay readable. Each file is minified on its own (no bundling), so the stamped
+      # imports like './util.js?v=abc12345' stay exactly as they are. esnext = keep modern syntax.
+      # index.html and web/data/*.json are left alone.
+      - name: Minify JS and CSS
+        run: |
+          V="${GITHUB_SHA::8}"
+          before=$(cat web/js/*.js | grep -o "?v=$V" | wc -l)
+          npx --yes esbuild@0.24.0 web/js/*.js --minify --format=esm --target=esnext \
+            --outdir=web/js --allow-overwrite --log-level=warning
+          npx --yes esbuild@0.24.0 web/css/*.css --minify --loader:.css=css --target=esnext \
+            --outdir=web/css --allow-overwrite --log-level=warning
+          after=$(cat web/js/*.js | grep -o "?v=$V" | wc -l)
+          echo "Stamped imports before: $before, after: $after"
+          if [ "$before" != "$after" ]; then echo "Minify changed the stamped imports"; exit 1; fi
+          ls -l web/js web/css
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web

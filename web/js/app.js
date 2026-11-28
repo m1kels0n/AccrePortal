@@ -1,6 +1,6 @@
 // Bootstrap: login gate, load snapshots, route, render, wire events.
 import { CONFIG } from './config.js';
-import { esc, fmtDate, debounce, toast } from './util.js';
+import { esc, fmtDate, debounce, toast, plural } from './util.js';
 import { parseHash, href, replaceQuery, navigate } from './router.js';
 import {
   readCache, writeCache, removeCache, clearCaches, fetchSnapshot, fetchReference, isMock, getSession, clearSession,
@@ -44,6 +44,14 @@ const app = { state, render, renderChrome, refresh, reindex, onLogin };
 const main = document.getElementById('app');
 const input = document.getElementById('searchInput');
 const clearBtn = document.getElementById('searchClear');
+const searchLive = document.getElementById('searchLive');
+
+// Pages the search box searches from. Their results are drawn into #searchResults over the page,
+// so the page underneath (and an open document) stays as it is while searching.
+const SEARCH_PAGES = ['home', 'program', 'workspace'];
+const isSearching = (route) => route.q.trim().length >= 2 && SEARCH_PAGES.includes(route.name);
+/** The page a route shows, without its search text. */
+const pageKey = (route) => route.name + ':' + route.segs.join('/');
 
 // ── Setup ───────────────────────────────────────────────────
 function applyBrand() {
@@ -175,14 +183,20 @@ function render(background = false) {
     if (open) { F.redrawList(app); renderChrome(); return; }
   }
   if (background) {
-    const viewing = route.fileId && route.q.trim().length < 2 && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
-    if (state.touched || viewing) { renderChrome(); return; }
+    const samePage = main.dataset.page === pageKey(route);
+    const viewing = route.fileId && samePage && main.querySelector(`.viewer-frame[data-file="${CSS.escape(route.fileId)}"]`);
+    if (state.touched || viewing) {
+      // Keep the page (and the open document); only the search results show the new data.
+      if (samePage) setTitle(route, showSearch(route));
+      renderChrome();
+      return;
+    }
   }
   state.touched = false;
 
-  const searching = route.q.trim().length >= 2 && ['home', 'program', 'workspace'].includes(route.name);
-  const searchHtml = searching
-    ? V.renderSearch(state, route, search(state.index, route.q, scopeOf(route), state.searchLimit), scopeOf(route)) : '';
+  const searching = isSearching(route);
+  // Plain pages: the page and the (hidden) results box side by side; a search hides the page.
+  const withResults = (h) => `<div id="pageBody">${h}</div>${V.searchBox()}`;
 
   const oldScroll = document.getElementById('treeScroll');
   const wsKey = route.name === 'files' ? 'files' : route.prog + '/' + route.area;
@@ -193,14 +207,20 @@ function render(background = false) {
   let workspace = false;
   switch (route.name) {
     case 'login': html = V.renderLogin(); break;
-    case 'home': html = searching ? searchHtml : V.renderHome(state); break;
-    case 'program': html = searching ? searchHtml : V.renderProgram(state, route); break;
-    case 'workspace': ({ html, workspace } = V.renderWorkspace(state, route, searchHtml)); break;
+    case 'home': html = withResults(V.renderHome(state)); break;
+    case 'program': html = withResults(V.renderProgram(state, route)); break;
+    case 'workspace':
+      ({ html, workspace } = V.renderWorkspace(state, route));
+      if (!workspace) html = withResults(html); // a workspace has its results box in the content pane
+      break;
     case 'admin': html = A.renderAdmin(state, route); break;
     case 'files': ({ html, workspace } = F.renderFiles(state, route)); break;
     default: html = V.notFound();
   }
   main.innerHTML = html;
+  if (SEARCH_PAGES.includes(route.name)) main.dataset.page = pageKey(route);
+  else delete main.dataset.page;
+  showSearch(route);
   // Removing a focused field (e.g. the PIN box) fires a late `change` that would mark the new
   // screen as "touched" and block background redraws, so reset the flag after the swap too.
   state.touched = false;
@@ -210,7 +230,8 @@ function render(background = false) {
   document.body.classList.toggle('is-files', workspace && route.name === 'files');
   document.body.classList.toggle('tree-open', workspace && state.treeOpen);
   // A document is open: the tree tucks away into a drawer so the document gets the full width.
-  document.body.classList.toggle('has-doc', workspace && !!route.fileId && !searching);
+  // (Search results show over the document, which stays open underneath.)
+  document.body.classList.toggle('has-doc', workspace && !!route.fileId);
   document.body.classList.toggle('role-viewer', !!session && !isStaff(session));
 
   if (workspace) {
@@ -219,7 +240,7 @@ function render(background = false) {
     else scroller.querySelector('.tn-link.active')?.scrollIntoView({ block: 'center' });
     const prog = getProgram(route.prog);
     if (prog) lastPlace.set({ prog: prog.code, area: route.area });
-    if (route.fileId && !searching) setupViewer();
+    if (route.fileId) setupViewer();
   }
   if (route.name === 'admin') A.loadAdminData(route.prog, state);
   // Staff "Who asked?" page: load the accreditor names and make any missing folders.
@@ -229,6 +250,60 @@ function render(background = false) {
   setTitle(route, searching);
   renderChrome();
   syncWelcome();
+}
+
+/**
+ * Only the search text changed (typing, ×, Esc, Show more): redraw just the results box and show or
+ * hide it. The page under it is not rebuilt, so an open document is not downloaded again and keeps
+ * its place. Anything else (another page, no page yet) gets a normal render().
+ */
+function renderSearchOnly() {
+  const route = parseHash();
+  if (!getSession() || !SEARCH_PAGES.includes(route.name) || main.dataset.page !== pageKey(route)
+      || !document.getElementById('searchResults')) { render(); return; }
+  state.route = route;
+  if (document.activeElement !== input) input.value = route.q;
+  clearBtn.hidden = !input.value;
+  const searching = showSearch(route);
+  // Staff "Who asked?" page: the same step render() runs when the page shows without a search.
+  if (!searching && route.name === 'workspace' && route.area === REQUEST && isStaff()) S.prepareRequestsPage(route.prog, app);
+  setTitle(route, searching);
+  renderChrome();
+  syncWelcome();
+}
+
+/** Fill (or empty) #searchResults for the route, and hide or show the page under it. Returns whether searching. */
+function showSearch(route) {
+  const box = document.getElementById('searchResults');
+  if (!box) return false;
+  const searching = isSearching(route);
+  if (searching) {
+    const scope = scopeOf(route);
+    const results = search(state.index, route.q, scope, state.searchLimit);
+    box.innerHTML = V.renderSearch(state, route, results, scope);
+    announceSearch(route, results, scope);
+  } else {
+    // Always empty the screen-reader note (and drop one still waiting), even when a full redraw made
+    // this box: otherwise the same search typed again later says the same words and is not read out.
+    announceSearch(route, null);
+    box.innerHTML = '';
+  }
+  box.hidden = !searching;
+  // Area page: the results cover the content pane; the document under it is only hidden, not removed.
+  box.closest('.content-pane')?.classList.toggle('is-searching', searching);
+  const page = document.getElementById('pageBody');
+  if (page) page.hidden = searching;
+  return searching;
+}
+
+// Screen readers: say how many results there are once the typing pauses (not on every key).
+const sayLive = debounce((text) => { if (searchLive && searchLive.textContent !== text) searchLive.textContent = text; }, 700);
+function announceSearch(route, results, scope) {
+  if (!results) { sayLive(''); return; }
+  const q = route.q.trim();
+  const pending = V.pendingPrograms(state, scope).length > 0;
+  if (!results.total) sayLive(pending ? 'Still loading… results will appear by themselves.' : `No results for ${q}.`);
+  else sayLive(`${plural(results.total, 'result')} for ${q}.` + (pending ? ' Still loading more…' : ''));
 }
 
 // The accreditors' welcome pop-up: shown once per login, over whatever page they land on.
@@ -295,12 +370,36 @@ function setupViewer() {
   };
 }
 
-function setTreeOpen(open) {
+// The button that opened the file drawer, so closing it puts the keyboard back there.
+let treeOpener = null;
+const shown = (el) => !!el && el.isConnected && el.getClientRects().length > 0;
+
+/** Open or close the file drawer (phones). `opener`: the button pressed to open it. */
+function setTreeOpen(open, opener = null) {
+  const was = state.treeOpen;
   state.treeOpen = open;
   document.body.classList.toggle('tree-open', open && document.body.classList.contains('is-workspace'));
   document.getElementById('treeToggle').setAttribute('aria-expanded', String(open));
+  const pane = document.getElementById('treePane');
   if (open) {
-    document.querySelector('#treeScroll .tn-link.active, #treeScroll .fl-item.active')?.scrollIntoView({ block: 'center' });
+    const active = document.querySelector('#treeScroll .tn-link.active, #treeScroll .fl-item.active');
+    active?.scrollIntoView({ block: 'center' });
+    if (!was) {
+      treeOpener = opener || document.activeElement;
+      // Into the drawer: the open document's link, else the Close button.
+      const target = shown(active) ? active : pane?.querySelector('.tree-close');
+      if (shown(target)) target.focus({ preventScroll: true });
+    }
+  } else if (was) {
+    // Back to the button that opened it (or whichever drawer button is on screen), but only when the
+    // keyboard was in the drawer or nowhere (a tap on the dark backdrop focuses <main>): never pull it
+    // away from something else.
+    const at = document.activeElement;
+    if (!at || at === document.body || at === main || pane?.contains(at)) {
+      const back = [treeOpener, ...document.querySelectorAll('#treeToggle, .tree-rail, .viewer-open-list')].find(shown);
+      back?.focus({ preventScroll: true });
+    }
+    treeOpener = null;
   }
 }
 
@@ -514,7 +613,7 @@ setExpiredHandler(sessionExpired);
 const onSearch = debounce(() => {
   state.searchLimit = 200;
   replaceQuery(input.value);
-  render();
+  renderSearchOnly();
 }, 150);
 
 input.addEventListener('input', () => { clearBtn.hidden = !input.value; onSearch(); });
@@ -526,7 +625,7 @@ function clearSearch() {
   input.value = '';
   clearBtn.hidden = true;
   replaceQuery('');
-  render();
+  renderSearchOnly();
 }
 
 window.addEventListener('hashchange', () => {
@@ -542,7 +641,7 @@ window.addEventListener('hashchange', () => {
     }
   }
   if (r.fileId) {
-    state.treeOpen = false; // close the drawer on phones once a document is picked
+    setTreeOpen(false); // close the drawer on phones once a document is picked (class + aria-expanded too)
     document.body.classList.add('tree-lock'); // desktop: shrink the tree back even though the mouse is still on it
     // Once the shrink finishes, unlock if the pointer is no longer on the tree (e.g. it is over the
     // document iframe, which sends no pointermove here), so hovering the tree again widens it.
@@ -550,9 +649,37 @@ window.addEventListener('hashchange', () => {
       if (!document.querySelector('.tree-pane:hover')) document.body.classList.remove('tree-lock');
     }, 250);
   }
-  render();
+  // A link to the page already showing, minus the search (e.g. a result for the open document):
+  // just close the results, so the document is not loaded again.
+  if (state.route && main.dataset.page === pageKey(r) && state.route.q !== r.q && !r.q.trim()) renderSearchOnly();
+  else render();
   if (!document.body.classList.contains('is-workspace')) window.scrollTo(0, 0);
+  focusAfterNav();
 });
+
+/**
+ * After moving to another page (not on background redraws), put the keyboard focus somewhere that
+ * tells a screen reader where it is: the tree link just picked (wide screens, list on screen), else
+ * the document or page heading, else the page itself.
+ */
+function focusAfterNav() {
+  const route = state.route;
+  if (!route || route.name === 'login' || document.getElementById('welcomeModal')) return;
+  if (document.activeElement === input) return; // typing a search
+  const body = document.body.classList;
+  const narrow = matchMedia('(max-width: 899px)').matches;
+  const drawer = narrow || (body.contains('has-doc') && matchMedia('(hover: none)').matches);
+  if (body.contains('is-workspace') && !body.contains('tree-lock') && (!drawer || state.treeOpen) && !isSearching(route)) {
+    const link = main.querySelector('#treeScroll .tn-link.active, #treeScroll .fl-item.active');
+    if (shown(link)) { link.focus({ preventScroll: true }); return; }
+  }
+  const target = isSearching(route)
+    ? main.querySelector('#searchResults .search-summary')
+    : main.querySelector('#contentPane .viewer-name, .page-title');
+  const el = shown(target) ? target : main;
+  if (!el.hasAttribute('tabindex')) el.setAttribute('tabindex', '-1');
+  el.focus({ preventScroll: true });
+}
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
@@ -560,9 +687,15 @@ document.addEventListener('click', (e) => {
   const action = el.dataset.action;
   if (action === 'clear-search') {
     clearSearch();
+    input.focus(); // the button pressed is gone with the results
   } else if (action === 'show-more') {
+    // Keep the keyboard's place: focus the first newly added result (the button pressed is gone).
+    const before = main.querySelectorAll('#searchResults .result-file').length;
     state.searchLimit += 200;
-    render();
+    renderSearchOnly();
+    const next = main.querySelectorAll('#searchResults .result-file')[before]
+      || main.querySelector('#searchResults .search-summary');
+    if (next) { if (!next.matches('a')) next.setAttribute('tabindex', '-1'); next.focus({ preventScroll: true }); }
   } else if (action === 'files-page') {
     F.setPage(state, Number(el.dataset.page));
     F.redrawList(app, true);
@@ -602,7 +735,7 @@ document.addEventListener('click', (e) => {
   } else if (action === 'viewer-reload') {
     el.closest('.viewer-frame')?.querySelector('iframe')?.reloadPreview?.();
   } else if (action === 'tree-toggle') {
-    setTreeOpen(!state.treeOpen);
+    setTreeOpen(!state.treeOpen, el);
   } else if (action === 'tree-close') {
     setTreeOpen(false);
   } else if (action === 'tree-expand' || action === 'tree-collapse') {

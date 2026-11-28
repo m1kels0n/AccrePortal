@@ -16,6 +16,9 @@
  * POST (body = JSON text, sent as text/plain to avoid a CORS preflight)
  *      { action: 'login', pin }                 (main program only)
  *      { action: 'logout', token }
+ *      { action: 'renew', token }                (main program only; accreditors)
+ *        A fresh 2-hour token, same reply as login (+ final: true when 12 hours from login are up).
+ *        "expired" if the token is not valid any more or the accreditor left the Access tab.
  *      { action: 'saveKeywords', token, fileId, keywords }   (coordinator or admin)
  *      Requested Documents (coordinator or admin):
  *      { action: 'saveRequestAccess', token, fileId, accreditors: [names], description? }
@@ -74,6 +77,7 @@ function doPost(e) {
     switch (body.action) {
       case 'login': return json_(handleLogin_(body));
       case 'logout': return json_({ ok: true });
+      case 'renew': return json_(handleRenew_(body));
       case 'saveKeywords': return json_(handleSaveKeywords_(body));
       case 'saveRequestAccess': return json_(handleSaveRequestAccess_(body));
       case 'refreshRequests': return json_(handleRefreshRequests_(body));
@@ -98,7 +102,20 @@ function handleLogin_(body) {
   var session = verifyLogin_(body.pin);
   var t = issueToken_(session);
   log_('login', session.name + ' (' + session.role + ')', '');
-  return { ok: true, role: session.role, name: session.name, token: t.token, expiresAt: t.expiresAt };
+  return { ok: true, role: session.role, name: session.name, token: t.token, expiresAt: t.expiresAt, expiresIn: t.expiresIn };
+}
+
+/**
+ * Accreditors: swap a valid token for a new 2-hour one (see ACC_TOKEN_SEC in Security.gs).
+ * checkToken_ on the main program already ends the session of an accreditor who left the Access
+ * tab. Coordinators and the admin keep their 12-hour token: nothing to renew.
+ */
+function handleRenew_(body) {
+  if (!isMain_()) return { ok: false, error: 'notMain', message: 'Sessions are renewed by the main program.' };
+  var s = checkToken_(body.token, 'any');
+  if (s.role !== 'accreditor') return { ok: false, error: 'invalid', message: 'Only accreditor sessions are renewed.' };
+  var t = issueToken_(s, s.loginAt);
+  return { ok: true, role: s.role, name: s.name, token: t.token, expiresAt: t.expiresAt, expiresIn: t.expiresIn, final: t.final };
 }
 
 // ── Snapshot, filtered by role ───────────────────────────────

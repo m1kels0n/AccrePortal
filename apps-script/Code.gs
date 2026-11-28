@@ -70,6 +70,41 @@ function onEdit(e) {
   }
 }
 
+/**
+ * Installable "on change" trigger (installChangeTrigger_ below). Deleting or inserting a row or
+ * column (or a tab) is not an edit, so onEdit never sees it: deleting an accreditor's row in the
+ * Access tab would only take effect when the cache runs out. The event doesn't say which tab
+ * changed, so every cache that comes from the Sheet is cleared; they are cheap to read again.
+ * Changes made by scripts don't fire it.
+ */
+function onSheetChange(e) {
+  try {
+    if (e && e.changeType === 'FORMAT') return; // colours, widths…: nothing that the website reads
+    CacheService.getScriptCache().removeAll(['settings', 'overrides', 'accessNames']);
+    PropertiesService.getScriptProperties().deleteProperty('AUTH_MODE'); // see isMain_ in Security.gs
+  } catch (err) {
+    // The caches then simply run out after SETTINGS_TTL / ACCESS_TTL.
+  }
+}
+
+/** (Re)create the onSheetChange trigger, never twice. Returns false if there is no Sheet to attach it to. */
+function installChangeTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'onSheetChange') ScriptApp.deleteTrigger(t);
+  });
+  var ss = null;
+  try { ss = SpreadsheetApp.getActive(); } catch (err) { ss = null; }
+  var id = ss ? ss.getId() : PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  if (!id) return false;
+  try {
+    ScriptApp.newTrigger('onSheetChange').forSpreadsheet(id).onChange().create();
+    return true;
+  } catch (err) {
+    console.error('installChangeTrigger_: ' + err);
+    return false;
+  }
+}
+
 // ── Setup ────────────────────────────────────────────────────
 function setup() {
   var ui = SpreadsheetApp.getUi();
@@ -221,7 +256,9 @@ function menuBuildSnapshot() {
 function installTrigger() {
   removeTrigger_(true);
   ScriptApp.newTrigger('buildSnapshot').timeBased().everyMinutes(5).create();
-  SpreadsheetApp.getUi().alert('Auto-refresh is ON: the file list is rescanned every 5 minutes.');
+  var change = installChangeTrigger_();
+  SpreadsheetApp.getUi().alert('Auto-refresh is ON: the file list is rescanned every 5 minutes.' +
+    (change ? '' : '\n\nThe Sheet change trigger could not be added: deleting a row in Access or Config takes effect within a few minutes instead of at once.'));
 }
 function removeTrigger() { removeTrigger_(false); }
 function removeTrigger_(silent) {

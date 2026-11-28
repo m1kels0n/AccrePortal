@@ -360,6 +360,18 @@ body.is-workspace .site-footer { display: none; }
 .content-pane.has-viewer .viewer { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .content-pane > :first-child { margin-top: 0; }
 .content-pane.is-empty { display: flex; align-items: center; justify-content: center; }
+/* Search on an area page: the results cover the content pane. The document under it is only hidden
+   (never removed), so clearing the search shows it again exactly as it was, without loading it again. */
+.content-pane { position: relative; }
+.content-pane > .search-results {
+  position: absolute; inset: 0; z-index: 6; overflow: auto; overscroll-behavior: contain;
+  background: var(--bg); padding: 14px 20px 32px;
+}
+.content-pane.is-searching { overflow: hidden; }
+.content-pane.is-searching > :not(.search-results) { visibility: hidden; }
+.search-results > :first-child { margin-top: 0; }
+/* Headings that get the focus after moving to another page (for screen readers): no box around them. */
+.page-title:focus, .viewer-name:focus, .search-summary:focus { outline: none; }
 .viewer-empty { margin: 0; color: var(--muted); font-size: 1rem; text-align: center; }
 .viewer-open-list { margin-top: 12px; }
 .search-pending { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 6px 0 12px; }
@@ -574,9 +586,12 @@ mark { background: #e7d59e; background: color-mix(in srgb, var(--accent) 45%, #f
   .tree-pane {
     position: fixed; z-index: 45; top: 0; bottom: 0; left: 0; width: min(86vw, 360px);
     padding-top: env(safe-area-inset-top, 0px);
-    transform: translateX(-105%); transition: transform .2s ease; box-shadow: 4px 0 24px rgba(0,0,0,.18);
+    transform: translateX(-105%); box-shadow: 4px 0 24px rgba(0,0,0,.18);
+    /* Closed: also hidden, so Tab can't reach its links. Hidden only after the slide-out ends. */
+    visibility: hidden; transition: transform .2s ease, visibility 0s .2s;
   }
-  body.tree-open .tree-pane { transform: none; }
+  body.tree-open .tree-pane { transform: none; visibility: visible; transition: transform .2s ease; }
+  .content-pane > .search-results { padding: 12px 14px 28px; }
   body.tree-open .tree-backdrop { display: block; position: fixed; inset: 0; z-index: 44; background: rgba(0,0,0,.35); }
   .content-pane { padding: 12px 14px 28px; }
   .hint-wide { display: none; }
@@ -628,7 +643,7 @@ mark { background: #e7d59e; background: color-mix(in srgb, var(--accent) 45%, #f
 
 /* All files on a phone: the list fills the screen until a document is picked (then it is the usual drawer). */
 @media (max-width: 899px) {
-  body.is-files:not(.has-doc) .tree-pane { position: static; width: auto; transform: none; box-shadow: none; border-right: 0; padding-top: 0; }
+  body.is-files:not(.has-doc) .tree-pane { position: static; width: auto; transform: none; box-shadow: none; border-right: 0; padding-top: 0; visibility: visible; }
   body.is-files:not(.has-doc) .content-pane,
   body.is-files:not(.has-doc) .tree-close { display: none; }
   body.is-files:not(.has-doc) .tree-toggle { display: none !important; }

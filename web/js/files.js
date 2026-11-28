@@ -219,7 +219,7 @@ function previewHtml(state, route) {
   const name = programName(getProgram(e.prog), state.snaps[e.prog]);
   return `<div class="viewer">
     <div class="viewer-bar files-bar">
-      <span class="viewer-name" title="${esc(e.file.name)}">${esc(e.file.name)}</span>
+      <span class="viewer-name" role="heading" aria-level="2" tabindex="-1" title="${esc(e.file.name)}">${esc(e.file.name)}</span>
       ${e.reference // Reference folders have no area page
         ? `<span class="viewer-path">${esc(name + ' · ' + placeOf(e))}</span>`
         : `<a class="viewer-path" href="${hrefFor(e.prog, e.area, e.param, e.ind, e.file.id)}"

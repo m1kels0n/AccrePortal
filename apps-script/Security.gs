@@ -18,7 +18,11 @@
 var PIN_RE = /^\d{6}$/;
 var MAX_FAILS = 10;           // wrong PINs (everyone together)…
 var FAIL_WINDOW_SEC = 300;    // …within 5 minutes → logins paused until the 5 minutes are over
-var TOKEN_SEC = 12 * 3600;    // a session lasts 12 hours
+var TOKEN_SEC = 12 * 3600;    // a session lasts 12 hours at most
+// An accreditor's token lasts only 2 hours: the linked programs can't check the Access tab, so a
+// removed accreditor's copied token works there until it runs out. The website renews it with the
+// main program ('renew' in Api.gs), which checks the Access tab first; never past 12 hours from login.
+var ACC_TOKEN_SEC = 2 * 3600;
 var ROLES = { accreditor: true, coordinator: true, admin: true };
 
 function getSalt_() {
@@ -178,11 +182,21 @@ function sign_(payload) {
     Utilities.computeHmacSha256Signature(payload, getTokenKey_(), Utilities.Charset.UTF_8));
 }
 
-function issueToken_(session) {
-  var exp = Date.now() + TOKEN_SEC * 1000;
+/**
+ * `loginAt` (ms): when this person typed their PIN; a renewed token keeps it (default: now).
+ * Older programs read only r, n and x, so the extra `i` doesn't bother them.
+ */
+function issueToken_(session, loginAt) {
+  var now = Date.now();
+  var at = Number(loginAt) || now;
+  var cap = at + TOKEN_SEC * 1000;
+  var exp = session.role === 'accreditor' ? Math.min(now + ACC_TOKEN_SEC * 1000, cap) : now + TOKEN_SEC * 1000;
   var payload = Utilities.base64EncodeWebSafe(
-    JSON.stringify({ r: session.role, n: session.name, x: exp }), Utilities.Charset.UTF_8);
-  return { token: payload + '.' + sign_(payload), expiresAt: new Date(exp).toISOString() };
+    JSON.stringify({ r: session.role, n: session.name, x: exp, i: at }), Utilities.Charset.UTF_8);
+  // final: this token can't be renewed any further (12 hours from login).
+  // expiresIn (seconds left) lets the website time the session by its own clock, which may be wrong.
+  return { token: payload + '.' + sign_(payload), expiresAt: new Date(exp).toISOString(),
+    expiresIn: Math.round((exp - now) / 1000), final: exp >= cap };
 }
 
 /** need: 'any' | 'staff' (coordinator or admin) | 'admin'. Returns { role, name }. */
@@ -204,8 +218,10 @@ function checkToken_(token, need) {
   }
   if (!data || !ROLES[data.r] || !(Number(data.x) > Date.now())) throw expired();
   var s = { role: data.r, name: String(data.n || '') };
+  // When they logged in (a token from before 2-hour tokens has no `i`: it was made 12 hours before x).
+  s.loginAt = Number(data.i) || Number(data.x) - TOKEN_SEC * 1000;
   // An accreditor removed from (or renamed in) the Access tab loses access at once, not when the
-  // 12-hour token runs out. Checked on the main program: its "expired" ends the whole session
+  // token runs out. Checked on the main program: its "expired" ends the whole session
   // on the website (see endsSession in api.js), so the linked programs stop being asked too.
   if (s.role === 'accreditor' && isMain_() && !accreditorStillListed_(s.name)) {
     throw apiError_('expired', 'Your access has ended. Please contact the accreditation coordinator.');
