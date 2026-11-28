@@ -51,8 +51,18 @@ function apiError_(code, message) {
 }
 
 // ── Main vs linked Sheet ─────────────────────────────────────
+/**
+ * Kept in a Script Property (AUTH_MODE) so accreditor requests don't read the Config tab every
+ * time. setConfig_ updates it; a hand edit of the Config tab clears it (onEdit in Code.gs).
+ */
 function isMain_() {
-  return String(getConfig_().authMode || 'main').toLowerCase() !== 'linked';
+  var p = PropertiesService.getScriptProperties();
+  var v = p.getProperty('AUTH_MODE');
+  if (v === null) {
+    v = String(getConfig_().authMode || 'main').toLowerCase();
+    try { p.setProperty('AUTH_MODE', v); } catch (e) { /* read the Config tab again next time */ }
+  }
+  return v !== 'linked';
 }
 
 function requireMain_() {
@@ -134,9 +144,15 @@ function findPinOwner_(h) {
   if (safeEqual_(h, cfg.adminPinHash)) return { role: 'admin', name: 'Admin' };
   if (safeEqual_(h, cfg.coordinatorPinHash)) return { role: 'coordinator', name: 'Coordinator' };
   var hit = null;
-  readAccess_().forEach(function (r) {
+  var rows = readAccess_();
+  rows.forEach(function (r) {
     if (!hit && safeEqual_(h, r.pinHash)) hit = { role: 'accreditor', name: r.accreditorName || 'Accreditor' };
   });
+  // The first snapshot request after an accreditor logs in checks this list (accreditorStillListed_):
+  // keep it now instead of reading the Access tab again a moment later.
+  if (hit) {
+    try { CacheService.getScriptCache().put('accessNames', JSON.stringify(accessNamesOf_(rows)), ACCESS_TTL); } catch (e) { /* read again later */ }
+  }
   return hit;
 }
 
@@ -209,11 +225,16 @@ function accreditorStillListed_(name) {
   if (raw) { try { list = JSON.parse(raw); } catch (e) { list = null; } }
   if (!list) {
     // Same name as findPinOwner_ puts in the token ('Accreditor' for a row without a name).
-    list = readAccess_().filter(function (r) { return r.pinHash; })
-      .map(function (r) { return (r.accreditorName || 'Accreditor').toLowerCase(); });
+    list = accessNamesOf_(readAccess_());
     cache.put('accessNames', JSON.stringify(list), ACCESS_TTL);
   }
   return list.indexOf(String(name || '').trim().toLowerCase()) !== -1;
+}
+
+/** The names that may log in, lower case: same as findPinOwner_ puts in the token. */
+function accessNamesOf_(rows) {
+  return rows.filter(function (r) { return r.pinHash; })
+    .map(function (r) { return (r.accreditorName || 'Accreditor').toLowerCase(); });
 }
 
 // ── Menu actions (run from the Sheet) ───────────────────────

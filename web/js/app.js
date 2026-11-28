@@ -701,7 +701,19 @@ document.addEventListener('pointermove', (e) => {
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && getSession() && staleMs() > CONFIG.refreshMinutes * 60000) refreshAll();
 });
-setInterval(() => { if (!document.hidden && getSession()) refreshAll(); }, CONFIG.refreshMinutes * 60000);
+// Background check: every minute, ask only the programs not heard from for refreshMinutes (so a
+// poll never comes right after Check now or a tab switch). A program closed to this PIN (noAccess)
+// is asked 3 times less often; it still shows up at once when the admin opens it and the tab is
+// shown again (visibilitychange above).
+setInterval(() => {
+  if (document.hidden || !getSession()) return;
+  const now = Date.now();
+  for (const p of CONFIG.programs) {
+    const s = state.status[p.code] || {};
+    const every = (s.noAccess ? 3 : 1) * CONFIG.refreshMinutes * 60000;
+    if (now - (s.fetchedAt || 0) >= every) refresh(p.code); // joins a request already running
+  }
+}, 60000);
 
 // Connection back: reload what failed now, instead of waiting for the next 5-minute check.
 window.addEventListener('online', () => {

@@ -62,6 +62,7 @@ function onEdit(e) {
   try {
     var name = e && e.range ? e.range.getSheet().getName() : '';
     if (name === 'Config' || name === 'AccreditorAccess') CacheService.getScriptCache().removeAll(['settings', 'overrides']);
+    if (name === 'Config') PropertiesService.getScriptProperties().deleteProperty('AUTH_MODE'); // see isMain_ in Security.gs
     // Removing or renaming an accreditor ends their login at once (accreditorStillListed_ in Security.gs).
     if (name === 'Access') CacheService.getScriptCache().remove('accessNames');
   } catch (err) {
@@ -302,6 +303,7 @@ function setConfig_(key, value) {
   if (i === -1) sh.appendRow([key, value]);
   else sh.getRange(i + 2, 2).setValue(value);
   CONFIG_MEMO_ = null;
+  if (key === 'authMode') PropertiesService.getScriptProperties().setProperty('AUTH_MODE', String(value).toLowerCase());
 }
 
 function requireConfig_(keys) {

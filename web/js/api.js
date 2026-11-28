@@ -255,6 +255,35 @@ export function cleanKeywords(input) {
   return out;
 }
 
+// ── Accreditor names (Requested Documents and the admin page share this one copy) ──
+// Kept with the session token in this tab, so both pages ask the main program at most once per TTL.
+const NAMES_KEY = 'aaccup:v2:accNames';
+// Loaded again when older than this, so an accreditor added to or removed from the Access tab
+// shows up within minutes (a removed name must never get its folder made again).
+export const NAMES_TTL_MS = 2 * 60 * 1000;
+let namesPromise = null;
+
+/** The accreditor names: { names, at } (kept with the session token in this tab, for NAMES_TTL_MS). */
+export function accreditorList() {
+  const tok = getSession()?.token;
+  const kept = store.get(NAMES_KEY, true);
+  if (kept && kept.token === tok && Array.isArray(kept.names) && Date.now() - (kept.at || 0) < NAMES_TTL_MS) {
+    return Promise.resolve(kept);
+  }
+  if (!namesPromise) {
+    namesPromise = post(mainProgram(), { action: 'accreditors' }).then((res) => {
+      namesPromise = null;
+      if (!res.ok || !Array.isArray(res.names)) throw new Error(res.message || 'Could not load the accreditors.');
+      const fresh = { token: tok, names: res.names, at: Date.now() };
+      store.set(NAMES_KEY, fresh, true);
+      return fresh;
+    }, (err) => { namesPromise = null; throw err; });
+  }
+  return namesPromise;
+}
+/** "Try again" after a failure: ask the server next time instead of using a kept list. */
+export function forgetAccreditorList() { store.remove(NAMES_KEY, true); }
+
 // ── Mock backend ────────────────────────────────────────────
 // Mock PINs: 111111 = accreditor Dr. Reyes, 333333 = accreditor Dr. Cruz
 // (one PIN per accreditor), 222222 = coordinators (shared), 000000 = admin.

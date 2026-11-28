@@ -2,14 +2,13 @@
 import { CONFIG } from './config.js';
 import { esc, fmtDate, toast } from './util.js';
 import { href, parseHash } from './router.js';
-import { post, isAdmin, mainProgram } from './api.js';
+import { post, isAdmin, accreditorList, NAMES_TTL_MS } from './api.js';
 import { crumbs, progressBadge, notFound, programName } from './views.js';
 import { getProgram, progress, areaLabel, areaKey, hrefFor, countFiles, realAreas, accessItems } from './model.js';
 
 // ── Per-accreditor access ──
 let accNames = null; // accreditor names from the main program's Access tab (null until loaded)
 let accNamesAt = 0;  // when they were loaded
-let accNamesLoading = null;
 let who = '';        // accreditor the access card is editing ('' = the program default for everyone)
 
 // The admin page redraws often (picking a name, saving, background updates). Issues and names
@@ -21,7 +20,6 @@ const issuesCache = new Map(); // programCode → { at, res }
 export function resetAdminCache() {
   accNames = null;
   accNamesAt = 0;
-  accNamesLoading = null;
   who = '';
   issuesCache.clear();
 }
@@ -254,15 +252,13 @@ export async function loadAdminData(progCode, state, force = false) {
 /** Ask the main program for the accreditor names, then fill the "Settings for" menu in place (no redraw, so nothing typed is lost). */
 async function loadAccreditorNames(prog, state) {
   // Already loaded: renderAdmin used them, nothing to fill in.
-  if (accNames !== null && Date.now() - accNamesAt < KEEP_MS) return;
-  if (!accNamesLoading) {
-    accNamesLoading = post(mainProgram(), { action: 'accreditors' }).finally(() => { accNamesLoading = null; });
-  }
-  const res = await accNamesLoading;
-  if (!res.ok || !Array.isArray(res.names)) return;
+  if (accNames !== null && Date.now() - accNamesAt < NAMES_TTL_MS) return;
+  // The same kept list as the Requested Documents pages (one request per 2 minutes at most).
+  let list;
+  try { list = await accreditorList(); } catch { return; }
   if (!isAdmin()) return; // logged out meanwhile
-  accNames = res.names;
-  accNamesAt = Date.now();
+  accNames = list.names;
+  accNamesAt = list.at;
   const sel = document.getElementById('adm-who');
   if (!sel || !sel.isConnected || sel.dataset.prog !== prog.code) return;
   sel.innerHTML = whoOptions(state, prog);
@@ -300,8 +296,11 @@ export async function adminAction(kind, progCode, button, app) {
   status.className = 'form-status ok';
   status.textContent = '✓ Done. Reloading data…';
   toast(`✓ ${kind === 'rebuild' ? 'Structure rebuilt' : 'Snapshot refreshed'}${res.ms ? ' in ' + (res.ms / 1000).toFixed(1) + ' s' : ''}.`);
+  // The reply carries the issues list (an older backend doesn't: then ask for it).
+  const hasIssues = Array.isArray(res.items);
+  if (hasIssues) issuesCache.set(prog.code, { at: Date.now(), res });
   await app.refresh(progCode, true);
-  loadAdminData(progCode, app.state, true);
+  loadAdminData(progCode, app.state, !hasIssues);
 }
 
 /** Watermark is one setting for every program: saved to each program's backend. */

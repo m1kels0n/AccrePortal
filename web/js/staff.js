@@ -1,10 +1,10 @@
 // Login, plus coordinator/admin actions: keyword editing and "Check now".
-import { toast, esc, store } from './util.js';
+import { toast, esc } from './util.js';
 import {
   getProgram, locateFile, applyRequestSection, requestCardsOf, requestFiles, nameKey, REQUEST,
 } from './model.js';
 import * as V from './views.js';
-import { post, login, getSession, setSession, clearCaches, writeCache, cleanKeywords, isStaff, mainProgram } from './api.js';
+import { post, login, getSession, setSession, clearCaches, writeCache, cleanKeywords, isStaff, accreditorList, forgetAccreditorList, NAMES_TTL_MS } from './api.js';
 
 // ── Login ───────────────────────────────────────────────────
 export async function handleLogin(form, app) {
@@ -87,30 +87,6 @@ export async function handleSaveKeywords(form, app) {
 // ── Requested Documents (staff) ─────────────────────────────
 // Requested Documents › <accreditor> › files. Coordinators put files in Drive, then tap ↻ Refresh,
 // which rescans only that folder. The accreditor names live in the main program (Access tab).
-const NAMES_KEY = 'aaccup:v2:accNames';
-// Loaded again when older than this, so an accreditor added to or removed from the Access tab
-// shows up within minutes (a removed name must never get its folder made again).
-const NAMES_TTL_MS = 2 * 60 * 1000;
-let namesPromise = null;
-
-/** The accreditor names: { names, at } (kept with the session token in this tab, for NAMES_TTL_MS). */
-function accreditorList() {
-  const tok = getSession()?.token;
-  const kept = store.get(NAMES_KEY, true);
-  if (kept && kept.token === tok && Array.isArray(kept.names) && Date.now() - (kept.at || 0) < NAMES_TTL_MS) {
-    return Promise.resolve(kept);
-  }
-  if (!namesPromise) {
-    namesPromise = post(mainProgram(), { action: 'accreditors' }).then((res) => {
-      namesPromise = null;
-      if (!res.ok || !Array.isArray(res.names)) throw new Error(res.message || 'Could not load the accreditors.');
-      const fresh = { token: tok, names: res.names, at: Date.now() };
-      store.set(NAMES_KEY, fresh, true);
-      return fresh;
-    }, (err) => { namesPromise = null; throw err; });
-  }
-  return namesPromise;
-}
 const accreditorNames = () => accreditorList().then((l) => l.names);
 
 const onRequestsPage = (app, progCode) => {
@@ -154,7 +130,10 @@ export async function refreshRequests(progCode, button, app) {
     reqStatus('error', res.error === 'busy' ? 'The server is busy. Please try again in a few seconds.' : res.message || 'Could not refresh.');
     return;
   }
-  applyRequestReply(app, progCode, res);
+  // Nothing new on the server AND this page already has that version: keep its copy (no cache
+  // write, no redraw). A page behind the server (a scan found the file first) still applies it.
+  const cur = app.state.snaps[progCode];
+  if (!res.unchanged || !cur || cur.hash !== res.hashTo) applyRequestReply(app, progCode, res);
   const after = requestFiles(app.state.snaps[progCode]).map((f) => f.id);
   const added = after.filter((id) => !before.has(id)).length;
   const removed = [...before].filter((id) => !after.includes(id)).length;
@@ -221,7 +200,7 @@ export async function prepareRequestsPage(progCode, app) {
 export function retryRequestSetup(progCode, app) {
   for (const k of [...setupTried]) if (k.startsWith(progCode + '|')) setupTried.delete(k);
   app.state.reqSetup[progCode] = {};
-  if (!app.state.accNames) store.remove(NAMES_KEY, true);
+  if (!app.state.accNames) forgetAccreditorList();
   app.state.touched = false;
   app.render();
 }

@@ -468,6 +468,14 @@ function handleSaveRequestAccess_(body) {
 
 var REQUEST_COOLDOWN_SEC = 4;   // per session: Refresh is cheap, but a stuck button shouldn't loop
 
+/** JSON with object keys sorted, so two copies built in a different key order compare equal. */
+function stableJson_(v) {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v);
+  if (Object.prototype.toString.call(v) === '[object Array]') return '[' + v.map(stableJson_).join(',') + ']';
+  return '{' + Object.keys(v).sort().filter(function (k) { return v[k] !== undefined; })
+    .map(function (k) { return JSON.stringify(k) + ':' + stableJson_(v[k]); }).join(',') + '}';
+}
+
 /** ↻ Refresh on the Requested Documents pages: scan only that folder (about 2 Drive requests). */
 function handleRefreshRequests_(body) {
   var s = checkToken_(body.token, 'staff');
@@ -477,11 +485,17 @@ function handleRefreshRequests_(body) {
   cache.put(key, '1', REQUEST_COOLDOWN_SEC);
   var c = readSnapshot_();
   if (!c) throw apiError_('notFound', 'No snapshot yet.');
-  var old = requestSection_(JSON.parse(c.text));
+  var cur = JSON.parse(c.text);
+  var old = requestSection_(cur);
   if (!old || !old.folderId || old.folderId === getConfig_().rootFolderId) {
     return { ok: true, section: null }; // no Requested Documents folder yet
   }
-  var res = saveRequestSection_(scanRequestFolder_(old.folderId, old.name));
+  var sec = scanRequestFolder_(old.folderId, old.name);
+  // Nothing new (the usual answer): no lock, no cache or Drive rewrite, and the page keeps its copy.
+  if (stableJson_(sec) === stableJson_(old)) {
+    return { ok: true, unchanged: true, section: sec, hashFrom: cur.hash, hashTo: cur.hash };
+  }
+  var res = saveRequestSection_(sec);
   log_('requestRefresh', s.name, res.section.files.length + ' files');
   return res;
 }
@@ -503,6 +517,11 @@ function handleEnsureRequestFolders_(body) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
   try {
+    // The folder in the snapshot was moved to the trash: find or make a new one, instead of
+    // creating name folders inside the trashed one (nobody would see them).
+    if (folderId) {
+      try { if (DriveApp.getFolderById(folderId).isTrashed()) folderId = null; } catch (e) { folderId = null; }
+    }
     if (!folderId) {
       // A folder with "request" in its name that the last scan hasn't seen yet, else a new one.
       var found = listChildren_([cfg.rootFolderId], true).filter(function (f) {
@@ -566,7 +585,7 @@ function handleRefresh_(body) {
   var s = checkToken_(body.token, 'admin');
   var res = runSnapshot_('admin:' + s.name);
   if (!res.ok) throw apiError_(res.error || 'server', res.message || 'Scan failed.');
-  return { ok: true, generatedAt: res.generatedAt, stats: res.stats, issueCount: res.issueCount, ms: res.ms };
+  return withIssues_({ ok: true, generatedAt: res.generatedAt, stats: res.stats, issueCount: res.issueCount, ms: res.ms });
 }
 
 function handleRebuild_(body) {
@@ -577,20 +596,23 @@ function handleRebuild_(body) {
   log_('rebuildStructure', 'admin:' + s.name, st.counts);
   var res = runSnapshot_('admin:' + s.name);
   if (!res.ok) throw apiError_(res.error || 'server', res.message || 'Scan failed after rebuild.');
-  return { ok: true, counts: st.counts, issueCount: res.issueCount, generatedAt: res.generatedAt, ms: Date.now() - t0 };
+  return withIssues_({ ok: true, counts: st.counts, issueCount: res.issueCount, generatedAt: res.generatedAt, ms: Date.now() - t0 });
 }
 
 function handleIssues_(body) {
   checkToken_(body.token, 'admin');
+  return withIssues_({ ok: true });
+}
+
+/** Add the issues list and scan status to a reply (the admin page needs no separate request after a scan). */
+function withIssues_(out) {
   var doc = readIssues_();
   var p = PropertiesService.getScriptProperties();
-  return {
-    ok: true,
-    items: doc.items || [],
-    lastScan: p.getProperty('LAST_SCAN'),
-    lastScanMs: Number(p.getProperty('LAST_SCAN_MS') || 0),
-    triggerActive: triggerActive_(),
-  };
+  out.items = doc.items || [];
+  out.lastScan = p.getProperty('LAST_SCAN');
+  out.lastScanMs = Number(p.getProperty('LAST_SCAN_MS') || 0);
+  out.triggerActive = triggerActive_();
+  return out;
 }
 
 function json_(obj) {
