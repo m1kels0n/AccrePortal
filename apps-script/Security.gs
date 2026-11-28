@@ -188,9 +188,32 @@ function checkToken_(token, need) {
   }
   if (!data || !ROLES[data.r] || !(Number(data.x) > Date.now())) throw expired();
   var s = { role: data.r, name: String(data.n || '') };
+  // An accreditor removed from (or renamed in) the Access tab loses access at once, not when the
+  // 12-hour token runs out. Checked on the main program: its "expired" ends the whole session
+  // on the website (see endsSession in api.js), so the linked programs stop being asked too.
+  if (s.role === 'accreditor' && isMain_() && !accreditorStillListed_(s.name)) {
+    throw apiError_('expired', 'Your access has ended. Please contact the accreditation coordinator.');
+  }
   if (need === 'admin' && s.role !== 'admin') throw apiError_('forbidden', 'Admin only.');
   if (need === 'staff' && s.role === 'accreditor') throw apiError_('forbidden', 'Coordinators only.');
   return s;
+}
+
+var ACCESS_TTL = 120; // seconds; editing the Access tab clears it at once (onEdit in Code.gs)
+
+/** Main program: is an accreditor with this name (as in their token) still in the Access tab with a PIN? */
+function accreditorStillListed_(name) {
+  var cache = CacheService.getScriptCache();
+  var list = null;
+  var raw = cache.get('accessNames');
+  if (raw) { try { list = JSON.parse(raw); } catch (e) { list = null; } }
+  if (!list) {
+    // Same name as findPinOwner_ puts in the token ('Accreditor' for a row without a name).
+    list = readAccess_().filter(function (r) { return r.pinHash; })
+      .map(function (r) { return (r.accreditorName || 'Accreditor').toLowerCase(); });
+    cache.put('accessNames', JSON.stringify(list), ACCESS_TTL);
+  }
+  return list.indexOf(String(name || '').trim().toLowerCase()) !== -1;
 }
 
 // ── Menu actions (run from the Sheet) ───────────────────────

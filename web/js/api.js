@@ -199,7 +199,7 @@ export async function fetchSnapshot(prog, sinceHash) {
   if (isStaff(s)) params.set('ref', '0');
   const data = await getJson(prog.apiUrl + '?' + params);
   if (data && data.ok === false) {
-    if (data.error === 'expired' && endsSession(prog, s)) onExpired();
+    if (data.error === 'expired' && endsSession(prog, s)) onExpired(data.message);
     throw apiError(data);
   }
   return data;
@@ -213,7 +213,7 @@ export async function fetchReference(prog) {
   if (s?.token) params.set('token', s.token);
   const data = await getJson(prog.apiUrl + '?' + params);
   if (data && data.ok === false) {
-    if (data.error === 'expired' && endsSession(prog, s)) onExpired();
+    if (data.error === 'expired' && endsSession(prog, s)) onExpired(data.message);
     throw apiError(data);
   }
   return data;
@@ -235,7 +235,7 @@ export async function post(prog, payload, opts = {}) {
       res = { ok: false, error: 'network', message: err.name === 'AbortError' ? 'The server took too long. Try again.' : err.message || 'Cannot reach the server. Check your connection.' };
     }
   }
-  if (res && res.error === 'expired' && payload.action !== 'login' && endsSession(prog, s)) onExpired();
+  if (res && res.error === 'expired' && payload.action !== 'login' && endsSession(prog, s)) onExpired(res.message);
   return res;
 }
 

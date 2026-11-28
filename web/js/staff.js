@@ -88,23 +88,30 @@ export async function handleSaveKeywords(form, app) {
 // Requested Documents › <accreditor> › files. Coordinators put files in Drive, then tap ↻ Refresh,
 // which rescans only that folder. The accreditor names live in the main program (Access tab).
 const NAMES_KEY = 'aaccup:v2:accNames';
+// Loaded again when older than this, so an accreditor added to or removed from the Access tab
+// shows up within minutes (a removed name must never get its folder made again).
+const NAMES_TTL_MS = 2 * 60 * 1000;
 let namesPromise = null;
 
-/** The accreditor names, loaded once per login (kept with the session token in this tab). */
-function accreditorNames() {
+/** The accreditor names: { names, at } (kept with the session token in this tab, for NAMES_TTL_MS). */
+function accreditorList() {
   const tok = getSession()?.token;
   const kept = store.get(NAMES_KEY, true);
-  if (kept && kept.token === tok && Array.isArray(kept.names)) return Promise.resolve(kept.names);
+  if (kept && kept.token === tok && Array.isArray(kept.names) && Date.now() - (kept.at || 0) < NAMES_TTL_MS) {
+    return Promise.resolve(kept);
+  }
   if (!namesPromise) {
     namesPromise = post(mainProgram(), { action: 'accreditors' }).then((res) => {
       namesPromise = null;
       if (!res.ok || !Array.isArray(res.names)) throw new Error(res.message || 'Could not load the accreditors.');
-      store.set(NAMES_KEY, { token: tok, names: res.names }, true);
-      return res.names;
+      const fresh = { token: tok, names: res.names, at: Date.now() };
+      store.set(NAMES_KEY, fresh, true);
+      return fresh;
     }, (err) => { namesPromise = null; throw err; });
   }
   return namesPromise;
 }
+const accreditorNames = () => accreditorList().then((l) => l.names);
 
 const onRequestsPage = (app, progCode) => {
   const r = app.state.route;
@@ -169,16 +176,22 @@ export async function prepareRequestsPage(progCode, app) {
   const prog = getProgram(progCode);
   if (!prog || !isStaff()) return;
   const rerender = () => { if (onRequestsPage(app, progCode)) { st.touched = false; app.render(); } };
-  if (!st.accNames) {
+  if (!st.accNames || Date.now() - (st.accNamesAt || 0) >= NAMES_TTL_MS) {
+    let list;
     try {
-      st.accNames = await accreditorNames();
+      list = await accreditorList();
     } catch (err) {
-      st.reqSetup[progCode] = { error: 'Could not load the accreditors. ' + (err.message || '') };
-      rerender();
-      return;
+      if (!st.accNames) {
+        st.reqSetup[progCode] = { error: 'Could not load the accreditors. ' + (err.message || '') };
+        rerender();
+        return;
+      }
+      list = { names: st.accNames, at: Date.now() }; // keep the names we have; try again later
     }
-    rerender(); // runs this again with the names
-    return;
+    const changed = JSON.stringify(list.names) !== JSON.stringify(st.accNames);
+    st.accNames = list.names;
+    st.accNamesAt = list.at;
+    if (changed) { rerender(); return; } // runs this again with the new names
   }
   const snap = st.snaps[progCode];
   if (!snap) return;

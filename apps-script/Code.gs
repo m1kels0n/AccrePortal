@@ -55,12 +55,15 @@ function onOpen() {
 /**
  * Simple trigger: someone typed in the Sheet. The website's viewer settings are cached for a few
  * minutes (see SETTINGS_TTL in Api.gs), so a hand edit of the Config or AccreditorAccess tab
- * clears that cache and takes effect on the next page load.
+ * clears that cache and takes effect on the next page load. The same goes for the Access tab
+ * and the list of accreditors who may still use their login (ACCESS_TTL in Security.gs).
  */
 function onEdit(e) {
   try {
     var name = e && e.range ? e.range.getSheet().getName() : '';
     if (name === 'Config' || name === 'AccreditorAccess') CacheService.getScriptCache().removeAll(['settings', 'overrides']);
+    // Removing or renaming an accreditor ends their login at once (accreditorStillListed_ in Security.gs).
+    if (name === 'Access') CacheService.getScriptCache().remove('accessNames');
   } catch (err) {
     // Simple triggers have limited rights; the cache then simply runs out after SETTINGS_TTL.
   }

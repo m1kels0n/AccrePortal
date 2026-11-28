@@ -432,6 +432,7 @@ function resetData() {
   state.treeOpen = false;
   state.files = F.defaultFilters();
   state.accNames = null;
+  state.accNamesAt = 0;
   state.reqSetup = {};
   A.resetAdminCache();
   reindex();
@@ -456,14 +457,15 @@ function logout() {
   navigate('#/login');
 }
 
-function sessionExpired() {
+/** `message`: the server's reason (e.g. an accreditor removed from the Access tab), else the usual one. */
+function sessionExpired(message) {
   // Not getSession(): it already drops a session that just ran out, which is the case to handle here.
   if (!hasStoredSession() || CONFIG.requireLogin === false) return;
   if (location.hash && !location.hash.startsWith('#/login')) nextHash.set(location.hash);
   clearSession();
   clearCaches();
   resetData();
-  toast('Your session expired. Please log in again.', 'error');
+  toast(message || 'Your session expired. Please log in again.', 'error');
   navigate('#/login');
 }
 setExpiredHandler(sessionExpired);
