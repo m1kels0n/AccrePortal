@@ -33,6 +33,7 @@ Keep the coordinator PIN within the coordinator team. Never give it to accredito
 📄 A file put directly in a Parameter or Area folder is shown to everyone under **General documents** at the top of that parameter or area.
 📋 **Compliance Report and PPP:** folders in the program folder, next to the Area folders, with one subfolder per area inside (e.g. `Compliance Report › Area 02 - Faculty`). Whatever you put in an area subfolder is shown as it is.
 📘 **Actual Self-Survey Report:** a folder with that name in the program folder, holding the report document(s).
+📥 **Requested Documents:** a folder with that name in the program folder, for documents accreditors asked for (see section 5).
 Other files left in the program folder show as **Other documents**.
 
 If one document is evidence for two indicators, upload it once. Then, in the second folder, right-click → **Add shortcut** to point to it.
@@ -57,7 +58,23 @@ Keywords help accreditors find a file even when its name doesn't contain the wor
 
 You can add keywords to any file in any area.
 
-## 5. See every file in one list
+## 5. Requested Documents (when an accreditor asks for something)
+
+Accreditors don't request documents in the website. They ask you in person or by message. You answer by uploading the document to **Requested Documents** and ticking who asked for it. **Only the accreditor(s) you tick can see the file.**
+
+1. On the program's card, tap **Requested Documents**.
+2. Tap **＋ Add files** at the top of the list on the left. The Requested Documents folder opens in Google Drive. Upload the file there.
+3. Back on the website, tap **↻ Check now**. The new file appears with a **⚠** mark: nobody can see it yet.
+4. Tap the file, then **👤 Accreditors** above it. Tick the accreditor(s) who asked for it, then **Save**.
+   The line above the document changes to **For: Dr. …**, and the ⚠ becomes **👤 1** (the number of accreditors).
+
+- The accreditor sees a **Requested Documents** tile on their program card, with **● New** until they open the file. If they are already logged in, a message tells them it has arrived (within about 5 minutes).
+- To show the file to another accreditor later, or to hide it again, open it and change the ticks.
+- A file with **no** ticks is hidden from every accreditor, so uploading alone never shows a file to anyone.
+- Tip: name the file clearly, e.g. `Faculty teaching load AY 2025-2026.pdf`. You may use subfolders (e.g. one per area); accreditors only see the subfolders that hold their own files.
+- After the visit, you can move the files into the right indicator folders so the evidence stays complete.
+
+## 6. See every file in one list
 
 Tap **≡ All files** in the bar at the top (or on the Home page). It lists every file of **both programs** in one place, so you don't have to open each folder.
 
@@ -65,11 +82,12 @@ Tap **≡ All files** in the bar at the top (or on the Home page). It lists ever
 - Tap a file to open it **beside the list**. On a phone it fills the screen; tap **Show files** to get the list back.
 - **📁↗** on a row (or **📁 Open folder in Drive** above the open file) opens the Google Drive folder that file is in.
 - **✎ Keywords** above the open file works the same as in the area pages.
+- **Requested Documents** files are listed here too (section menu: Requested Documents). Ticking accreditors is done on the program's Requested Documents page.
 - Older reference material, such as **Previous Accre Docs**, is listed here too. Pick it in the **section** menu (it starts with "Reference:"). These files appear only in this list, not in the top search box or on the area cards.
 
 Only coordinators and the admin see this list. Accreditors don't.
 
-## 6. Please do NOT
+## 7. Please do NOT
 
 - ❌ Rename, move or delete **folders**. The website relies on them.
 - ❌ Create your own Area, Parameter or indicator folders. Ask Ariel instead.
@@ -78,7 +96,7 @@ Only coordinators and the admin see this list. Accreditors don't.
 
 If you uploaded something to the wrong place, tell Ariel. Moving files is easy.
 
-## 7. Make scanned PDFs smaller
+## 8. Make scanned PDFs smaller
 
 Large scans load slowly for accreditors. Aim for **under 20 MB** per file.
 

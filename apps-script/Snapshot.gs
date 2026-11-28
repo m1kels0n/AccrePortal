@@ -65,7 +65,7 @@ function scan_(source, t0) {
       if (!st.allById[f.id] && f.name.charAt(0) !== '_' && f.id !== cfg.systemFolderId) {
         // A new Compliance Report / PPP / Actual Self-Survey Report folder at the root is used
         // right away, without Rebuild structure (scanned in step 3 like a known section).
-        var sc = parent === cfg.rootFolderId ? sectionOf_(f.name) : '';
+        var sc = parent === cfg.rootFolderId ? sectionOf_(f.name, true) : '';
         if (sc && !knownSections[sc]) {
           knownSections[sc] = true;
           var row = { level: 'section', code: sc, name: SECTIONS[sc].name, text: '', folderId: f.id, parentFolderId: parent,
@@ -151,7 +151,7 @@ function scan_(source, t0) {
   if (!lock.tryLock(30000)) throw new Error('Could not get the lock to save the snapshot.');
   try {
     var kw = readKeywords_();
-    var snap = assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs);
+    var snap = assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs, readRequests_());
     var issuesDoc = { generatedAt: snap.generatedAt, items: issues };
     var changed = saveSnapshot_(cfg, snap, issuesDoc);
     if (changed) log_('snapshot', source, snap.stats.files + ' files, ' + issues.length + ' issues, ' + (Date.now() - t0) + ' ms');
@@ -161,8 +161,9 @@ function scan_(source, t0) {
   }
 }
 
-function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs) {
+function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs, req) {
   subsByInd = subsByInd || {};
+  req = req || {};
   var bySub = function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1; };
   var bySort = function (a, b) { return a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0; };
   var group = function (level, key) {
@@ -225,6 +226,8 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs) {
   var sections = Object.keys(SECTIONS).filter(function (c) { return secByCode[c]; }).map(function (c) {
     var sec = secByCode[c];
     sec.files = withKw(sec.files);
+    // Requested Documents: the accreditors each file is for ([] = nobody yet, so no accreditor sees it).
+    if (c === REQUEST_SECTION) sec.files.forEach(function (f) { f.for = req[f.id] || []; });
     stats.files += sec.files.length;
     return sec;
   });
@@ -451,6 +454,76 @@ function cleanKeywords_(input) {
     if (k && !seen[key] && out.length < 20) { seen[key] = true; out.push(k); }
   });
   return out;
+}
+
+// ── Requests tab (who each Requested Documents file is for) ──
+// One row per file: fileId · accreditors (names from the main program's Access tab, comma
+// separated) · updatedBy · updatedAt. Created by the first save; missing tab = nobody assigned.
+var REQUESTS_TAB = 'Requests';
+
+/** { fileId: [names] } */
+function readRequests_() {
+  var map = {};
+  var sh = ss_().getSheetByName(REQUESTS_TAB);
+  if (!sh || sh.getLastRow() < 2) return map;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) {
+    var id = String(r[0] || '').trim();
+    if (id) map[id] = cleanNames_(String(r[1] || '').split(','));
+  });
+  return map;
+}
+
+/** Accreditor names: trimmed, no formula starts, no commas (the list separator), no duplicates. */
+function cleanNames_(input) {
+  var seen = {};
+  var out = [];
+  [].concat(input || []).forEach(function (raw) {
+    var n = String(raw === null || raw === undefined ? '' : raw).replace(/\s+/g, ' ').trim();
+    var key = n.toLowerCase();
+    if (!n || n.length > 100 || /^[=+\-@]/.test(n) || /[,;]/.test(n) || seen[key] || out.length >= 50) return;
+    seen[key] = true;
+    out.push(n);
+  });
+  return out;
+}
+
+/** The caller holds the script lock. An empty list removes the row. */
+function upsertRequest_(fileId, names, user) {
+  var ss = ss_();
+  var sh = ss.getSheetByName(REQUESTS_TAB);
+  if (!sh) {
+    if (!names.length) return;
+    sh = ss.insertSheet(REQUESTS_TAB);
+    sh.getRange(1, 1, 1, 4).setValues([SHEET_HEADERS[REQUESTS_TAB]]).setFontWeight('bold');
+    sh.setFrozenRows(1);
+  }
+  var n = Math.max(sh.getLastRow() - 1, 0);
+  var ids = n ? sh.getRange(2, 1, n, 1).getValues().map(function (r) { return String(r[0]).trim(); }) : [];
+  var i = ids.indexOf(fileId);
+  if (!names.length) { if (i !== -1) sh.deleteRow(i + 2); return; }
+  var row = i === -1 ? sh.getLastRow() + 1 : i + 2;
+  sh.getRange(row, 1, 1, 2).setNumberFormat('@');
+  sh.getRange(row, 1, 1, 4).setValues([[fileId, names.join(', '), user, new Date()]]);
+}
+
+/** The Requested Documents file with this id in a full snapshot, or null. */
+function requestFile_(snap, fileId) {
+  var hit = null;
+  (snap.sections || []).forEach(function (s) {
+    if (s.code !== REQUEST_SECTION) return;
+    s.files.forEach(function (f) { if (f.id === fileId) hit = f; });
+  });
+  return hit;
+}
+
+/** After an assignment save: update the cached snapshot (the caller holds the script lock). */
+function patchSnapshotRequest_(snap, fileId, names) {
+  (snap.sections || []).forEach(function (s) {
+    if (s.code === REQUEST_SECTION) s.files.forEach(function (f) { if (f.id === fileId) f.for = names; });
+  });
+  setSnapshotHashes_(snap);
+  cacheSnapshot_(snap);
+  PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
 }
 
 // ── Drive helpers ────────────────────────────────────────────

@@ -4,7 +4,8 @@
  * Expected tree:  Root › Area I … X › Parameter A, B … › S.1, S.2, I.1, O.1 …
  * Also accepted:  Parameter › "System Inputs and Processes" / "Implementation" / "Outcomes"
  *                 (or "S" / "I" / "O") › S.1 …   ← transparent "group" folders
- * Sections:       Root › "Compliance Report" / "PPP" / "Actual Self-Survey Report": any folders inside,
+ * Sections:       Root › "Compliance Report" / "PPP" / "Actual Self-Survey Report" / "Requested Documents"
+ *                 (any folder name with "request"): any folders inside,
  *                 scanned like an indicator's subfolders (the site shows each top-level subfolder of
  *                 Compliance Report and PPP as a card). A FILE at the root with one of these names
  *                 joins that section too (see sectionOf_).
@@ -23,12 +24,21 @@ var SECTIONS = {
   CR: { name: 'Compliance Report', order: 1 },
   PPP: { name: 'Program Performance Profile', order: 2 },
   SSR: { name: 'Actual Self-Survey Report', order: 3 },
+  // Documents accreditors asked the coordinators for. Each file is shown only to the
+  // accreditor(s) a coordinator ticked for it (Requests tab); see snapshotFor_ in Api.gs.
+  REQ: { name: 'Requested Documents', order: 4 },
 };
+var REQUEST_SECTION = 'REQ';
 
-/** Section code for a root folder or file name ("Compliance Report.pdf" → CR), or ''. */
-function sectionOf_(raw) {
+/**
+ * Section code for a root folder or file name ("Compliance Report.pdf" → CR), or ''.
+ * Requested Documents is a folder only (isFolder true): a root FILE with "request" in its
+ * name stays in "Other documents", so it never becomes hidden from accreditors by accident.
+ */
+function sectionOf_(raw, isFolder) {
   var name = cleanName_(raw).replace(/\.[a-z0-9]{2,5}$/i, '');
   if (AREA_RE.test(name)) return '';
+  if (isFolder && /request/i.test(name)) return REQUEST_SECTION;
   if (/compliance/i.test(name)) return 'CR';
   if (/\bppp\b|performance[\s\-–—_]*profile/i.test(name)) return 'PPP';
   if (/self[\s\-–—_]*survey/i.test(name)) return 'SSR';
@@ -62,7 +72,7 @@ function buildStructure_() {
   var areaRows = [];
   var sectionRows = [];
   listChildren_([cfg.rootFolderId], true, 'description').filter(usable).forEach(function (f) {
-    if (sectionOf_(f.name)) sectionRows.push(makeRow_('section', f, null, overrides));
+    if (sectionOf_(f.name, true)) sectionRows.push(makeRow_('section', f, null, overrides));
     else areaRows.push(makeRow_('area', f, null, overrides));
   });
   dedupeCodes_(sectionRows);
@@ -204,7 +214,7 @@ function parseFolderName_(level, raw) {
     m = name.match(PARAM_RE);
     if (m) return { ok: true, code: m[1].toUpperCase(), rest: m[2].trim(), sort: m[1].toUpperCase() };
   } else if (level === 'section') {
-    var sc = sectionOf_(name);
+    var sc = sectionOf_(name, true);
     if (SECTIONS[sc]) return { ok: true, code: sc, rest: SECTIONS[sc].name, sort: '0-' + SECTIONS[sc].order };
   } else if (level === 'group') {
     var t = (name.match(/^[sio]\b/i) || name.match(GROUP_RE) || [''])[0].charAt(0).toUpperCase();

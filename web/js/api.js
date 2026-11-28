@@ -2,7 +2,7 @@
 // and a mock backend so the site can be tried before Apps Script exists.
 import { CONFIG } from './config.js';
 import { store } from './util.js';
-import { locateFile, areaKey } from './model.js';
+import { locateFile, areaKey, REQUEST, SUB_SEP } from './model.js';
 
 const CACHE_PREFIX = 'aaccup:v2:snap:';
 const REF_PREFIX = 'aaccup:v2:ref:';   // Reference folders, kept apart (big; a full storage loses only them)
@@ -55,6 +55,23 @@ export const nextHash = {
 export const lastPlace = {
   get: () => store.get(LAST_KEY),
   set: (v) => store.set(LAST_KEY, v),
+};
+
+/**
+ * Requested Documents an accreditor has opened, so the others show as "New". Kept in this
+ * browser (only file ids), per accreditor name: on another device they all show as new again.
+ */
+const SEEN_KEY = 'aaccup:v2:seenReq';
+const seenOwner = () => (isMock() ? 'mock:' : '') + String(getSession()?.name || '').toLowerCase();
+export const seenRequests = {
+  has(fileId) { return ((store.get(SEEN_KEY) || {})[seenOwner()] || []).includes(fileId); },
+  add(fileId) {
+    const all = store.get(SEEN_KEY) || {};
+    const mine = all[seenOwner()] || [];
+    if (mine.includes(fileId)) return;
+    all[seenOwner()] = [...mine, fileId].slice(-500);
+    store.set(SEEN_KEY, all);
+  },
 };
 
 // ── Snapshot cache (per tab: nothing stays on a shared computer after logout) ──
@@ -257,6 +274,9 @@ async function loadMockRaw(prog) {
 }
 
 function mockKeywordStore(code) { return store.get('aaccup:mock:kw:' + code) || {}; }
+// Requested Documents ticks saved in mock mode: { fileId: [names] } (the mock JSON's `for` lists are the start).
+function mockRequestStore(code) { return store.get('aaccup:mock:req:' + code) || {}; }
+const requestSection = (snap) => (snap.sections || []).find((s) => s.code === REQUEST) || null;
 function mockSettings(code) { return { ...MOCK_DEFAULT_SETTINGS, ...(store.get('aaccup:mock:settings:' + code) || {}) }; }
 // Per-accreditor overrides for one program: [{ name, enabled, areas }] (same shape as Api.gs readOverrides_).
 function mockOverrides(code) { return store.get('aaccup:mock:overrides:' + code) || []; }
@@ -276,21 +296,32 @@ function mockReadToken(token) {
   } catch { return null; }
 }
 
-/** Same filtering the Apps Script does for accreditors (see Api.gs viewerArea_). */
-function accreditorCopy(snap, settings) {
+/** Same filtering the Apps Script does for accreditors (see Api.gs viewerArea_ and viewerRequests_). */
+function accreditorCopy(snap, settings, name) {
   const allowed = settings.accreditorAreas === 'ALL' ? null : new Set(settings.accreditorAreas.map(areaKey));
-  const files = (list) => (list || []).map(({ viewUrl, ...f }) => f);
+  const files = (list) => (list || []).map(({ viewUrl, for: _for, ...f }) => f);
+  const mineOnly = (x) => {
+    const own = (x.files || []).filter((f) => (f.for || []).some((n) => sameMockName(n, name)));
+    if (!own.length) return null;
+    const subs = new Set();
+    for (const f of own) {
+      const parts = f.subfolder ? f.subfolder.split(SUB_SEP) : [];
+      for (let i = 1; i <= parts.length; i++) subs.add(parts.slice(0, i).join(SUB_SEP));
+    }
+    return { code: x.code, name: x.name, files: files(own), subfolders: [...subs].sort() };
+  };
   return {
     schema: snap.schema,
     mock: true,
     program: { code: snap.program.code, name: snap.program.name },
     generatedAt: snap.generatedAt,
-    hash: snap.hash + '.' + JSON.stringify(settings.accreditorAreas),
+    hash: snap.hash + '.' + JSON.stringify([settings.accreditorAreas, String(name).toLowerCase()]),
     looseFiles: files(snap.looseFiles),
-    sections: (snap.sections || []).filter((x) => !allowed || allowed.has(areaKey(x.code))).map((x) => ({
-      code: x.code, name: x.name, files: files(x.files),
-      subfolders: (x.subfolders || []).map((sf) => (typeof sf === 'string' ? sf : sf.path)),
-    })),
+    sections: (snap.sections || []).filter((x) => x.code === REQUEST || !allowed || allowed.has(areaKey(x.code))).map((x) => (
+      x.code === REQUEST ? mineOnly(x) : {
+        code: x.code, name: x.name, files: files(x.files),
+        subfolders: (x.subfolders || []).map((sf) => (typeof sf === 'string' ? sf : sf.path)),
+      })).filter(Boolean),
     areas: snap.areas.filter((a) => !allowed || allowed.has(areaKey(a.code))).map((a) => ({
       code: a.code, name: a.name, looseFiles: files(a.looseFiles),
       parameters: a.parameters.map((p) => ({
@@ -315,10 +346,19 @@ async function mockSnapshot(prog, session) {
   for (const fileId of Object.keys(kw)) {
     for (const hit of locateFile(snap, fileId)) hit.file.keywords = kw[fileId];
   }
+  const req = mockRequestStore(prog.code);
+  const reqSec = requestSection(snap);
+  // The hash changes with the ticks, so a refresh after saving brings the new lists.
+  if (reqSec) {
+    for (const f of reqSec.files) { if (req[f.id]) f.for = req[f.id]; f.for = f.for || []; }
+    let h = 0;
+    for (const ch of JSON.stringify(reqSec.files.map((f) => f.for))) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    snap.hash += '.' + (h >>> 0).toString(36);
+  }
   if (s.role === 'accreditor') {
     const mine = mockSettingsFor(prog.code, s.name);
     if (!mine.accreditorEnabled) throw apiError({ error: 'noAccess', message: 'This program is not open to accreditors.' });
-    return accreditorCopy(snap, mine);
+    return accreditorCopy(snap, mine, s.name);
   }
   const settings = mockSettings(prog.code);
   // Only the admin also gets each accreditor's own settings (see Api.gs adminSettings_).
@@ -377,6 +417,28 @@ async function mockPost(prog, payload) {
     await delay(1200);
     return { ok: true, generatedAt: new Date().toISOString(), changed: false, ms: 1200 };
   }
+  if (action === 'saveRequestAccess') {
+    if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
+    if (!Array.isArray(payload.accreditors)) return { ok: false, error: 'invalid', message: 'Bad accreditor list.' };
+    const sec = requestSection(await loadMockRaw(prog));
+    if (!sec || !sec.files.some((f) => f.id === payload.fileId)) {
+      return { ok: false, error: 'notFound', message: 'This file is not in Requested Documents any more. Reload the page.' };
+    }
+    const names = [];
+    for (const raw of payload.accreditors) {
+      const n = String(raw ?? '').replace(/\s+/g, ' ').trim();
+      if (n && n.length <= 100 && !/^[=+\-@]/.test(n) && !/[,;]/.test(n) && !names.some((x) => sameMockName(x, n))) names.push(n);
+    }
+    const req = mockRequestStore(prog.code);
+    req[payload.fileId] = names; // kept even when empty, so it overrides the mock JSON's starting list
+    store.set('aaccup:mock:req:' + prog.code, req);
+    return { ok: true, fileId: payload.fileId, accreditors: names };
+  }
+  if (action === 'accreditors') {
+    if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
+    if (prog.code !== mainProgram().code) return { ok: false, error: 'notMain', message: 'The accreditor list is kept on the main program.' };
+    return { ok: true, names: Object.values(MOCK_PINS).filter((u) => u.role === 'accreditor').map((u) => u.name) };
+  }
   if (s.role !== 'admin') return { ok: false, error: 'forbidden', message: 'Admin only.' };
   if (action === 'refresh' || action === 'rebuildStructure') {
     await delay(900);
@@ -386,10 +448,6 @@ async function mockPost(prog, payload) {
     const all = await fetchJson('data/mock-issues.json?t=' + Date.now());
     const mine = all[prog.code] || { items: [] };
     return { ok: true, items: mine.items, lastScan: new Date(Date.now() - 120000).toISOString(), lastScanMs: 4200, triggerActive: true };
-  }
-  if (action === 'accreditors') {
-    if (prog.code !== mainProgram().code) return { ok: false, error: 'notMain', message: 'The accreditor list is kept on the main program.' };
-    return { ok: true, names: Object.values(MOCK_PINS).filter((u) => u.role === 'accreditor').map((u) => u.name) };
   }
   if (action === 'saveSettings' && payload.accreditor) {
     if (payload.watermark !== undefined) return { ok: false, error: 'invalid', message: 'The watermark is not set per accreditor.' };

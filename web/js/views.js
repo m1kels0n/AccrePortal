@@ -2,11 +2,12 @@
 import { CONFIG } from './config.js';
 import { esc, highlight, fileKind, fmtSize, fmtDate, plural, store } from './util.js';
 import { href } from './router.js';
-import { isStaff, lastPlace, getSession } from './api.js';
+import { isStaff, lastPlace, getSession, seenRequests } from './api.js';
 import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
   realAreas, shortCode, indLabel, placeLabel, areaTitle, findSection, otherArea, findGroup, groupCardsOf, SUB_SEP,
+  findRequests, unassigned,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -121,6 +122,7 @@ const ICONS = {
   CR: '<path d="M9 4h6v3H9z"/><path d="M15 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/>',
   PPP: '<path d="M4 20h16"/><path d="M7 16v-5"/><path d="M12 16V7"/><path d="M17 16v-8"/>',
   SSR: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z"/><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5"/><path d="M9 8h7M9 12h5"/>',
+  REQ: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
 };
 const icon = (key) => `<svg class="ptile-icon" viewBox="0 0 24 24" aria-hidden="true">${ICONS[key]}</svg>`;
 
@@ -130,13 +132,37 @@ function sectionHref(progCode, area) {
   return list.length === 1 ? hrefFor(progCode, area, list[0].param, list[0].ind, list[0].file.id) : hrefFor(progCode, area);
 }
 
-function programTile(key, title, sub, link, meta) {
+/** `flag`: optional HTML after the meta text (e.g. "● 2 new"); the caller escapes it. */
+function programTile(key, title, sub, link, meta, flag = '') {
   const inner = `${icon(key)}<span class="ptile-text"><span class="ptile-title">${esc(title)}</span>
       ${sub ? `<span class="ptile-sub">${esc(sub)}</span>` : ''}</span>`;
   if (!link) {
-    return `<li><span class="ptile is-off" aria-disabled="true">${inner}<span class="ptile-meta">Not available yet</span></span></li>`;
+    return `<li><span class="ptile is-off" aria-disabled="true">${inner}<span class="ptile-meta">${esc(meta || 'Not available yet')}</span></span></li>`;
   }
-  return `<li><a class="ptile" href="${link}">${inner}<span class="ptile-meta">${esc(meta)} <span aria-hidden="true">→</span></span></a></li>`;
+  return `<li><a class="ptile" href="${link}">${inner}<span class="ptile-meta">${esc(meta)}${flag} <span aria-hidden="true">→</span></span></a></li>`;
+}
+
+/** An accreditor's requested document they haven't opened yet (in this browser). */
+const isNewRequest = (file) => !isStaff() && !seenRequests.has(file.id);
+
+/**
+ * Requested Documents tile. Accreditors: only when something is there for them, with "● n new".
+ * Staff: always, with how many files nobody is ticked for yet.
+ */
+function requestTile(prog, snap) {
+  const req = findRequests(snap);
+  if (!isStaff()) {
+    const files = areaFileList(req).map((e) => e.file);
+    if (!files.length) return '';
+    const fresh = files.filter(isNewRequest).length;
+    return programTile('REQ', 'Requested Documents', 'Documents you asked the coordinator for', sectionHref(prog.code, req),
+      docCountLabel(files.length), fresh ? ` · <span class="ptile-new">● ${fresh} new</span>` : '');
+  }
+  if (!req) return programTile('REQ', 'Requested Documents', 'Create a “Requested Documents” folder in this program’s Drive folder', null);
+  const files = areaFileList(req).map((e) => e.file);
+  const open = files.filter(unassigned).length;
+  return programTile('REQ', 'Requested Documents', 'Each file is shown only to the accreditors ticked for it', hrefFor(prog.code, req),
+    docCountLabel(files.length), open ? ` · <span class="ptile-warn">⚠ ${open} not assigned</span>` : '');
 }
 
 /** "2 areas", "10 areas" (or "3 folders" when they aren't all area folders). */
@@ -174,6 +200,7 @@ function programCard(prog, snap) {
         ${groupTile(prog, snap, 'CR', 'Compliance Report', '')}
         ${groupTile(prog, snap, 'PPP', 'PPP', 'Program Performance Profile')}
         ${programTile('SSR', 'Self-Survey Report and Evidences', ssrSub, (actual || areas.length) && href([prog.code]), docCountLabel(ssrDocs))}
+        ${requestTile(prog, snap)}
       </ul>
       ${other ? `<a class="pc-other" href="${hrefFor(prog.code, other)}">Other documents · ${countFiles(other)}</a>` : ''}
     </article></li>`;
@@ -190,6 +217,7 @@ const WELCOME_ICONS = {
   doc: '<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
   chart: '<path d="M4 20h16M7 20v-6M12 20V8M17 20v-9"/>',
   folder: '<path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7z"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/>',
   help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.8M12 17h.01"/>',
 };
 const welcomeIcon = (k) => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${WELCOME_ICONS[k]}</svg>`;
@@ -216,6 +244,7 @@ export function welcomeModal() {
           ${item('doc', 'Compliance Report')}
           ${item('chart', 'Program Performance Profile', 'PPP')}
           ${item('folder', 'Self-Survey Report', 'with its supporting evidences')}
+          ${item('inbox', 'Requested Documents', 'documents you ask the coordinator for will appear here')}
         </ul>
         <div class="wm-help">
           <span class="wm-ico wm-ico-help">${welcomeIcon('help')}</span>
@@ -374,7 +403,7 @@ function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
     const kind = fileKind(f.mimeType);
     return `<li><a class="tn-link tn-file ${active ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind, f.id)}"
         title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
-      <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span></a></li>`;
+      <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span>${area.request ? requestMark(f, staff) : ''}</a></li>`;
   };
   const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
   if (ind.inline) return files || '<li><p class="tn-none">No documents yet</p></li>';
@@ -391,6 +420,36 @@ function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
       </a>${staff ? addToDrive(ind.folderId, indLabel(ind)) : ''}</summary>
       ${files ? `<ul>${files}</ul>` : '<p class="tn-none">No documents yet</p>'}
     </details></li>`;
+}
+
+/** Requested Documents tree row: "New" for accreditors; staff see ⚠ (nobody ticked) or 👤 n. */
+function requestMark(file, staff) {
+  if (!staff) return isNewRequest(file) ? '<span class="tn-new">New</span>' : '';
+  if (unassigned(file)) return '<span class="tn-warn" title="Not assigned yet: no accreditor sees this file">⚠</span>';
+  return `<span class="tn-count" title="For: ${esc(file.for.join(', '))}">👤${file.for.length}</span>`;
+}
+
+/** "For: Dr. Reyes, Dr. Cruz", or the warning that no accreditor sees the file yet. */
+export function requestForLine(file) {
+  return unassigned(file)
+    ? '<span class="req-for req-none">⚠ Not assigned yet: no accreditor sees this file</span>'
+    : `<span class="req-for">For: ${esc(file.for.join(', '))}</span>`;
+}
+
+/**
+ * Staff: tick who a Requested Documents file is for. The names are filled in when the form
+ * opens (they come from the main program); data-current holds the names ticked now.
+ */
+function requestEditor(progCode, file) {
+  return `<form class="kw-form req-form" data-form="req" data-prog="${esc(progCode)}" data-file-id="${esc(file.id)}"
+        data-current="${esc(JSON.stringify(file.for || []))}" hidden>
+    <fieldset>
+      <legend>Who asked for this document? <small>Only the ticked accreditors will see it.</small></legend>
+      <div class="req-list" data-req-list><span class="muted small"><span class="spinner spinner-sm"></span> Loading accreditors…</span></div>
+    </fieldset>
+    <div class="req-actions"><button type="submit" class="btn btn-primary btn-sm" disabled>Save</button>
+      <span class="kw-status" aria-live="polite"></span></div>
+  </form>`;
 }
 
 /** Staff "＋" on a tree row: opens that exact Drive folder in a new tab to drop files into. */
@@ -486,10 +545,17 @@ function renderViewer(state, prog, snap, area, route) {
   const { param, ind, file } = list[idx];
   const staff = isStaff();
   const body = viewerFrame(state, file);
+  // Opening a requested document clears its "New" mark (rendered before the tree, so the tree agrees).
+  if (area.request && !staff) seenRequests.add(file.id);
+  const req = staff && area.request;
   return `<div class="viewer">
     <div class="viewer-bar">
       <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
-      <span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>
+      ${req ? requestForLine(file) : `<span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>`}
+      ${req ? `<div class="viewer-req" data-req-scope>
+        <button type="button" class="btn btn-primary btn-sm" data-action="req-toggle" aria-label="Choose the accreditors for ${esc(file.name)}">👤 Accreditors</button>
+        ${requestEditor(prog.code, file)}
+      </div>` : ''}
       ${staff ? `<div class="viewer-kw" data-kw-scope>
         <button type="button" class="btn btn-ghost btn-sm" data-action="kw-toggle" aria-label="Edit keywords for ${esc(file.name)}">✎ Keywords</button>
         ${kwEditor(prog.code, file)}

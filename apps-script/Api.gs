@@ -9,6 +9,7 @@
  *        page loads those with action=reference. Without ref=0 they are included, as before.
  *        Accreditors get only the areas the admin opened, without Drive folder links
  *        (error "noAccess" if the program is closed to them). Never any Reference folders.
+ *        Requested Documents: only the files ticked for that accreditor, without the names.
  *        since=<hash> answers { unchanged: true } when nothing changed, without the file list.
  * GET  ?action=reference&token=<token>[&since=<refHash>]   (coordinator or admin)
  *        { refHash, reference: [...] }: the Reference folders only.
@@ -16,6 +17,8 @@
  *      { action: 'login', pin }                 (main program only)
  *      { action: 'logout', token }
  *      { action: 'saveKeywords', token, fileId, keywords }   (coordinator or admin)
+ *      { action: 'saveRequestAccess', token, fileId, accreditors: [names] }   (coordinator or admin:
+ *        who a Requested Documents file is for; [] = nobody)
  *      { action: 'checkNow', token }            (coordinator or admin: rescan Drive now)
  *      { action: 'refresh', token }             (admin)
  *      { action: 'rebuildStructure', token }    (admin)
@@ -23,7 +26,7 @@
  *      { action: 'saveSettings', token, accreditorEnabled?, accreditorAreas?, watermark? }   (admin)
  *        With accreditor: '<name>' the change is that one accreditor's own setting for this program
  *        (reset: true removes it, back to the program-wide setting). No watermark per accreditor.
- *      { action: 'accreditors', token }         (admin, main program: names from the Access tab)
+ *      { action: 'accreditors', token }         (coordinator or admin, main program: names from the Access tab)
  */
 
 function doGet(e) {
@@ -67,6 +70,7 @@ function doPost(e) {
       case 'login': return json_(handleLogin_(body));
       case 'logout': return json_({ ok: true });
       case 'saveKeywords': return json_(handleSaveKeywords_(body));
+      case 'saveRequestAccess': return json_(handleSaveRequestAccess_(body));
       case 'checkNow': return json_(handleCheckNow_(body));
       case 'refresh': return json_(handleRefresh_(body));
       case 'rebuildStructure': return json_(handleRebuild_(body));
@@ -126,7 +130,8 @@ function snapshotFor_(session, since, lazyRef) {
   var mine = settingsFor_(st, session.name);
   if (!mine.accreditorEnabled) throw apiError_('noAccess', 'This program is not open to accreditors.');
   var pub = { watermark: st.watermark };
-  var areasKey = '.' + md5_(JSON.stringify(mine.accreditorAreas)).slice(0, 8);
+  // Each accreditor gets their own Requested Documents, so the name is part of the version key.
+  var areasKey = '.' + md5_(JSON.stringify([mine.accreditorAreas, String(session.name || '').toLowerCase()])).slice(0, 8);
   if (since && m && since === m.hash + areasKey) {
     return { ok: true, unchanged: true, hash: since, generatedAt: m.generatedAt, settings: pub };
   }
@@ -145,10 +150,14 @@ function snapshotFor_(session, since, lazyRef) {
     hash: hash,
     looseFiles: (snap.looseFiles || []).map(viewerFile_),
     // Sections (Compliance Report, PPP, Actual Self-Survey Report) are opened and hidden like areas.
-    sections: (snap.sections || []).filter(function (x) { return !allowed || allowed[normalizeAreaCode_(x.code)]; }).map(function (x) {
+    // Requested Documents is not in the admin's list: the names ticked on each file decide.
+    sections: (snap.sections || []).filter(function (x) {
+      return x.code === REQUEST_SECTION || !allowed || allowed[normalizeAreaCode_(x.code)];
+    }).map(function (x) {
+      if (x.code === REQUEST_SECTION) return viewerRequests_(x, session.name);
       return { code: x.code, name: x.name, files: x.files.map(viewerFile_),
                subfolders: (x.subfolders || []).map(function (s) { return typeof s === 'string' ? s : s.path; }) };
-    }),
+    }).filter(Boolean),
     areas: snap.areas.filter(function (a) { return !allowed || allowed[normalizeAreaCode_(a.code)]; }).map(viewerArea_),
     settings: pub,
   };
@@ -184,6 +193,26 @@ function viewerArea_(a) {
       };
     }),
   };
+}
+
+/**
+ * One accreditor's copy of Requested Documents: only the files ticked for them (names compared
+ * ignoring case), without the `for` lists, and only the subfolders those files sit in, so the
+ * names of other accreditors' folders don't show either. Null when nothing is for them.
+ */
+function viewerRequests_(sec, name) {
+  var key = String(name || '').trim().toLowerCase();
+  var files = (sec.files || []).filter(function (f) {
+    return key && (f.for || []).some(function (n) { return String(n).toLowerCase() === key; });
+  });
+  if (!files.length) return null;
+  var subs = {};
+  files.forEach(function (f) {
+    if (!f.subfolder) return;
+    var parts = String(f.subfolder).split(' › ');
+    for (var i = 1; i <= parts.length; i++) subs[parts.slice(0, i).join(' › ')] = true;
+  });
+  return { code: sec.code, name: sec.name, files: files.map(viewerFile_), subfolders: Object.keys(subs).sort() };
 }
 
 /** Accreditor copy of a file. A folder shortcut would preview as a browsable Drive folder (other areas, Drive links). */
@@ -343,9 +372,13 @@ function saveOverride_(name, reset, enabled, areasV) {
   CacheService.getScriptCache().remove('overrides');
 }
 
-/** Admin only, main program only: the accreditor names from the Access tab (never their PINs). */
+/**
+ * Coordinators and admin, main program only: the accreditor names from the Access tab (never
+ * their PINs). The admin panel uses them for "Settings for"; coordinators to tick who a
+ * Requested Documents file is for.
+ */
 function handleAccreditors_(body) {
-  checkToken_(body.token, 'admin');
+  checkToken_(body.token, 'staff');
   if (!isMain_()) throw apiError_('notMain', 'The accreditor list is kept on the main program.');
   var seen = {};
   var names = readAccess_().map(function (r) { return r.accreditorName; }).filter(function (n) {
@@ -382,6 +415,32 @@ function handleSaveKeywords_(body) {
   log_('keywords', s.name, fileId + ': ' + keywords.join(', '));
   return { ok: true, fileId: fileId, keywords: keywords, updatedAt: new Date().toISOString(),
            hashFrom: before.hash, hashTo: snap.hash, refHashFrom: before.refHash, refHashTo: snap.refHash };
+}
+
+/** Who a Requested Documents file is for. The names come from the main program's Access tab. */
+function handleSaveRequestAccess_(body) {
+  var s = checkToken_(body.token, 'staff');
+  var fileId = String(body.fileId || '').trim();
+  if (!/^[-\w]{10,}$/.test(fileId)) throw apiError_('invalid', 'Invalid file.');
+  if (Object.prototype.toString.call(body.accreditors) !== '[object Array]') throw apiError_('invalid', 'Bad accreditor list.');
+  var names = cleanNames_(body.accreditors);
+
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
+  try {
+    var snap = readFullSnapshot_();
+    if (!snap) throw apiError_('notFound', 'No snapshot yet.');
+    if (!requestFile_(snap, fileId)) {
+      throw apiError_('notFound', 'This file is not in Requested Documents any more. It may have been moved or deleted. Reload the page.');
+    }
+    upsertRequest_(fileId, names, s.name);
+    var before = snap.hash;
+    patchSnapshotRequest_(snap, fileId, names);
+  } finally {
+    lock.releaseLock();
+  }
+  log_('requestAccess', s.name, fileId + ': ' + (names.join(', ') || '(nobody)'));
+  return { ok: true, fileId: fileId, accreditors: names, hashFrom: before, hashTo: snap.hash };
 }
 
 var CHECK_COOLDOWN_SEC = 20;   // per session, so a stuck button can't flood Drive

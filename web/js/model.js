@@ -30,6 +30,11 @@ const GENERAL_LABEL = 'General documents';
 export const SUB_SEP = ' › ';
 /** Sections whose top-level subfolders are shown as cards (one card per area folder). */
 const GROUPED = { CR: 'Compliance Report', PPP: 'PPP' };
+/**
+ * Requested Documents (REQUEST_SECTION in Structure.gs). Staff get every file with `for: [names]`;
+ * an accreditor's snapshot has only the files ticked for them (no names), or no such section.
+ */
+export const REQUEST = 'REQ';
 const AREA_NAME_RE = /^area\s*([ivxl]+|\d{1,2})(?![a-z0-9])[\s\-–—:.,_]*(.*)$/i;
 
 /** A made-up area whose files and subfolders sit directly at the top of the tree. */
@@ -110,10 +115,14 @@ export function prepareSnapshot(snap) {
   const rootId = (String(snap.program?.rootFolderUrl || '').match(/folders\/([\w-]+)/) || [])[1];
   if (snap.sections?.length || !snap.groups) {
     const made = [];
+    let requests = null;
     snap.groups = [];
     for (const sec of snap.sections || []) {
       const folderId = sec.folderId || rootId;
-      if (GROUPED[sec.code]) {
+      if (sec.code === REQUEST) {
+        // Its own area after Area I … X: not on the Self-Survey page, the area menus or the access list.
+        requests = docArea(sec.code, sec.name, sec.folderId || null, sec.files || [], sec.subfolders || [], { request: true });
+      } else if (GROUPED[sec.code]) {
         snap.groups.push({ code: sec.code, name: sec.name, folderId });
         made.push(...groupCards(sec, folderId));
       } else {
@@ -123,6 +132,7 @@ export function prepareSnapshot(snap) {
     const order = Object.keys(GROUPED);
     snap.groups.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
     snap.areas.unshift(...made);
+    if (requests) snap.areas.push(requests);
   }
   snap.sections = [];
   // Reference folders (folder shortcuts at the program root; only the admin's snapshot has them):
@@ -146,6 +156,9 @@ export const findSection = (snap, code) => (snap?.areas || []).find((a) => a.sec
 export const findGroup = (snap, code) => (snap?.groups || []).find((g) => g.code === code) || null;
 export const groupCardsOf = (snap, code) => (snap?.areas || []).filter((a) => a.group === code);
 export const otherArea = (snap) => (snap?.areas || []).find((a) => a.general) || null;
+export const findRequests = (snap) => (snap?.areas || []).find((a) => a.request) || null;
+/** Staff: a Requested Documents file nobody is ticked for yet (no accreditor sees it). */
+export const unassigned = (file) => !(file.for || []).length;
 
 /**
  * What the admin can open or hide for accreditors: Compliance Report and PPP as a whole,
@@ -154,16 +167,17 @@ export const otherArea = (snap) => (snap?.areas || []).find((a) => a.general) ||
 export function accessItems(snap) {
   const groups = (snap?.groups || []).map((g) => ({ code: g.code, label: g.name, name: '',
     docs: groupCardsOf(snap, g.code).reduce((n, a) => n + countFiles(a), 0) }));
-  const rest = (snap?.areas || []).filter((a) => !a.general && !a.group).map((a) => ({
+  // Requested Documents is left out: the accreditors ticked on each file decide who sees it.
+  const rest = (snap?.areas || []).filter((a) => !a.general && !a.group && !a.request).map((a) => ({
     code: a.code, label: areaLabel(a), name: a.section ? '' : a.name, docs: countFiles(a) }));
   return [...groups, ...rest];
 }
 
 /** The areas listed with this one in the toolbar's area menu (same card page). */
 export function siblingAreas(snap, area) {
-  if (!area || area.general) return [];
+  if (!area || area.general || area.request) return [];
   if (area.group) return groupCardsOf(snap, area.group);
-  return (snap?.areas || []).filter((a) => !a.general && !a.group);
+  return (snap?.areas || []).filter((a) => !a.general && !a.group && !a.request);
 }
 
 /** Number of documents under a node. */

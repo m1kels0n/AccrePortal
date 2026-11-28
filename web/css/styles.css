@@ -244,6 +244,8 @@ a.ptile:hover, a.ptile:focus-visible { transform: translateY(-2px); border-color
 .ptile.is-off { background: var(--bg); color: var(--muted); border-style: dashed; cursor: default; }
 .ptile.is-off .ptile-icon { stroke: var(--muted); background: #ecebe7; }
 .ptile.is-off .ptile-meta { color: var(--muted); font-weight: 500; }
+.ptile-new { color: var(--primary); font-weight: 700; }
+.ptile-warn { color: var(--warn); font-weight: 700; }
 .pc-other { align-self: flex-start; margin: -4px 14px 14px; font-size: .85rem; font-weight: 600; }
 .area-card:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
 .area-card-doc .badge-area { background: var(--secondary); }
@@ -335,6 +337,9 @@ body.is-workspace .site-footer { display: none; }
 .tn-O { background: #e4efe7; background: color-mix(in srgb, var(--o) 12%, #fff); color: var(--o); }
 .tn-count { flex-shrink: 0; font-size: .72rem; color: var(--muted); padding-top: 1px; font-variant-numeric: tabular-nums; }
 .tn-missing { flex-shrink: 0; color: var(--err); font-size: .7rem; padding-top: 2px; }
+/* Requested Documents: "New" (accreditors, not opened yet) and ⚠ (staff: nobody ticked yet) */
+.tn-new { flex-shrink: 0; align-self: center; padding: 0 5px; border-radius: 4px; background: var(--primary); color: #fff; font-size: .66rem; font-weight: 700; line-height: 1.5; }
+.tn-warn { flex-shrink: 0; color: var(--warn); font-size: .8rem; font-weight: 700; }
 .tn-ind.empty > details > summary .tn-text { color: var(--muted); }
 .tn-file { padding-left: 20px; }
 .tn-folder-icon { flex-shrink: 0; font-size: .8rem; line-height: 1.3; }
@@ -453,6 +458,20 @@ body.is-workspace .site-footer { display: none; }
 /* Staff keyword editor: button at the end of the bar, form drops down over the top of the document */
 .viewer-kw { margin-left: auto; flex-shrink: 0; align-self: center; }
 .viewer-kw > .btn { padding: 2px 8px; font-size: .8rem; }
+/* Staff, Requested Documents: "👤 Accreditors" button + its drop-down (same look as the keyword editor) */
+.viewer-req { margin-left: auto; flex-shrink: 0; align-self: center; }
+.viewer-req + .viewer-kw { margin-left: 0; }
+.viewer-req > .btn { padding: 2px 8px; font-size: .8rem; }
+.req-for { font-size: .78rem; color: var(--muted); flex: 0 100 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.req-for.req-none { color: var(--warn); font-weight: 600; }
+.req-form fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.req-form legend { padding: 0; font-size: .8rem; font-weight: 600; color: var(--ink-2); }
+.req-list { display: grid; gap: 2px; max-height: 260px; overflow: auto; margin: 6px 0 8px; }
+.kw-form label.req-name { display: flex; align-items: center; gap: 8px; margin: 0; padding: 5px 6px; border-radius: 6px; font-size: .9rem; font-weight: 400; color: var(--ink); cursor: pointer; }
+.req-name:hover { background: var(--bg); }
+.req-name input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; }
+.req-actions { display: flex; align-items: center; gap: 10px; }
+.viewer-req .req-form,
 .viewer-kw .kw-form {
   position: absolute; z-index: 5; top: calc(100% + 2px); right: 0; width: min(100%, 520px);
   padding: 10px 12px 8px; background: var(--card); border: 1px solid var(--line); border-radius: 10px;

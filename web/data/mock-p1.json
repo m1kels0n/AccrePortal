@@ -312,6 +312,58 @@
      "keywords": []
     }
    ]
+  },
+  {
+   "code": "REQ",
+   "name": "Requested Documents",
+   "folderId": "MOCKREQFOLDER",
+   "files": [
+    {
+     "id": "f_req01MockFileId",
+     "name": "Faculty teaching load 2025-2026.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-27T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "for": [
+      "Dr. Reyes"
+     ]
+    },
+    {
+     "id": "f_req02MockFileId",
+     "name": "BOR Resolution No. 12 s. 2025.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-27T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "for": [
+      "Dr. Reyes",
+      "Dr. Cruz"
+     ]
+    },
+    {
+     "id": "f_req03MockFileId",
+     "name": "Library acquisitions list.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-27T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
+     "keywords": [],
+     "for": [],
+     "subfolder": "Library"
+    }
+   ],
+   "subfolders": [
+    {
+     "path": "Library",
+     "id": "MOCKREQLIB"
+    }
+   ]
   }
  ],
  "areas": [

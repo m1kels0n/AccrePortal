@@ -26,7 +26,7 @@ Coordinators ──upload──▶ Google Drive (folder tree per program)
 | Role | PIN | Can do |
 |---|---|---|
 | Accreditor | **one PIN per person** | View only. Sees only the programs and areas the admin opened. No Drive links, no "Open in new tab", no right-click. A transparent cover sits over the preview's "open in new window" button. Optional watermark with **their initials** and the date. |
-| Coordinator | **one shared PIN** | Every program and area, including files uploaded by others. Add keywords to any file, **＋** on each indicator and subfolder in the file tree (opens that Drive folder), **Check now**, progress and missing-document markers. |
+| Coordinator | **one shared PIN** | Every program and area, including files uploaded by others. Add keywords to any file, tick which accreditors see each **Requested Documents** file, **＋** on each indicator and subfolder in the file tree (opens that Drive folder), **Check now**, progress and missing-document markers. |
 | Admin | one PIN | Everything a coordinator can do, plus the **Admin panel**: which programs/areas accreditors see (for everyone, or **per accreditor**: pick a name in "Settings for"), watermark on/off, Refresh / Rebuild / Issues. |
 
 All PINs live in the **main** program's Sheet (Program 1) and work for every program. PINs are *light protection only*: the documents themselves are "anyone with the link", so someone determined (e.g. with browser developer tools) can still find a file's link.
@@ -79,12 +79,13 @@ Program 1 - AACCUP/
 - An extra level of **S / I / O group folders** under a parameter (e.g. `System Inputs and Processes › S.1 …`) is also understood.
 - An indicator folder's **Description** (Drive → right-click → File information → Details → Description), if set, becomes the full indicator text shown on the site.
 - Subfolders inside an indicator (e.g. sub-indicators `I.1.6.1 › I.1.6.1.3. Students`) are read up to 6 levels deep. Their files are listed under the indicator, labeled with the subfolder path.
-- **Sections** at the program root, matched by name: `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` → Actual Self-Survey Report. Each program card on the home page shows **Compliance Report**, **PPP** and **Self-Survey Report and Evidences** (= the Actual Self-Survey Report + Area I–X).
+- **Sections** at the program root, matched by name: `Compliance` → Compliance Report, `PPP` or `Performance Profile` → PPP, `Self-Survey` / `Self Survey` → Actual Self-Survey Report. Each program card on the home page shows **Compliance Report**, **PPP**, **Self-Survey Report and Evidences** (= the Actual Self-Survey Report + Area I–X) and **Requested Documents** (see below).
   - Compliance Report and PPP open a page with **one card per subfolder** (`Area 02 - Faculty` shows as *Area II · Faculty*, sorted by area number). A card shows that folder's files and subfolders as they are in Drive (up to 5 levels). Files directly in the Compliance Report / PPP folder show as a **General documents** card.
   - The Actual Self-Survey Report opens its documents directly (a single document opens straight away).
   - A new section **folder** is picked up on the next scan (no Rebuild structure needed), and so are new files and subfolders inside it.
 - Files placed directly in a Parameter or Area folder are shown to everyone as **General documents** at the top of that parameter / area. Other files directly in the program root are shown as **Other documents** under the program card. Neither counts in indicator progress.
 - A **shortcut to a folder** placed directly in the program root is a **Reference** folder: it and its subfolders are scanned like a section, and its files are shown to the **admin and coordinators**, in **All files** only (not on the program cards, in the search box or in counts, and never to accreditors). Use it for material kept outside the program folder. Reference folders are often big, so the site downloads them only when **All files** is opened, not at every login.
+- **Requested Documents**: a folder at the program root whose name contains `request` (e.g. `Requested Documents`). It holds documents accreditors asked the coordinators for (they ask outside the site, in person or by message). Each file is shown **only to the accreditors a coordinator ticked for it** with **👤 Accreditors** on the website (saved in the program Sheet's **Requests** tab: `fileId`, `accreditors`, `updatedBy`, `updatedAt`). A file nobody is ticked for is hidden from every accreditor. Accreditors never see other accreditors' names, nor subfolders that hold none of their files. The admin panel's open/hide list doesn't include it; closing a whole program still hides it. Accreditors see a **Requested Documents** tile only when something is there for them, with **● New** on files they haven't opened yet (remembered in their browser). Names are matched to the main program's **Access** tab (ignoring case): after renaming an accreditor there, tick their files again. Only a **folder** counts: a root *file* with "request" in its name stays in Other documents.
 - Folders starting with `_` are ignored.
 
 **Sharing** (for each program root):
@@ -112,7 +113,7 @@ AACCUP → **1. Setup / check settings**. Approve the permissions (Google warns 
 - Root folder: paste the link to `Program 1 - AACCUP`
 - **Main program?** Answer **YES** for Program 1. This Sheet then holds every PIN and handles all logins, for both programs.
 
-Setup creates the tabs (Config, Structure, Keywords, Access, Log) and a private folder `_system AACCUP p1 (do not share)` in your My Drive for `snapshot.json` and `issues.json`.
+Setup creates the tabs (Config, Structure, Keywords, Access, AccreditorAccess, Requests, Log) and a private folder `_system AACCUP p1 (do not share)` in your My Drive for `snapshot.json` and `issues.json`.
 
 ### 3.3 Build the structure
 AACCUP → **2. Build structure**. Then open the **Structure** tab:

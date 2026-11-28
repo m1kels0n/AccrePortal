@@ -7,11 +7,17 @@ import {
   isStaff, isAdmin, roleLabel, setExpiredHandler, nextHash, lastPlace, mainProgram, hasStoredSession,
 } from './api.js';
 import { buildIndex, search } from './search.js';
-import { getProgram, findArea, findParam, findIndicator, findGroup, areaTitle, indLabel, hrefFor, prepareSnapshot, siblingAreas } from './model.js';
+import {
+  getProgram, findArea, findParam, findIndicator, findGroup, areaTitle, indLabel, hrefFor, prepareSnapshot, siblingAreas,
+  findRequests, areaFileList,
+} from './model.js';
 import * as V from './views.js';
 import * as S from './staff.js';
 import * as A from './admin.js';
 import * as F from './files.js';
+
+/** Ids of the Requested Documents in a snapshot (an accreditor's: only their own). */
+const requestIds = (snap) => areaFileList(findRequests(snap)).map((e) => e.file.id);
 
 const state = {
   snaps: {},        // programCode → snapshot (already filtered by the server for accreditors)
@@ -95,7 +101,8 @@ function renderChrome() {
   // Back to the card page this area was picked from: a Compliance Report / PPP card → that
   // section's page; the Actual Self-Survey Report or Area I … X → the Self-Survey Report page.
   const curArea = snap && route.name === 'workspace' ? findArea(snap, route.area) : null;
-  const back = curArea && !curArea.general
+  // Requested Documents opens straight from the program card, so it has no card page to go back to.
+  const back = curArea && !curArea.general && !curArea.request
     ? (curArea.group ? { href: href([route.prog, curArea.group]), text: '▦ ' + curArea.groupName } : { href: href([route.prog]), text: '▦ Areas' })
     : null;
   areasBtn.hidden = !back;
@@ -317,9 +324,13 @@ async function refresh(code, force = false) {
         snap.referenceAreas = had.referenceAreas;
         snap.refLoaded = had.refLoaded;
       }
+      // Accreditors: tell them when a document they asked for arrives while they are logged in.
+      const reqBefore = had && !isStaff() ? requestIds(had) : null;
       state.snaps[code] = snap;
       writeCache(code, snap);
       reindex();
+      const arrived = reqBefore ? requestIds(snap).filter((id) => !reqBefore.includes(id)).length : 0;
+      if (arrived) toast(arrived === 1 ? '📥 A document you requested has arrived. See Requested Documents.' : `📥 ${arrived} documents you requested have arrived. See Requested Documents.`);
     } else {
       throw new Error('Unexpected response from the server.');
     }
@@ -513,6 +524,10 @@ document.addEventListener('click', (e) => {
   } else if (action === 'kw-toggle') {
     const form = el.closest('[data-kw-scope], .file-item')?.querySelector('.kw-form');
     if (form) { form.hidden = !form.hidden; if (!form.hidden) form.querySelector('input').focus(); }
+  } else if (action === 'req-toggle') {
+    S.toggleRequestForm(el);
+  } else if (action === 'req-retry') {
+    S.retryRequestNames(el);
   } else if (action === 'retry') {
     // "Try again" on a program that could not be loaded.
     const code = el.dataset.prog;
@@ -596,6 +611,7 @@ document.addEventListener('submit', (e) => {
   const handlers = {
     login: () => S.handleLogin(form, app),
     kw: () => S.handleSaveKeywords(form, app),
+    req: () => S.handleSaveRequest(form, app),
     watermark: () => A.saveWatermark(form, app),
     access: () => A.saveAccess(form, app),
   };
