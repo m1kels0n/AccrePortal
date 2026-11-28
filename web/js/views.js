@@ -106,10 +106,11 @@ export function renderLogin() {
       <form data-form="login" class="form" autocomplete="off">
         <label class="sr-only" for="pin">PIN</label>
         <input id="pin" name="pin" class="pin-input" type="password" inputmode="numeric" pattern="[0-9]{6}"
-               maxlength="6" autocomplete="off" required placeholder="••••••">
+               maxlength="6" autocomplete="off" required placeholder="••••••" aria-describedby="pinHelp">
         <button type="submit" class="btn btn-primary btn-block">Log in</button>
         <div class="form-status" aria-live="polite"></div>
       </form>
+      <p class="muted small" id="pinHelp">If you don't have your 6-PIN yet, please message the CIE coordinators.</p>
     </div>
   </div>`;
 }
