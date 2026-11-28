@@ -361,6 +361,8 @@ body.is-workspace .site-footer { display: none; }
 .content-pane > :first-child { margin-top: 0; }
 .content-pane.is-empty { display: flex; align-items: center; justify-content: center; }
 .viewer-empty { margin: 0; color: var(--muted); font-size: 1rem; text-align: center; }
+.viewer-open-list { margin-top: 12px; }
+.search-pending { display: flex; align-items: center; gap: 8px; color: var(--muted); margin: 6px 0 12px; }
 .tree-staff { display: grid; gap: 4px; }
 .tree-staff .form-status:empty { display: none; }
 /* Nothing to say (no status message, no misplaced files): take no space at all. */

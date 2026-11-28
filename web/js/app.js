@@ -284,8 +284,15 @@ function setupViewer() {
   if (!frame) return;
   const loading = main.querySelector('.viewer-loading');
   const slow = main.querySelector('.viewer-slow');
-  const timer = setTimeout(() => { if (slow) slow.hidden = false; }, 15000);
+  let timer = setTimeout(() => { if (slow) slow.hidden = false; }, 15000);
   frame.addEventListener('load', () => { clearTimeout(timer); loading?.remove(); }, { once: true });
+  // "Reload document" (shown with the slow notice): load only the preview again, not the page.
+  frame.reloadPreview = () => {
+    clearTimeout(timer);
+    if (slow) slow.hidden = true;
+    timer = setTimeout(() => { if (slow && slow.isConnected) slow.hidden = false; }, 15000);
+    frame.src = frame.src; // setting src (even to the same address) loads it again
+  };
 }
 
 function setTreeOpen(open) {
@@ -592,6 +599,8 @@ document.addEventListener('click', (e) => {
     S.checkNow(el.dataset.prog, el, app);
   } else if (action === 'admin-refresh' || action === 'admin-rebuild') {
     A.adminAction(action === 'admin-rebuild' ? 'rebuild' : 'refresh', el.dataset.prog, el, app);
+  } else if (action === 'viewer-reload') {
+    el.closest('.viewer-frame')?.querySelector('iframe')?.reloadPreview?.();
   } else if (action === 'tree-toggle') {
     setTreeOpen(!state.treeOpen);
   } else if (action === 'tree-close') {

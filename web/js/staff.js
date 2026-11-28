@@ -23,14 +23,21 @@ export async function handleLogin(form, app) {
   button.disabled = true;
   status.className = 'form-status';
   status.textContent = 'Checking…';
+  // The server sleeps when nobody used it for a while; waking it up can take 10-20 s.
+  const slow = setTimeout(() => {
+    if (form.dataset.busy === '1') status.textContent = 'Still checking… The server can take up to 20 seconds to wake up.';
+  }, 5000);
   const res = await login(pin);
+  clearTimeout(slow);
   form.dataset.busy = '';
   button.disabled = false;
   if (!res.ok) {
     status.className = 'form-status error';
     status.textContent = res.error === 'locked' ? 'Too many wrong PINs. Wait 5 minutes, then try again.'
+      : res.error === 'network' ? (res.message || 'Cannot reach the server.') + ' Your PIN is kept: just try Log in again.'
       : res.message || 'Login failed.';
-    input.value = '';
+    // Only a wrong PIN is cleared; after a network problem the same PIN can simply be sent again.
+    if (res.error === 'badPin' || res.error === 'locked') input.value = '';
     input.focus();
     return;
   }

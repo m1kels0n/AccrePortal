@@ -573,7 +573,10 @@ function renderFolder(node, key, fileLink, isActive, isOpen, staff) {
 /** The viewer pane stays empty until a document is picked; selecting a folder only opens it in the tree. */
 function renderContent(state, prog, snap, area, route) {
   if (route.fileId) return renderViewer(state, prog, snap, area, route);
-  return `<p class="viewer-empty">Select a document to view it</p>`;
+  // Phones: the list is in a drawer, so say where it is and open it with one tap.
+  return `<p class="viewer-empty"><span class="hint-wide">Select a document to view it</span>
+    <span class="hint-narrow">Pick a document from the list of files.<br>
+      <button type="button" class="btn btn-primary viewer-open-list" data-action="tree-toggle" aria-controls="treePane">☰ Show the list of files</button></span></p>`;
 }
 
 /** Coordinator/admin: rescan Drive now. Sits on the same row as Expand/Collapse all. */
@@ -641,7 +644,8 @@ export function viewerFrame(state, file) {
   return file.previewUrl
     ? `<div class="viewer-frame" data-file="${esc(file.id)}">
         <div class="viewer-loading"><span class="spinner"></span><span>Loading document…</span>
-          <span class="viewer-slow" hidden>Large files can take a while.${staff && file.viewUrl ? ` <a href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab</a>` : ''}</span></div>
+          <span class="viewer-slow" hidden>Large files or a slow connection can take a while.
+            <button type="button" class="linklike" data-action="viewer-reload">Reload document</button>${staff && file.viewUrl ? ` · <a href="${esc(file.viewUrl)}" target="_blank" rel="noopener">Open in new tab</a>` : ''}</span></div>
         <iframe src="${esc(file.previewUrl)}" title="${esc(file.name)}" allow="autoplay; fullscreen" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
         ${shield}${watermark}
       </div>`
@@ -665,6 +669,14 @@ export function renderSearch(state, route, results, scope) {
   const multi = scope === 'all' && CONFIG.programs.length > 1;
   const scopeName = scope !== 'all' ? programName(getProgram(scope), state.snaps[scope]) : '';
   const where = scopeName ? ` in ${esc(scopeName)}` : '';
+  // Programs not loaded yet (first login, slow connection): their documents can't be searched yet.
+  const pending = CONFIG.programs.filter((p) => (scope === 'all' || p.code === scope) && state.status[p.code]?.loading && !state.snaps[p.code]);
+  const pendingNote = pending.length
+    ? `<p class="search-pending"><span class="spinner spinner-sm"></span> Still loading ${esc(pending.map((p) => p.name).join(' and '))}… results will appear here by themselves.</p>` : '';
+  if (!results.total && pending.length) {
+    return `<div class="search-summary">Searching for “${esc(q)}”${where}
+      <button type="button" class="btn btn-ghost btn-sm" data-action="clear-search">× Clear</button></div>${pendingNote}`;
+  }
   if (!results.total) {
     return `<div class="search-summary">No results for “${esc(q)}”${where}</div>
       <div class="card empty"><p>No documents match. Try fewer words${scopeName ? ', or search from the Home page to look in every program' : ''}.</p>
@@ -700,7 +712,7 @@ export function renderSearch(state, route, results, scope) {
     </section>`;
   }).join('');
   return `<div class="search-summary">${plural(results.total, 'result')} for “${esc(q)}”${where}
-      <button type="button" class="btn btn-ghost btn-sm" data-action="clear-search">× Clear</button></div>
+      <button type="button" class="btn btn-ghost btn-sm" data-action="clear-search">× Clear</button></div>${pendingNote}
     ${groups}
     ${results.more ? `<p class="center"><button type="button" class="btn" data-action="show-more">Show more results</button></p>` : ''}`;
 }
