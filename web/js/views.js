@@ -7,7 +7,7 @@ import {
   getProgram, findArea, findParam, findIndicator, countFiles, progress,
   areaLabel, paramLabel, hrefFor, docCountLabel, areaFileList,
   realAreas, shortCode, indLabel, placeLabel, areaTitle, findSection, otherArea, findGroup, groupCardsOf, SUB_SEP,
-  findRequests, unassigned,
+  findRequests, requestCardsOf, requestFiles, requestNames, nameKey, REQUEST,
 } from './model.js';
 
 // ── Small building blocks ───────────────────────────────────
@@ -147,22 +147,21 @@ const isNewRequest = (file) => !isStaff() && !seenRequests.has(file.id);
 
 /**
  * Requested Documents tile. Accreditors: only when something is there for them, with "● n new".
- * Staff: always, with how many files nobody is ticked for yet.
+ * Staff: always (opening it sets up the folders), with how many files no accreditor gets.
  */
 function requestTile(prog, snap) {
-  const req = findRequests(snap);
   if (!isStaff()) {
+    const req = findRequests(snap);
     const files = areaFileList(req).map((e) => e.file);
     if (!files.length) return '';
     const fresh = files.filter(isNewRequest).length;
     return programTile('REQ', 'Requested Documents', 'Documents you asked the coordinator for', sectionHref(prog.code, req),
       docCountLabel(files.length), fresh ? ` · <span class="ptile-new">● ${fresh} new</span>` : '');
   }
-  if (!req) return programTile('REQ', 'Requested Documents', 'Create a “Requested Documents” folder in this program’s Drive folder', null);
-  const files = areaFileList(req).map((e) => e.file);
-  const open = files.filter(unassigned).length;
-  return programTile('REQ', 'Requested Documents', 'Each file is shown only to the accreditors ticked for it', hrefFor(prog.code, req),
-    docCountLabel(files.length), open ? ` · <span class="ptile-warn">⚠ ${open} not assigned</span>` : '');
+  const none = requestCardsOf(snap).find((a) => a.noneCard);
+  const open = none ? countFiles(none) : 0;
+  return programTile('REQ', 'Requested Documents', 'One folder per accreditor', href([prog.code, REQUEST]),
+    docCountLabel(requestFiles(snap).length), open ? ` · <span class="ptile-warn">⚠ ${open} not assigned</span>` : '');
 }
 
 /** "2 areas", "10 areas" (or "3 folders" when they aren't all area folders). */
@@ -319,6 +318,57 @@ function renderGroup(prog, snap, group) {
   return cardPage(prog, snap, group.name, 'Choose an area to see its documents.', cards, 'No documents yet.', group.folderId);
 }
 
+// ── Requested Documents (staff): "Who asked?" ───────────────
+/** Coordinator/admin: rescan only the Requested Documents folder (about 2 Drive requests). */
+function refreshButton(prog) {
+  return `<button type="button" class="btn btn-sm btn-primary tree-check" data-action="req-refresh" data-prog="${esc(prog.code)}"
+        title="Look for new files in Requested Documents">↻ Refresh</button>`;
+}
+
+/**
+ * One card per accreditor folder (made automatically for every name in the Access tab), a
+ * "Not assigned" card for files no accreditor gets, and a warning for folders matching no name.
+ */
+function renderRequestsPage(state, prog, snap) {
+  const cards = requestCardsOf(snap);
+  const known = state.accNames ? new Set(state.accNames.map(nameKey)) : null;
+  const stray = (a) => !!known && !a.noneCard && !known.has(nameKey(a.owner));
+  const setup = state.reqSetup[prog.code] || {};
+  const card = (a) => {
+    const warn = a.noneCard || stray(a);
+    const label = a.noneCard ? 'No accreditor sees these' : stray(a) ? '⚠ Not an accreditor name' : 'Accreditor';
+    return `<li><a class="card area-card area-card-doc ${warn ? 'area-card-warn' : ''}" href="${hrefFor(prog.code, a)}">
+      <span class="badge badge-area">${esc(shortCode(a))}</span>
+      <span class="area-card-main">
+        <span class="area-card-label">${esc(label)}</span>
+        <span class="area-card-name">${esc(a.name)}</span>
+        <span class="muted small">${docCountLabel(countFiles(a))}</span>
+      </span></a></li>`;
+  };
+  const strays = cards.filter(stray);
+  const notes = [
+    setup.busy ? '<p class="req-note"><span class="spinner spinner-sm"></span> Setting up the accreditor folders in Google Drive…</p>'
+      : !state.accNames && !setup.error ? '<p class="req-note"><span class="spinner spinner-sm"></span> Checking the accreditor list…</p>' : '',
+    setup.error ? `<p class="req-note error">${esc(setup.error)} <button type="button" class="linklike" data-action="req-setup-retry" data-prog="${esc(prog.code)}">Try again</button></p>` : '',
+    ...strays.map((a) => `<p class="req-note warn">⚠ The folder “${esc(a.name)}” doesn’t match any accreditor in the Access tab, so no accreditor sees its files.
+      Rename it in Google Drive to the accreditor’s name, then tap ↻ Refresh.</p>`),
+  ].join('');
+  const group = snap.groups?.find((g) => g.code === REQUEST);
+  const steps = `<ol class="req-steps">
+      <li>Tap the accreditor who asked.</li>
+      <li>Tap <strong>＋ Add files for …</strong>. Their folder opens in Google Drive. Put the document there.</li>
+      <li>Come back here and tap <strong>↻ Refresh</strong>.</li>
+    </ol>
+    <div class="req-bar">${refreshButton(prog)}
+      <span class="form-status" data-req-status aria-live="polite"></span>
+      ${group ? `<a class="small" href="https://drive.google.com/drive/folders/${esc(group.folderId)}" target="_blank" rel="noopener">Open the whole folder in Google Drive ↗</a>` : ''}
+    </div>`;
+  return crumbs([{ label: 'Programs', href: '#/' }, { label: `${programName(prog, snap)} · Requested Documents`, href: esc(location.hash || '#/') }]) +
+    pageHead(esc(programName(prog, snap)), 'Requested Documents', steps) + notes +
+    (cards.length ? `<ul class="area-grid">${cards.map(card).join('')}</ul>`
+      : `<div class="card empty"><p>${setup.busy || !state.accNames ? 'Loading the accreditors…' : 'No accreditors yet. The admin adds them in the Access tab of the main program’s Sheet.'}</p></div>`);
+}
+
 // ── Workspace: tree (left) + content (right) ────────────────
 /** Returns { html, workspace } — workspace=false when the area can't be shown (plain page instead). */
 export function renderWorkspace(state, route, searchHtml) {
@@ -328,6 +378,7 @@ export function renderWorkspace(state, route, searchHtml) {
   if (!snap) return { html: unavailable(prog, state.status[prog.code]), workspace: false };
   const area = findArea(snap, route.area);
   if (!area) {
+    if (route.area === REQUEST && isStaff()) return { html: searchHtml || renderRequestsPage(state, prog, snap), workspace: false };
     const group = findGroup(snap, route.area);
     if (group) return { html: searchHtml || renderGroup(prog, snap, group), workspace: false };
     return { html: notFound(href([prog.code]), 'This area is not available. It may not be open for viewing.'), workspace: false };
@@ -346,11 +397,11 @@ export function renderWorkspace(state, route, searchHtml) {
         <div class="tree-tools">
           <button type="button" class="icon-btn" data-action="tree-expand" title="Expand all" aria-label="Expand all">⊞</button>
           <button type="button" class="icon-btn" data-action="tree-collapse" title="Collapse all" aria-label="Collapse all">⊟</button>
-          ${checkNowButton(prog)}
+          ${area.request && isStaff() ? refreshButton(prog) : checkNowButton(prog)}
           ${isStaff() && area.section && area.folderId ? `<a class="btn btn-sm" href="https://drive.google.com/drive/folders/${esc(area.folderId)}" target="_blank" rel="noopener"
-              title="Add files to “${esc(area.name)}”: opens its folder in Google Drive">＋ Add files</a>` : ''}
+              title="Add files to “${esc(area.name)}”: opens its folder in Google Drive">＋ Add files${area.owner ? ' for ' + esc(area.name) : ''}</a>` : ''}
         </div>
-        ${treeStaffTools()}
+        ${treeStaffTools(area)}
       </div>
       <div class="tree-scroll" id="treeScroll">
         <nav class="tree" id="tree">${renderTree(state, prog, area, route)}</nav>
@@ -402,7 +453,7 @@ function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
     const active = onI && route.fileId === f.id;
     const kind = fileKind(f.mimeType);
     return `<li><a class="tn-link tn-file ${active ? 'active' : ''}" href="${hrefFor(prog.code, area, param, ind, f.id)}"
-        title="${esc(f.name)}" ${active ? 'aria-current="page"' : ''}>
+        title="${esc(f.desc ? f.name + ' — ' + f.desc : f.name)}" ${active ? 'aria-current="page"' : ''}>
       <span class="kind kind-xs ${kind.cls}">${kind.label}</span><span class="tn-text">${esc(f.name)}</span>${area.request ? requestMark(f, staff) : ''}</a></li>`;
   };
   const files = renderFolder(subfolderTree(ind.files, ind.subfolders), ik, fileLink, (fid) => onI && route.fileId === fid, isOpen, staff);
@@ -422,29 +473,37 @@ function indRow(prog, area, param, ind, route, onP, isOpen, staff) {
     </details></li>`;
 }
 
-/** Requested Documents tree row: "New" for accreditors; staff see ⚠ (nobody ticked) or 👤 n. */
+/** Requested Documents tree row: "New" for accreditors; staff see 📝 (has a description) and +n (also shown to n others). */
 function requestMark(file, staff) {
   if (!staff) return isNewRequest(file) ? '<span class="tn-new">New</span>' : '';
-  if (unassigned(file)) return '<span class="tn-warn" title="Not assigned yet: no accreditor sees this file">⚠</span>';
-  return `<span class="tn-count" title="For: ${esc(file.for.join(', '))}">👤${file.for.length}</span>`;
+  const extra = (file.for || []).filter((n) => nameKey(n) !== nameKey(file.owner));
+  return (file.desc ? `<span class="tn-note" title="${esc(file.desc)}">📝</span>` : '') +
+    (extra.length ? `<span class="tn-count" title="Also shown to ${esc(extra.join(', '))}">+${extra.length}</span>` : '');
 }
 
-/** "For: Dr. Reyes, Dr. Cruz", or the warning that no accreditor sees the file yet. */
+/** Staff: "For: Dr. Reyes, Dr. Cruz · “description”", or the warning that no accreditor sees the file. */
 export function requestForLine(file) {
-  return unassigned(file)
-    ? '<span class="req-for req-none">⚠ Not assigned yet: no accreditor sees this file</span>'
-    : `<span class="req-for">For: ${esc(file.for.join(', '))}</span>`;
+  const names = requestNames(file);
+  const who = names.length ? 'For: ' + names.join(', ') : '⚠ Not assigned: no accreditor sees this file';
+  const desc = file.desc ? ` · “${file.desc}”` : '';
+  return `<span class="req-for ${names.length ? '' : 'req-none'}" title="${esc(who + desc)}">${esc(who)}${desc ? `<span class="req-desc">${esc(desc)}</span>` : ''}</span>`;
 }
 
 /**
- * Staff: tick who a Requested Documents file is for. The names are filled in when the form
- * opens (they come from the main program); data-current holds the names ticked now.
+ * Staff ✎ Details: the description, and who else sees the file. Its name folder's accreditor
+ * always sees it; the names are filled in when the form opens (they come from the main program).
  */
 function requestEditor(progCode, file) {
-  return `<form class="kw-form req-form" data-form="req" data-prog="${esc(progCode)}" data-file-id="${esc(file.id)}"
-        data-current="${esc(JSON.stringify(file.for || []))}" hidden>
+  const extra = (file.for || []).filter((n) => nameKey(n) !== nameKey(file.owner));
+  const fid = esc(file.id);
+  return `<form class="kw-form req-form" data-form="req" data-prog="${esc(progCode)}" data-file-id="${fid}"
+        data-owner="${esc(file.owner || '')}" data-current="${esc(JSON.stringify(extra))}" hidden>
+    <label for="rd-${fid}">Description <small>(optional · the accreditor sees it)</small></label>
+    <textarea id="rd-${fid}" name="desc" rows="3" maxlength="500"
+      placeholder="e.g. Faculty teaching load, AY 2025-2026, as asked on Dec 1">${esc(file.desc || '')}</textarea>
     <fieldset>
-      <legend>Who asked for this document? <small>Only the ticked accreditors will see it.</small></legend>
+      <legend>${file.owner ? `Also show to <small>(${esc(file.owner)} already sees it: it is in their folder)</small>`
+        : 'Show to <small>(this file is not in an accreditor’s folder)</small>'}</legend>
       <div class="req-list" data-req-list><span class="muted small"><span class="spinner spinner-sm"></span> Loading accreditors…</span></div>
     </fieldset>
     <div class="req-actions"><button type="submit" class="btn btn-primary btn-sm" disabled>Save</button>
@@ -526,10 +585,12 @@ function checkNowButton(prog) {
 
 /** Coordinator/admin status line under the tree tools.
  *  Adding files is done with the ＋ on each indicator and subfolder row in the tree. */
-function treeStaffTools() {
+function treeStaffTools(area) {
   if (!isStaff()) return '';
-  return `<div class="tree-staff">
-    <span class="form-status" id="chk-status" aria-live="polite"></span>
+  const hint = area?.request && area.group && !area.noneCard
+    ? '<span class="muted small">After putting files in Google Drive, tap ↻ Refresh.</span>' : '';
+  return `<div class="tree-staff">${hint}
+    <span class="form-status" id="chk-status" ${area?.request ? 'data-req-status' : ''} aria-live="polite"></span>
   </div>`;
 }
 
@@ -551,9 +612,11 @@ function renderViewer(state, prog, snap, area, route) {
   return `<div class="viewer">
     <div class="viewer-bar">
       <span class="viewer-name" title="${esc(file.name)}">${esc(file.name)}</span>
-      ${req ? requestForLine(file) : `<span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>`}
+      ${req ? requestForLine(file)
+        : area.request ? (file.desc ? `<span class="viewer-path req-desc-line" title="${esc(file.desc)}">${esc(file.desc)}</span>` : '')
+        : `<span class="viewer-path" title="${esc(ind.text || '')}">${esc(placeLabel(param, ind))}</span>`}
       ${req ? `<div class="viewer-req" data-req-scope>
-        <button type="button" class="btn btn-primary btn-sm" data-action="req-toggle" aria-label="Choose the accreditors for ${esc(file.name)}">👤 Accreditors</button>
+        <button type="button" class="btn btn-primary btn-sm" data-action="req-toggle" aria-label="Description and who sees ${esc(file.name)}">✎ Details</button>
         ${requestEditor(prog.code, file)}
       </div>` : ''}
       ${staff ? `<div class="viewer-kw" data-kw-scope>

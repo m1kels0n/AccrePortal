@@ -226,8 +226,8 @@ function assemble_(cfg, st, loose, filesByInd, kw, subsByInd, refs, req) {
   var sections = Object.keys(SECTIONS).filter(function (c) { return secByCode[c]; }).map(function (c) {
     var sec = secByCode[c];
     sec.files = withKw(sec.files);
-    // Requested Documents: the accreditors each file is for ([] = nobody yet, so no accreditor sees it).
-    if (c === REQUEST_SECTION) sec.files.forEach(function (f) { f.for = req[f.id] || []; });
+    // Requested Documents: who each file is for (its name folder + extra names) and its description.
+    if (c === REQUEST_SECTION) decorateRequestFiles_(sec.files, req);
     stats.files += sec.files.length;
     return sec;
   });
@@ -456,19 +456,31 @@ function cleanKeywords_(input) {
   return out;
 }
 
-// ── Requests tab (who each Requested Documents file is for) ──
-// One row per file: fileId · accreditors (names from the main program's Access tab, comma
-// separated) · updatedBy · updatedAt. Created by the first save; missing tab = nobody assigned.
+// ── Requested Documents ──────────────────────────────────────
+// Requested Documents › <accreditor name> › files: a file is for the accreditor its top folder is
+// named after (matched by sameName_, so case, dots and extra spaces don't matter). The Requests tab
+// adds, per file, extra accreditors and a description (set with ✎ Details on the website):
+// fileId · accreditors (comma separated) · updatedBy · updatedAt · description.
+// The program Sheets don't know the accreditor names (they live in the main Sheet), so the
+// server only compares names; the website warns about folders that match no accreditor.
 var REQUESTS_TAB = 'Requests';
+var REQUEST_FOLDER_NAME = 'Requested Documents';
+var REQUEST_MAX_DEPTH = 6;
 
-/** { fileId: [names] } */
+/** Comparison key for accreditor names and their folders: "DR.  Reyes" and "dr reyes" are the same. */
+function nameKey_(s) {
+  return String(s === null || s === undefined ? '' : s).toLowerCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/** { fileId: { names: [extra accreditors], desc } } */
 function readRequests_() {
   var map = {};
   var sh = ss_().getSheetByName(REQUESTS_TAB);
   if (!sh || sh.getLastRow() < 2) return map;
-  sh.getRange(2, 1, sh.getLastRow() - 1, 2).getValues().forEach(function (r) {
+  var cols = Math.min(Math.max(sh.getLastColumn(), 2), 5);
+  sh.getRange(2, 1, sh.getLastRow() - 1, cols).getValues().forEach(function (r) {
     var id = String(r[0] || '').trim();
-    if (id) map[id] = cleanNames_(String(r[1] || '').split(','));
+    if (id) map[id] = { names: cleanNames_(String(r[1] || '').split(',')), desc: cleanDesc_(cols >= 5 ? r[4] : '') };
   });
   return map;
 }
@@ -479,7 +491,7 @@ function cleanNames_(input) {
   var out = [];
   [].concat(input || []).forEach(function (raw) {
     var n = String(raw === null || raw === undefined ? '' : raw).replace(/\s+/g, ' ').trim();
-    var key = n.toLowerCase();
+    var key = nameKey_(n);
     if (!n || n.length > 100 || /^[=+\-@]/.test(n) || /[,;]/.test(n) || seen[key] || out.length >= 50) return;
     seen[key] = true;
     out.push(n);
@@ -487,40 +499,97 @@ function cleanNames_(input) {
   return out;
 }
 
-/** The caller holds the script lock. An empty list removes the row. */
-function upsertRequest_(fileId, names, user) {
+/** A description: plain text, at most 500 characters, no formula start (it is written into a cell). */
+function cleanDesc_(input) {
+  return String(input === null || input === undefined ? '' : input).replace(/\r\n?/g, '\n')
+    .replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().replace(/^[=+\-@]+\s*/, '').slice(0, 500);
+}
+
+/** Sets owner (its name folder, '' at the top), for (extra names) and desc on Requested Documents files. */
+function decorateRequestFiles_(files, req) {
+  files.forEach(function (f) {
+    var r = req[f.id] || { names: [], desc: '' };
+    f.owner = f.subfolder ? String(f.subfolder).split(' › ')[0] : '';
+    f.for = r.names;
+    if (r.desc) f.desc = r.desc; else delete f.desc;
+  });
+  return files;
+}
+
+/** The caller holds the script lock. Nothing left to keep removes the row. */
+function upsertRequest_(fileId, names, desc, user) {
   var ss = ss_();
+  var headers = SHEET_HEADERS[REQUESTS_TAB];
   var sh = ss.getSheetByName(REQUESTS_TAB);
   if (!sh) {
-    if (!names.length) return;
+    if (!names.length && !desc) return;
     sh = ss.insertSheet(REQUESTS_TAB);
-    sh.getRange(1, 1, 1, 4).setValues([SHEET_HEADERS[REQUESTS_TAB]]).setFontWeight('bold');
     sh.setFrozenRows(1);
+  }
+  if (sh.getRange(1, 1, 1, headers.length).getValues()[0].join('|') !== headers.join('|')) {
+    sh.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
   }
   var n = Math.max(sh.getLastRow() - 1, 0);
   var ids = n ? sh.getRange(2, 1, n, 1).getValues().map(function (r) { return String(r[0]).trim(); }) : [];
   var i = ids.indexOf(fileId);
-  if (!names.length) { if (i !== -1) sh.deleteRow(i + 2); return; }
+  if (!names.length && !desc) { if (i !== -1) sh.deleteRow(i + 2); return; }
   var row = i === -1 ? sh.getLastRow() + 1 : i + 2;
-  sh.getRange(row, 1, 1, 2).setNumberFormat('@');
-  sh.getRange(row, 1, 1, 4).setValues([[fileId, names.join(', '), user, new Date()]]);
+  sh.getRange(row, 1, 1, 5).setNumberFormat('@');
+  sh.getRange(row, 1, 1, 5).setValues([[fileId, names.join(', '), user, new Date().toISOString(), desc]]);
+}
+
+/** The Requested Documents section of a full snapshot, or null. */
+function requestSection_(snap) {
+  return (snap.sections || []).filter(function (s) { return s.code === REQUEST_SECTION; })[0] || null;
 }
 
 /** The Requested Documents file with this id in a full snapshot, or null. */
 function requestFile_(snap, fileId) {
-  var hit = null;
-  (snap.sections || []).forEach(function (s) {
-    if (s.code !== REQUEST_SECTION) return;
-    s.files.forEach(function (f) { if (f.id === fileId) hit = f; });
-  });
-  return hit;
+  var sec = requestSection_(snap);
+  return sec ? sec.files.filter(function (f) { return f.id === fileId; })[0] || null : null;
 }
 
-/** After an assignment save: update the cached snapshot (the caller holds the script lock). */
-function patchSnapshotRequest_(snap, fileId, names) {
-  (snap.sections || []).forEach(function (s) {
-    if (s.code === REQUEST_SECTION) s.files.forEach(function (f) { if (f.id === fileId) f.for = names; });
-  });
+/**
+ * Small scan: only the Requested Documents folder and its subfolders (one Drive query per
+ * folder level, usually 2), the same way the full scan reads them. Returns the section.
+ */
+function scanRequestFolder_(folderId, name) {
+  var files = [];
+  var subs = [];
+  var level = {};
+  level[folderId] = '';
+  for (var depth = 0; Object.keys(level).length && depth <= REQUEST_MAX_DEPTH; depth++) {
+    var set = toSet_(Object.keys(level));
+    var next = {};
+    listChildren_(Object.keys(level), false).forEach(function (f) {
+      var parent = firstIn_(f.parents, set);
+      if (parent === null || parent === undefined || level[parent] === undefined) return;
+      var label = level[parent];
+      if (f.mimeType !== FOLDER_MIME) { files.push(toFile_(f, label || undefined)); return; }
+      if (depth >= REQUEST_MAX_DEPTH) return;
+      var path = label ? label + ' › ' + f.name : f.name;
+      next[f.id] = path;
+      subs.push({ path: path, id: f.id });
+    });
+    level = next;
+  }
+  var kw = readKeywords_();
+  sortFiles_(files).forEach(function (f) { f.keywords = kw[f.id] || []; });
+  decorateRequestFiles_(files, readRequests_());
+  subs.sort(function (a, b) { return a.path < b.path ? -1 : a.path > b.path ? 1 : a.id < b.id ? -1 : 1; });
+  var sec = { code: REQUEST_SECTION, name: name || SECTIONS[REQUEST_SECTION].name, folderId: folderId, files: files };
+  if (subs.length) sec.subfolders = subs;
+  return sec;
+}
+
+/**
+ * Put a freshly scanned Requested Documents section into the cached snapshot (the caller holds
+ * the script lock). The next full scan rewrites the Drive file.
+ */
+function patchSnapshotRequests_(snap, sec) {
+  var old = requestSection_(snap);
+  if (snap.stats) snap.stats.files += sec.files.length - (old ? old.files.length : 0);
+  snap.sections = (snap.sections || []).filter(function (s) { return s.code !== REQUEST_SECTION; }).concat([sec]);
   setSnapshotHashes_(snap);
   cacheSnapshot_(snap);
   PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');

@@ -33,7 +33,7 @@ Keep the coordinator PIN within the coordinator team. Never give it to accredito
 📄 A file put directly in a Parameter or Area folder is shown to everyone under **General documents** at the top of that parameter or area.
 📋 **Compliance Report and PPP:** folders in the program folder, next to the Area folders, with one subfolder per area inside (e.g. `Compliance Report › Area 02 - Faculty`). Whatever you put in an area subfolder is shown as it is.
 📘 **Actual Self-Survey Report:** a folder with that name in the program folder, holding the report document(s).
-📥 **Requested Documents:** a folder with that name in the program folder, for documents accreditors asked for (see section 5).
+📥 **Requested Documents:** made automatically in the program folder, with one folder per accreditor inside, for documents accreditors asked for (see section 5).
 Other files left in the program folder show as **Other documents**.
 
 If one document is evidence for two indicators, upload it once. Then, in the second folder, right-click → **Add shortcut** to point to it.
@@ -60,19 +60,35 @@ You can add keywords to any file in any area.
 
 ## 5. Requested Documents (when an accreditor asks for something)
 
-Accreditors don't request documents in the website. They ask you in person or by message. You answer by uploading the document to **Requested Documents** and ticking who asked for it. **Only the accreditor(s) you tick can see the file.**
+Accreditors don't request documents in the website. They ask you in person or by message. You answer by putting the document in **that accreditor's folder** inside **Requested Documents**. **Only that accreditor can see it.**
+
+```
+Requested Documents/
+  Dr. Reyes/      ← only Dr. Reyes sees what is in here
+  Dr. Cruz/       ← only Dr. Cruz sees what is in here
+```
+
+The folders are made automatically, one per accreditor, the first time someone opens Requested Documents on the website. You never need to create or rename them.
+
+**Step by step**
 
 1. On the program's card, tap **Requested Documents**.
-2. Tap **＋ Add files** at the top of the list on the left. The Requested Documents folder opens in Google Drive. Upload the file there.
-3. Back on the website, tap **↻ Check now**. The new file appears with a **⚠** mark: nobody can see it yet.
-4. Tap the file, then **👤 Accreditors** above it. Tick the accreditor(s) who asked for it, then **Save**.
-   The line above the document changes to **For: Dr. …**, and the ⚠ becomes **👤 1** (the number of accreditors).
+2. Tap the accreditor who asked, e.g. **Dr. Reyes**.
+3. Tap **＋ Add files for Dr. Reyes**. Their folder opens in Google Drive. Drag the document(s) in, or click **New → File upload**. Wait until Drive says the upload is complete.
+4. Go back to the website tab and tap **↻ Refresh**. It says **"✓ Updated: 1 new"**. If it says "No new files yet", wait a moment and tap it again.
+   (Without Refresh, the file still appears by itself within about **5 minutes**.)
+5. *Optional:* tap the file, then **✎ Details**. Type a short **description** for the accreditor (e.g. *"Faculty teaching load, AY 2025-2026, as asked on Dec 1"*) and tap **Save**.
 
-- The accreditor sees a **Requested Documents** tile on their program card, with **● New** until they open the file. If they are already logged in, a message tells them it has arrived (within about 5 minutes).
-- To show the file to another accreditor later, or to hide it again, open it and change the ticks.
-- A file with **no** ticks is hidden from every accreditor, so uploading alone never shows a file to anyone.
-- Tip: name the file clearly, e.g. `Faculty teaching load AY 2025-2026.pdf`. You may use subfolders (e.g. one per area); accreditors only see the subfolders that hold their own files.
-- After the visit, you can move the files into the right indicator folders so the evidence stays complete.
+**Good to know**
+
+- You may also go straight to Google Drive, open **Requested Documents › Dr. Reyes**, and upload there. It works the same.
+- **Two accreditors asked for the same document?** Put it in one person's folder, then in **✎ Details** tick the other person under **Also show to**.
+- **To take a document back**, delete it from the folder in Google Drive, then tap **↻ Refresh**.
+- A file put directly in **Requested Documents** (not inside a name folder) shows under **⚠ Not assigned**, and no accreditor sees it. Move it into the right name folder, or tick a name in **✎ Details**.
+- If a folder shows **⚠ Not an accreditor name**, its name doesn't match anyone in the accreditor list (for example a typo). No accreditor sees its files until it is renamed in Drive.
+- The accreditor sees a **Requested Documents** tile on their program card, with **● New** until they open the file, and the description under the file name. If they are already logged in, a message tells them it has arrived.
+- Subfolders inside a name folder are fine (e.g. one per area). Accreditors never see other accreditors' folders or names.
+- After the visit, you can copy the documents into the right indicator folders so the evidence stays complete.
 
 ## 6. See every file in one list
 
@@ -82,7 +98,7 @@ Tap **≡ All files** in the bar at the top (or on the Home page). It lists ever
 - Tap a file to open it **beside the list**. On a phone it fills the screen; tap **Show files** to get the list back.
 - **📁↗** on a row (or **📁 Open folder in Drive** above the open file) opens the Google Drive folder that file is in.
 - **✎ Keywords** above the open file works the same as in the area pages.
-- **Requested Documents** files are listed here too (section menu: Requested Documents). Ticking accreditors is done on the program's Requested Documents page.
+- **Requested Documents** files are listed here too (section menu: Requested Documents). Descriptions and "Also show to" are set on the program's Requested Documents page.
 - Older reference material, such as **Previous Accre Docs**, is listed here too. Pick it in the **section** menu (it starts with "Reference:"). These files appear only in this list, not in the top search box or on the area cards.
 
 Only coordinators and the admin see this list. Accreditors don't.

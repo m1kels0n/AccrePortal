@@ -31,10 +31,88 @@ export const SUB_SEP = ' › ';
 /** Sections whose top-level subfolders are shown as cards (one card per area folder). */
 const GROUPED = { CR: 'Compliance Report', PPP: 'PPP' };
 /**
- * Requested Documents (REQUEST_SECTION in Structure.gs). Staff get every file with `for: [names]`;
- * an accreditor's snapshot has only the files ticked for them (no names), or no such section.
+ * Requested Documents (REQUEST_SECTION in Structure.gs): Requested Documents › <accreditor> › files.
+ * Staff get every file with `owner` (its name folder), `for` (extra names) and `desc`; the page
+ * shows one card per name folder. An accreditor's snapshot has only their own files (no names,
+ * no name folders, `desc` kept), shown as one plain area.
  */
 export const REQUEST = 'REQ';
+export const REQUEST_NAME = 'Requested Documents';
+const NONE_CODE = REQUEST + '-NONE';
+
+/** Comparison key for accreditor names and folders; must match nameKey_ in Snapshot.gs. */
+export function nameKey(s) { return String(s ?? '').toLowerCase().replace(/\./g, ' ').replace(/\s+/g, ' ').trim(); }
+
+/** "Dr. Maria Reyes" → "MR" (a leading title is skipped). */
+function nameBadge(name) {
+  let words = String(name).replace(/[.,]/g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length > 1 && /^(dr|engr|prof|mr|mrs|ms|atty|rev|sir)$/i.test(words[0])) words = words.slice(1);
+  return words.slice(0, 3).map((w) => w[0].toUpperCase()).join('') || '•';
+}
+
+/**
+ * Staff: the areas of Requested Documents. One card per top-level (name) folder, its contents as
+ * they are in Drive; a file a coordinator also showed to someone else is listed on that person's
+ * card too (a copy, at the top). Files nobody gets: a "Not assigned" card first.
+ */
+function requestCards(sec) {
+  const cards = new Map();
+  const card = (name) => {
+    const k = nameKey(name);
+    if (!cards.has(k)) cards.set(k, { name, files: [], subfolders: [], folderId: null });
+    return cards.get(k);
+  };
+  for (const sf of sec.subfolders || []) {
+    const [first, ...rest] = (typeof sf === 'string' ? sf : sf.path).split(SUB_SEP);
+    const c = card(first);
+    if (!rest.length) { if (sf.id) c.folderId = sf.id; continue; }
+    c.subfolders.push({ path: rest.join(SUB_SEP), id: sf.id });
+  }
+  const none = [];
+  for (const f of sec.files || []) {
+    const copy = (sub) => { const o = { ...f }; if (sub) o.subfolder = sub; else delete o.subfolder; return o; };
+    if (f.subfolder) {
+      const [first, ...rest] = f.subfolder.split(SUB_SEP);
+      card(first).files.push(copy(rest.join(SUB_SEP)));
+    }
+    for (const n of f.for || []) if (nameKey(n) !== nameKey(f.owner)) card(n).files.push(copy(''));
+    if (!f.subfolder && !(f.for || []).length) none.push(copy(''));
+  }
+  const used = new Set();
+  const out = [...cards.values()].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })).map((c) => {
+    const base = `${REQUEST}-${c.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 30) || 'folder'}`;
+    let code = base;
+    for (let i = 2; used.has(code) || code === NONE_CODE; i++) code = `${base}-${i}`;
+    used.add(code);
+    return docArea(code, c.name, c.folderId, c.files, c.subfolders,
+      { group: REQUEST, groupName: REQUEST_NAME, request: true, owner: c.name, badge: nameBadge(c.name) });
+  });
+  if (none.length) {
+    out.unshift(docArea(NONE_CODE, 'Not assigned', null, none, [],
+      { group: REQUEST, groupName: REQUEST_NAME, request: true, noneCard: true, badge: '⚠' }));
+  }
+  return out;
+}
+
+/** { group, areas } for a Requested Documents section: staff (has folderId) → cards; accreditor → one area. */
+function requestAreas(sec) {
+  if (sec.folderId) {
+    return { group: { code: REQUEST, name: sec.name || REQUEST_NAME, folderId: sec.folderId }, areas: requestCards(sec) };
+  }
+  return { group: null, areas: [docArea(REQUEST, sec.name || REQUEST_NAME, null, sec.files || [], sec.subfolders || [], { request: true })] };
+}
+
+/** Swap in a freshly scanned Requested Documents section (staff ↻ Refresh), keeping the rest. */
+export function applyRequestSection(snap, sec) {
+  snap.areas = (snap.areas || []).filter((a) => !a.request);
+  snap.groups = (snap.groups || []).filter((g) => g.code !== REQUEST);
+  if (!sec) return snap;
+  const { group, areas } = requestAreas(sec);
+  if (group) snap.groups.push(group);
+  const other = snap.areas.findIndex((a) => a.general);
+  snap.areas.splice(other === -1 ? snap.areas.length : other, 0, ...areas);
+  return snap;
+}
 const AREA_NAME_RE = /^area\s*([ivxl]+|\d{1,2})(?![a-z0-9])[\s\-–—:.,_]*(.*)$/i;
 
 /** A made-up area whose files and subfolders sit directly at the top of the tree. */
@@ -120,8 +198,9 @@ export function prepareSnapshot(snap) {
     for (const sec of snap.sections || []) {
       const folderId = sec.folderId || rootId;
       if (sec.code === REQUEST) {
-        // Its own area after Area I … X: not on the Self-Survey page, the area menus or the access list.
-        requests = docArea(sec.code, sec.name, sec.folderId || null, sec.files || [], sec.subfolders || [], { request: true });
+        // After Area I … X: not on the Self-Survey page, the area menus or the access list.
+        requests = requestAreas(sec);
+        if (requests.group) snap.groups.push(requests.group);
       } else if (GROUPED[sec.code]) {
         snap.groups.push({ code: sec.code, name: sec.name, folderId });
         made.push(...groupCards(sec, folderId));
@@ -129,10 +208,10 @@ export function prepareSnapshot(snap) {
         made.unshift(docArea(sec.code, sec.name, folderId, sec.files || [], sec.subfolders || []));
       }
     }
-    const order = Object.keys(GROUPED);
+    const order = [...Object.keys(GROUPED), REQUEST];
     snap.groups.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
     snap.areas.unshift(...made);
-    if (requests) snap.areas.push(requests);
+    if (requests) snap.areas.push(...requests.areas);
   }
   snap.sections = [];
   // Reference folders (folder shortcuts at the program root; only the admin's snapshot has them):
@@ -156,18 +235,31 @@ export const findSection = (snap, code) => (snap?.areas || []).find((a) => a.sec
 export const findGroup = (snap, code) => (snap?.groups || []).find((g) => g.code === code) || null;
 export const groupCardsOf = (snap, code) => (snap?.areas || []).filter((a) => a.group === code);
 export const otherArea = (snap) => (snap?.areas || []).find((a) => a.general) || null;
-export const findRequests = (snap) => (snap?.areas || []).find((a) => a.request) || null;
-/** Staff: a Requested Documents file nobody is ticked for yet (no accreditor sees it). */
-export const unassigned = (file) => !(file.for || []).length;
+/** An accreditor's Requested Documents (one plain area), or null. */
+export const findRequests = (snap) => (snap?.areas || []).find((a) => a.request && !a.group) || null;
+/** Staff: the Requested Documents cards (Not assigned first, then one per name folder). */
+export const requestCardsOf = (snap) => groupCardsOf(snap, REQUEST);
+/** Staff: every Requested Documents file once (a shared file is on several cards). */
+export function requestFiles(snap) {
+  const seen = new Map();
+  for (const a of requestCardsOf(snap)) for (const e of areaFileList(a)) if (!seen.has(e.file.id)) seen.set(e.file.id, e.file);
+  return [...seen.values()];
+}
+/** Staff: who a Requested Documents file is for: its name folder, then the extra names. */
+export function requestNames(file) {
+  const out = file.owner ? [file.owner] : [];
+  for (const n of file.for || []) if (!out.some((x) => nameKey(x) === nameKey(n))) out.push(n);
+  return out;
+}
 
 /**
  * What the admin can open or hide for accreditors: Compliance Report and PPP as a whole,
  * the Actual Self-Survey Report, and Area I … X. [{ code, label, name, docs }]
  */
 export function accessItems(snap) {
-  const groups = (snap?.groups || []).map((g) => ({ code: g.code, label: g.name, name: '',
+  // Requested Documents is left out: its folders decide who sees each file.
+  const groups = (snap?.groups || []).filter((g) => g.code !== REQUEST).map((g) => ({ code: g.code, label: g.name, name: '',
     docs: groupCardsOf(snap, g.code).reduce((n, a) => n + countFiles(a), 0) }));
-  // Requested Documents is left out: the accreditors ticked on each file decide who sees it.
   const rest = (snap?.areas || []).filter((a) => !a.general && !a.group && !a.request).map((a) => ({
     code: a.code, label: areaLabel(a), name: a.section ? '' : a.name, docs: countFiles(a) }));
   return [...groups, ...rest];
@@ -175,8 +267,9 @@ export function accessItems(snap) {
 
 /** The areas listed with this one in the toolbar's area menu (same card page). */
 export function siblingAreas(snap, area) {
-  if (!area || area.general || area.request) return [];
+  if (!area || area.general) return [];
   if (area.group) return groupCardsOf(snap, area.group);
+  if (area.request) return [];
   return (snap?.areas || []).filter((a) => !a.general && !a.group && !a.request);
 }
 

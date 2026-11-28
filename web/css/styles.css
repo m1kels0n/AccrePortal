@@ -471,6 +471,19 @@ body.is-workspace .site-footer { display: none; }
 .req-name:hover { background: var(--bg); }
 .req-name input { width: 16px; height: 16px; margin: 0; flex-shrink: 0; }
 .req-actions { display: flex; align-items: center; gap: 10px; }
+.req-form textarea { display: block; width: 100%; margin-bottom: 8px; font: inherit; font-size: .9rem; padding: 8px 10px; border: 1.5px solid var(--line); border-radius: 8px; resize: vertical; }
+.req-form textarea:focus { border-color: var(--secondary); outline: none; }
+.req-desc { color: var(--ink-2); font-style: italic; }
+.req-desc-line { font-style: italic; color: var(--ink-2); }
+.tn-note { flex-shrink: 0; font-size: .72rem; padding-top: 1px; }
+/* Staff "Who asked?" page */
+.req-steps { margin: 4px 0 10px; padding-left: 1.3em; color: var(--ink-2); line-height: 1.5; }
+.req-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 14px; }
+.req-note { margin: 0 0 10px; padding: 10px 12px; border-radius: 8px; background: var(--card); border: 1px solid var(--line); font-size: .9rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.req-note.warn { border-color: color-mix(in srgb, var(--warn) 40%, var(--line)); background: #fffaf0; color: #6b4600; }
+.req-note.error { border-color: color-mix(in srgb, var(--err) 40%, var(--line)); }
+.area-card-warn { border-color: color-mix(in srgb, var(--warn) 45%, var(--line)); background: #fffaf0; }
+.area-card-warn .badge-area { background: var(--warn); }
 .viewer-req .req-form,
 .viewer-kw .kw-form {
   position: absolute; z-index: 5; top: calc(100% + 2px); right: 0; width: min(100%, 520px);

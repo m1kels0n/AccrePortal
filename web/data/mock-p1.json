@@ -327,9 +327,8 @@
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
      "keywords": [],
-     "for": [
-      "Dr. Reyes"
-     ]
+     "subfolder": "Dr. Reyes",
+     "desc": "Teaching load of all faculty, AY 2025-2026 (asked on Nov 27)"
     },
     {
      "id": "f_req02MockFileId",
@@ -340,8 +339,8 @@
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
      "keywords": [],
+     "subfolder": "Dr. Reyes",
      "for": [
-      "Dr. Reyes",
       "Dr. Cruz"
      ]
     },
@@ -353,15 +352,28 @@
      "modified": "2026-11-27T03:00:00Z",
      "viewUrl": "assets/sample.pdf",
      "previewUrl": "assets/sample.pdf",
+     "keywords": []
+    },
+    {
+     "id": "f_req04MockFileId",
+     "name": "Alumni tracer study 2024.pdf",
+     "mimeType": "application/pdf",
+     "size": 524288,
+     "modified": "2026-11-27T03:00:00Z",
+     "viewUrl": "assets/sample.pdf",
+     "previewUrl": "assets/sample.pdf",
      "keywords": [],
-     "for": [],
-     "subfolder": "Library"
+     "subfolder": "Dr Santos"
     }
    ],
    "subfolders": [
     {
-     "path": "Library",
-     "id": "MOCKREQLIB"
+     "path": "Dr Santos",
+     "id": "MOCKREQSANTOS"
+    },
+    {
+     "path": "Dr. Reyes",
+     "id": "MOCKREQREYES"
     }
    ]
   }

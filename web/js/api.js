@@ -2,7 +2,7 @@
 // and a mock backend so the site can be tried before Apps Script exists.
 import { CONFIG } from './config.js';
 import { store } from './util.js';
-import { locateFile, areaKey, REQUEST, SUB_SEP } from './model.js';
+import { locateFile, areaKey, REQUEST, REQUEST_NAME, SUB_SEP, nameKey } from './model.js';
 
 const CACHE_PREFIX = 'aaccup:v2:snap:';
 const REF_PREFIX = 'aaccup:v2:ref:';   // Reference folders, kept apart (big; a full storage loses only them)
@@ -275,8 +275,48 @@ async function loadMockRaw(prog) {
 
 function mockKeywordStore(code) { return store.get('aaccup:mock:kw:' + code) || {}; }
 // Requested Documents ticks saved in mock mode: { fileId: [names] } (the mock JSON's `for` lists are the start).
-function mockRequestStore(code) { return store.get('aaccup:mock:req:' + code) || {}; }
+// Requested Documents in mock mode, like Snapshot.gs / Api.gs:
+// details: { fileId: { names, desc } } (✎ Details; the mock JSON's `for` / `desc` are the start)
+// folders: { root, names } made by ensureRequestFolders (the mock JSON's subfolders are the start)
+function mockRequestStore(code) { return store.get('aaccup:mock:req2:' + code) || {}; }
+function mockReqFolders(code) { return store.get('aaccup:mock:reqfolders:' + code) || { root: false, names: [] }; }
 const requestSection = (snap) => (snap.sections || []).find((s) => s.code === REQUEST) || null;
+const mockFolderId = (code, name) => 'MOCKREQ-' + code + '-' + nameKey(name).replace(/[^a-z0-9]+/g, '-');
+
+/** The staff copy of Requested Documents for a raw mock snapshot (modified in place), or null. */
+function mockRequestSection(snap, code) {
+  const folders = mockReqFolders(code);
+  let sec = requestSection(snap);
+  if (!sec && folders.root) {
+    sec = { code: REQUEST, name: REQUEST_NAME, folderId: mockFolderId(code, 'root'), files: [], subfolders: [] };
+    snap.sections = [...(snap.sections || []), sec];
+  }
+  if (!sec) return null;
+  sec.subfolders = sec.subfolders || [];
+  for (const n of folders.names) {
+    if (!sec.subfolders.some((s) => !s.path.includes(SUB_SEP) && nameKey(s.path) === nameKey(n))) {
+      sec.subfolders.push({ path: n, id: mockFolderId(code, n) });
+    }
+  }
+  sec.subfolders.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  const details = mockRequestStore(code);
+  for (const f of sec.files) {
+    const d = details[f.id];
+    f.owner = f.subfolder ? f.subfolder.split(SUB_SEP)[0] : '';
+    f.for = d ? d.names : f.for || [];
+    const desc = d ? d.desc : f.desc;
+    if (desc) f.desc = desc; else delete f.desc;
+  }
+  return sec;
+}
+
+/** Hash of everything the staff copy of Requested Documents shows (so a change reloads it). */
+function mockReqHash(sec) {
+  let h = 0;
+  for (const ch of JSON.stringify(sec ? [sec.subfolders, sec.files.map((f) => [f.id, f.for, f.desc || ''])] : null)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  return (h >>> 0).toString(36);
+}
+
 function mockSettings(code) { return { ...MOCK_DEFAULT_SETTINGS, ...(store.get('aaccup:mock:settings:' + code) || {}) }; }
 // Per-accreditor overrides for one program: [{ name, enabled, areas }] (same shape as Api.gs readOverrides_).
 function mockOverrides(code) { return store.get('aaccup:mock:overrides:' + code) || []; }
@@ -300,15 +340,18 @@ function mockReadToken(token) {
 function accreditorCopy(snap, settings, name) {
   const allowed = settings.accreditorAreas === 'ALL' ? null : new Set(settings.accreditorAreas.map(areaKey));
   const files = (list) => (list || []).map(({ viewUrl, for: _for, ...f }) => f);
+  // Same as Api.gs viewerRequests_: their name folder + files also shown to them; no names, no name folders.
   const mineOnly = (x) => {
-    const own = (x.files || []).filter((f) => (f.for || []).some((n) => sameMockName(n, name)));
-    if (!own.length) return null;
+    const key = nameKey(name);
+    const own = (x.files || []).filter((f) => nameKey(f.owner) === key || (f.for || []).some((n) => nameKey(n) === key));
+    if (!key || !own.length) return null;
     const subs = new Set();
-    for (const f of own) {
-      const parts = f.subfolder ? f.subfolder.split(SUB_SEP) : [];
+    const out = own.map(({ viewUrl, for: _for, owner, subfolder, ...f }) => {
+      const parts = subfolder ? subfolder.split(SUB_SEP).slice(1) : [];
       for (let i = 1; i <= parts.length; i++) subs.add(parts.slice(0, i).join(SUB_SEP));
-    }
-    return { code: x.code, name: x.name, files: files(own), subfolders: [...subs].sort() };
+      return parts.length ? { ...f, subfolder: parts.join(SUB_SEP) } : f;
+    });
+    return { code: x.code, name: x.name, files: out, subfolders: [...subs].sort() };
   };
   return {
     schema: snap.schema,
@@ -346,15 +389,8 @@ async function mockSnapshot(prog, session) {
   for (const fileId of Object.keys(kw)) {
     for (const hit of locateFile(snap, fileId)) hit.file.keywords = kw[fileId];
   }
-  const req = mockRequestStore(prog.code);
-  const reqSec = requestSection(snap);
-  // The hash changes with the ticks, so a refresh after saving brings the new lists.
-  if (reqSec) {
-    for (const f of reqSec.files) { if (req[f.id]) f.for = req[f.id]; f.for = f.for || []; }
-    let h = 0;
-    for (const ch of JSON.stringify(reqSec.files.map((f) => f.for))) h = (h * 31 + ch.charCodeAt(0)) | 0;
-    snap.hash += '.' + (h >>> 0).toString(36);
-  }
+  // The hash changes with folders, names and descriptions, so a refresh brings them.
+  snap.hash += '.' + mockReqHash(mockRequestSection(snap, prog.code));
   if (s.role === 'accreditor') {
     const mine = mockSettingsFor(prog.code, s.name);
     if (!mine.accreditorEnabled) throw apiError({ error: 'noAccess', message: 'This program is not open to accreditors.' });
@@ -420,19 +456,41 @@ async function mockPost(prog, payload) {
   if (action === 'saveRequestAccess') {
     if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
     if (!Array.isArray(payload.accreditors)) return { ok: false, error: 'invalid', message: 'Bad accreditor list.' };
-    const sec = requestSection(await loadMockRaw(prog));
-    if (!sec || !sec.files.some((f) => f.id === payload.fileId)) {
-      return { ok: false, error: 'notFound', message: 'This file is not in Requested Documents any more. Reload the page.' };
-    }
+    const raw = await loadMockRaw(prog);
+    const file = mockRequestSection(raw, prog.code)?.files.find((f) => f.id === payload.fileId);
+    if (!file) return { ok: false, error: 'notFound', message: 'This file is not in Requested Documents any more. Tap Refresh.' };
     const names = [];
-    for (const raw of payload.accreditors) {
-      const n = String(raw ?? '').replace(/\s+/g, ' ').trim();
-      if (n && n.length <= 100 && !/^[=+\-@]/.test(n) && !/[,;]/.test(n) && !names.some((x) => sameMockName(x, n))) names.push(n);
+    for (const r of payload.accreditors) {
+      const n = String(r ?? '').replace(/\s+/g, ' ').trim();
+      if (n && n.length <= 100 && !/^[=+\-@]/.test(n) && !/[,;]/.test(n) && !names.some((x) => nameKey(x) === nameKey(n))
+        && nameKey(n) !== nameKey(file.owner)) names.push(n);
     }
-    const req = mockRequestStore(prog.code);
-    req[payload.fileId] = names; // kept even when empty, so it overrides the mock JSON's starting list
-    store.set('aaccup:mock:req:' + prog.code, req);
-    return { ok: true, fileId: payload.fileId, accreditors: names };
+    const desc = payload.description == null ? file.desc || '' : String(payload.description).trim().slice(0, 500);
+    const details = mockRequestStore(prog.code);
+    details[payload.fileId] = { names, desc }; // kept even when empty, so it overrides the mock JSON's start
+    store.set('aaccup:mock:req2:' + prog.code, details);
+    return { ok: true, fileId: payload.fileId, accreditors: names, description: desc,
+      section: mockRequestSection(await loadMockRaw(prog), prog.code) };
+  }
+  if (action === 'refreshRequests') {
+    if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
+    await delay(500);
+    return { ok: true, section: mockRequestSection(await loadMockRaw(prog), prog.code) };
+  }
+  if (action === 'ensureRequestFolders') {
+    if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };
+    await delay(700);
+    const folders = mockReqFolders(prog.code);
+    const created = [];
+    const have = mockRequestSection(await loadMockRaw(prog), prog.code);
+    if (!have) { folders.root = true; created.push(REQUEST_NAME); }
+    for (const n of payload.names || []) {
+      const exists = (have?.subfolders || []).some((s) => !s.path.includes(SUB_SEP) && nameKey(s.path) === nameKey(n))
+        || folders.names.some((x) => nameKey(x) === nameKey(n));
+      if (!exists) { folders.names.push(n); created.push(n); }
+    }
+    store.set('aaccup:mock:reqfolders:' + prog.code, folders);
+    return { ok: true, created, section: mockRequestSection(await loadMockRaw(prog), prog.code) };
   }
   if (action === 'accreditors') {
     if (!staff) return { ok: false, error: 'forbidden', message: 'Coordinators only.' };

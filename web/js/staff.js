@@ -1,6 +1,8 @@
 // Login, plus coordinator/admin actions: keyword editing and "Check now".
-import { toast, esc } from './util.js';
-import { getProgram, locateFile } from './model.js';
+import { toast, esc, store } from './util.js';
+import {
+  getProgram, locateFile, applyRequestSection, requestCardsOf, requestFiles, nameKey, REQUEST,
+} from './model.js';
 import * as V from './views.js';
 import { post, login, getSession, setSession, clearCaches, writeCache, cleanKeywords, isStaff, mainProgram } from './api.js';
 
@@ -82,49 +84,165 @@ export async function handleSaveKeywords(form, app) {
   }
 }
 
-// ── Requested Documents: who a file is for ──────────────────
-// The accreditor names live in the main program (Access tab). Loaded once per page visit.
+// ── Requested Documents (staff) ─────────────────────────────
+// Requested Documents › <accreditor> › files. Coordinators put files in Drive, then tap ↻ Refresh,
+// which rescans only that folder. The accreditor names live in the main program (Access tab).
+const NAMES_KEY = 'aaccup:v2:accNames';
 let namesPromise = null;
+
+/** The accreditor names, loaded once per login (kept with the session token in this tab). */
 function accreditorNames() {
+  const tok = getSession()?.token;
+  const kept = store.get(NAMES_KEY, true);
+  if (kept && kept.token === tok && Array.isArray(kept.names)) return Promise.resolve(kept.names);
   if (!namesPromise) {
     namesPromise = post(mainProgram(), { action: 'accreditors' }).then((res) => {
-      if (!res.ok || !Array.isArray(res.names)) { namesPromise = null; throw new Error(res.message || 'Could not load the accreditors.'); }
+      namesPromise = null;
+      if (!res.ok || !Array.isArray(res.names)) throw new Error(res.message || 'Could not load the accreditors.');
+      store.set(NAMES_KEY, { token: tok, names: res.names }, true);
       return res.names;
     }, (err) => { namesPromise = null; throw err; });
   }
   return namesPromise;
 }
 
-const sameName = (a, b) => String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+const onRequestsPage = (app, progCode) => {
+  const r = app.state.route;
+  return r && r.name === 'workspace' && r.prog === progCode && r.area === REQUEST;
+};
 
-/** "👤 Accreditors": open or close the picker; fill in the names the first time. */
+/** Put a Requested Documents section from the server into the local copy, then redraw. */
+function applyRequestReply(app, progCode, res) {
+  const snap = app.state.snaps[progCode];
+  if (!snap) return;
+  applyRequestSection(snap, res.section || null);
+  if (res.hashFrom && snap.hash === res.hashFrom) snap.hash = res.hashTo;
+  writeCache(progCode, snap);
+  app.reindex();
+  // A document open in the viewer stays put: only the tree is redrawn.
+  const r = app.state.route;
+  const viewing = r && r.name === 'workspace' && r.prog === progCode && r.fileId
+    && document.querySelector(`.viewer-frame[data-file="${CSS.escape(r.fileId)}"]`)
+    && locateFile(snap, r.fileId).length > 0;
+  if (viewing) redrawTree(app);
+  else { app.state.touched = false; app.render(); }
+}
+
+const reqStatus = (cls, text) => {
+  const box = document.querySelector('[data-req-status]');
+  if (box) { box.className = 'form-status ' + cls; box.textContent = text; }
+};
+
+/** ↻ Refresh: look for new or removed files in Requested Documents only. */
+export async function refreshRequests(progCode, button, app) {
+  const prog = getProgram(progCode);
+  const snap = app.state.snaps[progCode];
+  if (!prog || !snap || !isStaff()) return;
+  const before = new Set(requestFiles(snap).map((f) => f.id));
+  button.disabled = true;
+  reqStatus('', 'Looking for new files…');
+  const res = await post(prog, { action: 'refreshRequests' });
+  button.disabled = false;
+  if (!res.ok) {
+    reqStatus('error', res.error === 'busy' ? 'The server is busy. Please try again in a few seconds.' : res.message || 'Could not refresh.');
+    return;
+  }
+  applyRequestReply(app, progCode, res);
+  const after = requestFiles(app.state.snaps[progCode]).map((f) => f.id);
+  const added = after.filter((id) => !before.has(id)).length;
+  const removed = [...before].filter((id) => !after.includes(id)).length;
+  if (added) toast(`✓ ${added} new file${added > 1 ? 's' : ''} found.`);
+  reqStatus(added || removed ? 'ok' : '',
+    added || removed ? '✓ Updated: ' + [added && `${added} new`, removed && `${removed} removed`].filter(Boolean).join(', ') + '.'
+      : 'No new files yet. If you just put files in Google Drive, wait until the upload finishes, then tap Refresh again.');
+}
+
+// Folder set-ups already tried in this tab (program + missing names), so a failure doesn't loop.
+const setupTried = new Set();
+
+/**
+ * Opening the "Who asked?" page: load the accreditor names, then create the folder of anyone
+ * who has none yet (and Requested Documents itself). Nothing is sent when all folders exist.
+ */
+export async function prepareRequestsPage(progCode, app) {
+  const st = app.state;
+  const prog = getProgram(progCode);
+  if (!prog || !isStaff()) return;
+  const rerender = () => { if (onRequestsPage(app, progCode)) { st.touched = false; app.render(); } };
+  if (!st.accNames) {
+    try {
+      st.accNames = await accreditorNames();
+    } catch (err) {
+      st.reqSetup[progCode] = { error: 'Could not load the accreditors. ' + (err.message || '') };
+      rerender();
+      return;
+    }
+    rerender(); // runs this again with the names
+    return;
+  }
+  const snap = st.snaps[progCode];
+  if (!snap) return;
+  const hasGroup = (snap.groups || []).some((g) => g.code === REQUEST);
+  const have = new Set(requestCardsOf(snap).filter((a) => a.owner && a.folderId).map((a) => nameKey(a.owner)));
+  const missing = st.accNames.filter((n) => !have.has(nameKey(n)));
+  if (hasGroup && !missing.length) return;
+  const key = progCode + '|' + hasGroup + '|' + missing.map(nameKey).join(',');
+  if (setupTried.has(key)) return;
+  setupTried.add(key);
+  st.reqSetup[progCode] = { busy: true };
+  rerender();
+  const res = await post(prog, { action: 'ensureRequestFolders', names: missing });
+  if (!getSession()) return;
+  if (!res.ok) {
+    st.reqSetup[progCode] = { error: res.message || 'Could not set up the folders.' };
+    rerender();
+    return;
+  }
+  st.reqSetup[progCode] = {};
+  applyRequestReply(app, progCode, res);
+  if (res.created?.length) toast(`✓ Folder${res.created.length > 1 ? 's' : ''} ready in Google Drive: ${res.created.join(', ')}`);
+}
+
+export function retryRequestSetup(progCode, app) {
+  for (const k of [...setupTried]) if (k.startsWith(progCode + '|')) setupTried.delete(k);
+  app.state.reqSetup[progCode] = {};
+  if (!app.state.accNames) store.remove(NAMES_KEY, true);
+  app.state.touched = false;
+  app.render();
+}
+
+/** ✎ Details: open or close the form; fill in the "Also show to" names the first time. */
 export async function toggleRequestForm(button) {
   const form = button.closest('[data-req-scope]')?.querySelector('.req-form');
   if (!form) return;
   form.hidden = !form.hidden;
   if (form.hidden || form.dataset.loaded === '1') return;
+  form.dataset.loaded = '1';
   const list = form.querySelector('[data-req-list]');
   const save = form.querySelector('button[type=submit]');
+  save.disabled = false; // the description can be saved even if the names don't load
   let names;
   try {
     names = await accreditorNames();
   } catch (err) {
     list.innerHTML = `<span class="error small">${esc(err.message || 'Could not load the accreditors.')}</span>
       <button type="button" class="linklike small" data-action="req-retry">Try again</button>`;
+    form.dataset.loaded = '';
     return;
   }
   if (!form.isConnected) return;
   let current = [];
   try { current = JSON.parse(form.dataset.current || '[]'); } catch { current = []; }
-  // Names ticked earlier that are no longer in the Access tab (renamed or removed): listed so they can be unticked.
-  const gone = current.filter((c) => !names.some((n) => sameName(n, c)));
+  const owner = nameKey(form.dataset.owner);
+  const others = names.filter((n) => nameKey(n) !== owner);
+  // Names shown earlier that are no longer in the Access tab (renamed or removed): listed so they can be unticked.
+  const gone = current.filter((c) => !names.some((n) => nameKey(n) === nameKey(c)));
   const box = (name, note) => `<label class="req-name"><input type="checkbox" name="acc" value="${esc(name)}"
-      ${current.some((c) => sameName(c, name)) ? 'checked' : ''}> <span>${esc(name)}</span>${note ? ` <small class="muted">${note}</small>` : ''}</label>`;
-  list.innerHTML = names.length || gone.length
-    ? names.map((n) => box(n, '')).join('') + gone.map((n) => box(n, '(not in the Access tab any more)')).join('')
-    : '<span class="muted small">No accreditors yet. The admin adds them in the main program’s Access tab.</span>';
-  form.dataset.loaded = '1';
-  save.disabled = false;
+      ${current.some((c) => nameKey(c) === nameKey(name)) ? 'checked' : ''}> <span>${esc(name)}</span>${note ? ` <small class="muted">${note}</small>` : ''}</label>`;
+  list.innerHTML = others.length || gone.length
+    ? others.map((n) => box(n, '')).join('') + gone.map((n) => box(n, '(not in the Access tab any more)')).join('')
+    : '<span class="muted small">No other accreditors.</span>';
+  form.dataset.namesOk = '1';
 }
 
 export function retryRequestNames(button) {
@@ -142,11 +260,14 @@ export async function handleSaveRequest(form, app) {
   const status = form.querySelector('.kw-status');
   const button = form.querySelector('button[type=submit]');
   if (!isStaff()) { status.className = 'kw-status error'; status.textContent = 'Please log in again.'; return; }
-  const names = [...form.querySelectorAll('input[name=acc]:checked')].map((c) => c.value);
+  let names;
+  if (form.dataset.namesOk === '1') names = [...form.querySelectorAll('input[name=acc]:checked')].map((c) => c.value);
+  else { try { names = JSON.parse(form.dataset.current || '[]'); } catch { names = []; } }
+  const description = form.querySelector('textarea[name=desc]')?.value || '';
   button.disabled = true;
   status.className = 'kw-status';
   status.textContent = 'Saving…';
-  const res = await post(prog, { action: 'saveRequestAccess', fileId, accreditors: names });
+  const res = await post(prog, { action: 'saveRequestAccess', fileId, accreditors: names, description });
   button.disabled = false;
   if (!res.ok) {
     status.className = 'kw-status error';
@@ -154,22 +275,22 @@ export async function handleSaveRequest(form, app) {
       : res.message || 'Could not save.';
     return;
   }
-  form.dataset.current = JSON.stringify(res.accreditors);
-  status.className = 'kw-status ok';
-  status.textContent = '✓ Saved';
-  setTimeout(() => { if (status.textContent === '✓ Saved') status.textContent = ''; }, 4000);
-  toast(res.accreditors.length ? `✓ Shown to ${res.accreditors.join(', ')} only.` : '✓ Saved. No accreditor sees this file now.');
+  toast('✓ Details saved.');
   const snap = app.state.snaps[progCode];
   if (!snap) return;
-  let file = null;
-  for (const hit of locateFile(snap, fileId)) { hit.file.for = res.accreditors; file = hit.file; }
-  if (res.hashFrom && snap.hash === res.hashFrom) snap.hash = res.hashTo;
-  writeCache(progCode, snap);
-  // Update the "For:" line and the tree marks without reloading the open document.
+  if (res.section) {
+    applyRequestReply(app, progCode, res); // a newly shown name gets the file on their card too
+  } else {
+    for (const hit of locateFile(snap, fileId)) { hit.file.for = res.accreditors; if (res.description) hit.file.desc = res.description; else delete hit.file.desc; }
+    writeCache(progCode, snap);
+    redrawTree(app);
+  }
+  // The viewer bar was not redrawn: update its "For:" line and the form's saved values.
+  const file = locateFile(app.state.snaps[progCode], fileId)[0]?.file;
   const line = form.closest('.viewer-bar')?.querySelector('.req-for');
   if (file && line) line.outerHTML = V.requestForLine(file);
-  redrawTree(app);
-  app.state.touched = false;
+  form.dataset.current = JSON.stringify(res.accreditors);
+  form.hidden = true;
 }
 
 // ── Check now (rescan Drive after uploading) ────────────────

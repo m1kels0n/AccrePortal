@@ -17,8 +17,13 @@
  *      { action: 'login', pin }                 (main program only)
  *      { action: 'logout', token }
  *      { action: 'saveKeywords', token, fileId, keywords }   (coordinator or admin)
- *      { action: 'saveRequestAccess', token, fileId, accreditors: [names] }   (coordinator or admin:
- *        who a Requested Documents file is for; [] = nobody)
+ *      Requested Documents (coordinator or admin):
+ *      { action: 'saveRequestAccess', token, fileId, accreditors: [names], description? }
+ *        extra accreditors (besides the one whose name folder holds the file) and a description
+ *      { action: 'refreshRequests', token }   small scan of the Requested Documents folder only
+ *      { action: 'ensureRequestFolders', token, names: [names] }   create the folder and one
+ *        subfolder per accreditor name if missing (names come from the main program's Access tab)
+ *        Both reply { section, hashFrom, hashTo } with the section as the staff snapshot has it.
  *      { action: 'checkNow', token }            (coordinator or admin: rescan Drive now)
  *      { action: 'refresh', token }             (admin)
  *      { action: 'rebuildStructure', token }    (admin)
@@ -71,6 +76,8 @@ function doPost(e) {
       case 'logout': return json_({ ok: true });
       case 'saveKeywords': return json_(handleSaveKeywords_(body));
       case 'saveRequestAccess': return json_(handleSaveRequestAccess_(body));
+      case 'refreshRequests': return json_(handleRefreshRequests_(body));
+      case 'ensureRequestFolders': return json_(handleEnsureRequestFolders_(body));
       case 'checkNow': return json_(handleCheckNow_(body));
       case 'refresh': return json_(handleRefresh_(body));
       case 'rebuildStructure': return json_(handleRebuild_(body));
@@ -196,23 +203,30 @@ function viewerArea_(a) {
 }
 
 /**
- * One accreditor's copy of Requested Documents: only the files ticked for them (names compared
- * ignoring case), without the `for` lists, and only the subfolders those files sit in, so the
- * names of other accreditors' folders don't show either. Null when nothing is for them.
+ * One accreditor's copy of Requested Documents: the files in the folder named after them, plus
+ * files a coordinator also showed to them, compared with nameKey_. The name folder itself is left
+ * out of the paths (no other accreditor's folder name shows), and so are the coordinators' lists
+ * of names. The description is kept. Null when nothing is for them.
  */
 function viewerRequests_(sec, name) {
-  var key = String(name || '').trim().toLowerCase();
+  var key = nameKey_(name);
+  if (!key) return null;
   var files = (sec.files || []).filter(function (f) {
-    return key && (f.for || []).some(function (n) { return String(n).toLowerCase() === key; });
+    return nameKey_(f.owner) === key || (f.for || []).some(function (n) { return nameKey_(n) === key; });
   });
   if (!files.length) return null;
   var subs = {};
-  files.forEach(function (f) {
-    if (!f.subfolder) return;
-    var parts = String(f.subfolder).split(' › ');
+  var out = files.map(function (f) {
+    var o = viewerFile_(f);
+    delete o.subfolder;
+    // "Dr. Reyes › Area 2" → "Area 2"; a file right in a name folder sits at the top.
+    var parts = f.subfolder ? String(f.subfolder).split(' › ').slice(1) : [];
+    if (parts.length) o.subfolder = parts.join(' › ');
     for (var i = 1; i <= parts.length; i++) subs[parts.slice(0, i).join(' › ')] = true;
+    if (f.desc) o.desc = f.desc;
+    return o;
   });
-  return { code: sec.code, name: sec.name, files: files.map(viewerFile_), subfolders: Object.keys(subs).sort() };
+  return { code: sec.code, name: sec.name, files: out, subfolders: Object.keys(subs).sort() };
 }
 
 /** Accreditor copy of a file. A folder shortcut would preview as a browsable Drive folder (other areas, Drive links). */
@@ -417,30 +431,120 @@ function handleSaveKeywords_(body) {
            hashFrom: before.hash, hashTo: snap.hash, refHashFrom: before.refHash, refHashTo: snap.refHash };
 }
 
-/** Who a Requested Documents file is for. The names come from the main program's Access tab. */
+/** Extra accreditors and the description of a Requested Documents file (✎ Details). */
 function handleSaveRequestAccess_(body) {
   var s = checkToken_(body.token, 'staff');
   var fileId = String(body.fileId || '').trim();
   if (!/^[-\w]{10,}$/.test(fileId)) throw apiError_('invalid', 'Invalid file.');
   if (Object.prototype.toString.call(body.accreditors) !== '[object Array]') throw apiError_('invalid', 'Bad accreditor list.');
   var names = cleanNames_(body.accreditors);
+  var desc;
 
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
   try {
     var snap = readFullSnapshot_();
     if (!snap) throw apiError_('notFound', 'No snapshot yet.');
-    if (!requestFile_(snap, fileId)) {
-      throw apiError_('notFound', 'This file is not in Requested Documents any more. It may have been moved or deleted. Reload the page.');
+    var file = requestFile_(snap, fileId);
+    if (!file) {
+      throw apiError_('notFound', 'This file is not in Requested Documents any more. It may have been moved or deleted. Tap Refresh.');
     }
-    upsertRequest_(fileId, names, s.name);
+    // No description sent: keep the one saved.
+    desc = body.description === undefined || body.description === null ? (file.desc || '') : cleanDesc_(body.description);
+    // The name folder's own accreditor needs no extra row.
+    names = names.filter(function (n) { return nameKey_(n) !== nameKey_(file.owner); });
+    upsertRequest_(fileId, names, desc, s.name);
     var before = snap.hash;
-    patchSnapshotRequest_(snap, fileId, names);
+    file.for = names;
+    if (desc) file.desc = desc; else delete file.desc;
+    setSnapshotHashes_(snap);
+    cacheSnapshot_(snap);
+    PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
   } finally {
     lock.releaseLock();
   }
-  log_('requestAccess', s.name, fileId + ': ' + (names.join(', ') || '(nobody)'));
-  return { ok: true, fileId: fileId, accreditors: names, hashFrom: before, hashTo: snap.hash };
+  log_('requestDetails', s.name, fileId + ': ' + (names.join(', ') || '-') + (desc ? ' · ' + desc.slice(0, 80) : ''));
+  return { ok: true, fileId: fileId, accreditors: names, description: desc, section: requestSection_(snap),
+           hashFrom: before, hashTo: snap.hash };
+}
+
+var REQUEST_COOLDOWN_SEC = 4;   // per session: Refresh is cheap, but a stuck button shouldn't loop
+
+/** ↻ Refresh on the Requested Documents pages: scan only that folder (about 2 Drive requests). */
+function handleRefreshRequests_(body) {
+  var s = checkToken_(body.token, 'staff');
+  var cache = CacheService.getScriptCache();
+  var key = 'req:' + md5_(String(body.token));
+  if (cache.get(key)) throw apiError_('tooSoon', 'You just refreshed. Please wait a few seconds, then try again.');
+  cache.put(key, '1', REQUEST_COOLDOWN_SEC);
+  var c = readSnapshot_();
+  if (!c) throw apiError_('notFound', 'No snapshot yet.');
+  var old = requestSection_(JSON.parse(c.text));
+  if (!old || !old.folderId || old.folderId === getConfig_().rootFolderId) {
+    return { ok: true, section: null }; // no Requested Documents folder yet
+  }
+  var res = saveRequestSection_(scanRequestFolder_(old.folderId, old.name));
+  log_('requestRefresh', s.name, res.section.files.length + ' files');
+  return res;
+}
+
+/**
+ * Create Requested Documents and one subfolder per accreditor name when missing, then return
+ * the section (rescanned). The website calls it only when a name has no folder yet.
+ */
+function handleEnsureRequestFolders_(body) {
+  var s = checkToken_(body.token, 'staff');
+  if (Object.prototype.toString.call(body.names) !== '[object Array]') throw apiError_('invalid', 'Bad name list.');
+  var names = cleanNames_(body.names);
+  var cfg = requireConfig_(['rootFolderId']);
+  var c = readSnapshot_();
+  if (!c) throw apiError_('notFound', 'No snapshot yet.');
+  var old = requestSection_(JSON.parse(c.text));
+  var made = [];
+  var folderId = old && old.folderId && old.folderId !== cfg.rootFolderId ? old.folderId : null;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
+  try {
+    if (!folderId) {
+      // A folder with "request" in its name that the last scan hasn't seen yet, else a new one.
+      var found = listChildren_([cfg.rootFolderId], true).filter(function (f) {
+        return f.name.charAt(0) !== '_' && sectionOf_(f.name, true) === REQUEST_SECTION;
+      })[0];
+      folderId = found ? found.id : DriveApp.getFolderById(cfg.rootFolderId).createFolder(REQUEST_FOLDER_NAME).getId();
+      if (!found) made.push(REQUEST_FOLDER_NAME);
+    }
+    var have = {};
+    listChildren_([folderId], true).forEach(function (f) { have[nameKey_(f.name)] = true; });
+    var parent = null;
+    names.forEach(function (n) {
+      if (have[nameKey_(n)]) return;
+      parent = parent || DriveApp.getFolderById(folderId);
+      parent.createFolder(n);
+      have[nameKey_(n)] = true;
+      made.push(n);
+    });
+  } finally {
+    lock.releaseLock();
+  }
+  if (made.length) log_('requestFolders', s.name, 'created: ' + made.join(', '));
+  var res = saveRequestSection_(scanRequestFolder_(folderId, old && old.name));
+  res.created = made;
+  return res;
+}
+
+/** Put a scanned section into the cached snapshot; reply with it and the hashes before/after. */
+function saveRequestSection_(sec) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) throw apiError_('busy', 'The server is busy. Please try again in a few seconds.');
+  try {
+    var snap = readFullSnapshot_();
+    if (!snap) throw apiError_('notFound', 'No snapshot yet.');
+    var before = snap.hash;
+    patchSnapshotRequests_(snap, sec);
+    return { ok: true, section: sec, hashFrom: before, hashTo: snap.hash };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 var CHECK_COOLDOWN_SEC = 20;   // per session, so a stuck button can't flood Drive

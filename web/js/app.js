@@ -9,7 +9,7 @@ import {
 import { buildIndex, search } from './search.js';
 import {
   getProgram, findArea, findParam, findIndicator, findGroup, areaTitle, indLabel, hrefFor, prepareSnapshot, siblingAreas,
-  findRequests, areaFileList,
+  findRequests, areaFileList, REQUEST,
 } from './model.js';
 import * as V from './views.js';
 import * as S from './staff.js';
@@ -32,6 +32,8 @@ const state = {
   closedNodes: new Set(),  // branches on the current path the user closed
   treeOpen: false,         // tree drawer on small screens
   files: F.defaultFilters(), // All files page: filter box, menus, how many rows are shown
+  accNames: null,   // staff, Requested Documents: the accreditor names (from the main program)
+  reqSetup: {},     // programCode → { busy } | { error } while its accreditor folders are set up
   get watermark() {
     const s = this.settings[mainProgram().code] || Object.values(this.settings)[0];
     return s ? s.watermark !== false : true;
@@ -101,8 +103,8 @@ function renderChrome() {
   // Back to the card page this area was picked from: a Compliance Report / PPP card → that
   // section's page; the Actual Self-Survey Report or Area I … X → the Self-Survey Report page.
   const curArea = snap && route.name === 'workspace' ? findArea(snap, route.area) : null;
-  // Requested Documents opens straight from the program card, so it has no card page to go back to.
-  const back = curArea && !curArea.general && !curArea.request
+  // An accreditor's Requested Documents opens straight from the program card: no card page to go back to.
+  const back = curArea && !curArea.general && !(curArea.request && !curArea.group)
     ? (curArea.group ? { href: href([route.prog, curArea.group]), text: '▦ ' + curArea.groupName } : { href: href([route.prog]), text: '▦ Areas' })
     : null;
   areasBtn.hidden = !back;
@@ -220,6 +222,8 @@ function render(background = false) {
     if (route.fileId && !searching) setupViewer();
   }
   if (route.name === 'admin') A.loadAdminData(route.prog, state);
+  // Staff "Who asked?" page: load the accreditor names and make any missing folders.
+  if (route.name === 'workspace' && route.area === REQUEST && !searching && isStaff(session)) S.prepareRequestsPage(route.prog, app);
   if (route.name === 'files') CONFIG.programs.forEach((p) => ensureReference(p.code));
   if (route.name === 'login') document.getElementById('pin')?.focus();
   setTitle(route, searching);
@@ -427,6 +431,8 @@ function resetData() {
   state.closedNodes.clear();
   state.treeOpen = false;
   state.files = F.defaultFilters();
+  state.accNames = null;
+  state.reqSetup = {};
   A.resetAdminCache();
   reindex();
 }
@@ -528,6 +534,10 @@ document.addEventListener('click', (e) => {
     S.toggleRequestForm(el);
   } else if (action === 'req-retry') {
     S.retryRequestNames(el);
+  } else if (action === 'req-refresh') {
+    S.refreshRequests(el.dataset.prog, el, app);
+  } else if (action === 'req-setup-retry') {
+    S.retryRequestSetup(el.dataset.prog, app);
   } else if (action === 'retry') {
     // "Try again" on a program that could not be loaded.
     const code = el.dataset.prog;

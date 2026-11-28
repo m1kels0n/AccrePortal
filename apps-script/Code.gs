@@ -14,8 +14,8 @@ var SHEET_HEADERS = {
   Access: ['accreditorName', 'pinHash'],
   // Optional per-accreditor override of the program-wide viewer settings (set in the admin panel).
   AccreditorAccess: ['accreditorName', 'enabled', 'areas'],
-  // Requested Documents: which accreditor(s) each file is for (set by coordinators on the website).
-  Requests: ['fileId', 'accreditors', 'updatedBy', 'updatedAt'],
+  // Requested Documents: extra accreditors and a description per file (✎ Details on the website).
+  Requests: ['fileId', 'accreditors', 'updatedBy', 'updatedAt', 'description'],
   Log: ['timestamp', 'action', 'user', 'details'],
 };
 var CONFIG_KEYS = ['programCode', 'programName', 'rootFolderId', 'driveId', 'systemFolderId',
