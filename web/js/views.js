@@ -102,17 +102,14 @@ export function renderLogin() {
   return `<div class="login-wrap">
     <div class="card login-card">
       <div class="login-logos">${CONFIG.logos.map((l) => `<img src="${esc(l.src)}" alt="${esc(l.alt)}" width="64" height="64">`).join('')}</div>
-      <h2 class="page-title">Welcome</h2>
-      <p class="muted">Enter your 6-digit PIN to open the accreditation evidence.</p>
+      <p class="muted">Enter your 6-pin to open</p>
       <form data-form="login" class="form" autocomplete="off">
         <label class="sr-only" for="pin">PIN</label>
         <input id="pin" name="pin" class="pin-input" type="password" inputmode="numeric" pattern="[0-9]{6}"
-               maxlength="6" autocomplete="off" required placeholder="••••••" aria-describedby="pinHelp">
+               maxlength="6" autocomplete="off" required placeholder="••••••">
         <button type="submit" class="btn btn-primary btn-block">Log in</button>
         <div class="form-status" aria-live="polite"></div>
       </form>
-      <p class="muted small" id="pinHelp">Each accreditor has a personal PIN; coordinators use the coordinator PIN.
-        If you don't have one, ask the accreditation coordinator.</p>
     </div>
   </div>`;
 }
