@@ -321,6 +321,25 @@ function snapMeta_() {
 
 /** Split a full snapshot (Reference folders included) into the two cached parts and cache them. */
 function cacheSnapshot_(snap) {
+  var parts = splitSnapshot_(snap);
+  var meta = parts.meta;
+  // The Reference part first: a reader that sees the new 'snap' meta then finds the matching 'ref'.
+  // Unchanged and still fresh: kept as it is (it is usually the biggest part).
+  var oldRm = cacheMeta_('ref');
+  var rm = oldRm && oldRm.hash === meta.refHash && cacheFresh_(oldRm) ? oldRm : cachePutChunked_('ref', parts.refText, { hash: meta.refHash });
+  // The main part is cached even when the Reference part could not be: every page (and every
+  // accreditor) needs it, and readReference_ sees the missing 'ref' and reads the Drive file.
+  if (!rm) console.warn('Reference folders not cached; the All files page reads them from the Drive file.');
+  // Same version already cached and still fresh, chunks present (e.g. only 'ref' was missing): keep it.
+  var oldSm = snapMeta_();
+  var keep = oldSm && oldSm.hash === meta.hash && oldSm.refHash === meta.refHash && cacheFresh_(oldSm) &&
+             cacheGetChunks_('snap', oldSm) !== null;
+  if (!keep) cachePutChunked_('snap', parts.mainText, meta);
+  return parts;
+}
+
+/** A full snapshot split into the two parts, without caching them. */
+function splitSnapshot_(snap) {
   var reference = snap.reference || [];
   var refText = JSON.stringify(reference);
   var refHash = snap.refHash || md5_(refText).slice(0, 12);
@@ -328,26 +347,63 @@ function cacheSnapshot_(snap) {
   Object.keys(snap).forEach(function (k) { if (k !== 'reference') main[k] = snap[k]; });
   main.refHash = refHash;
   main.refCount = reference.length;
-  var mainText = JSON.stringify(main);
-  var meta = { f: SNAP_FMT, hash: snap.hash, refHash: refHash, refCount: reference.length, generatedAt: snap.generatedAt };
-  // The Reference part first: a reader that sees the new 'snap' meta then finds the matching 'ref'.
-  // Unchanged and still fresh: kept as it is (it is usually the biggest part).
-  var oldRm = cacheMeta_('ref');
-  var rm = oldRm && oldRm.hash === refHash && cacheFresh_(oldRm) ? oldRm : cachePutChunked_('ref', refText, { hash: refHash });
-  var sm = rm ? cachePutChunked_('snap', mainText, meta) : null;
-  if (!sm) { try { CacheService.getScriptCache().remove('snap:meta'); } catch (e) { /* the Drive file is used */ } }
-  return { mainText: mainText, refText: refText, meta: meta };
+  return { mainText: JSON.stringify(main), refText: refText,
+           meta: { f: SNAP_FMT, hash: snap.hash, refHash: refHash, refCount: reference.length, generatedAt: snap.generatedAt } };
 }
 
-/** The Drive file, split and cached again. Null when there is no snapshot yet. */
-function loadSnapshotFile_() {
+/** The Drive file snapshot.json as an object (Reference folders included), or null. */
+function readSnapshotFileObject_() {
   var cfg = getConfig_();
   if (!cfg.snapshotFileId) return null;
   var text = DriveApp.getFileById(cfg.snapshotFileId).getBlob().getDataAsString('UTF-8');
   if (!text || text.length < 10) return null;
   var snap = JSON.parse(text);
-  if (!snap || !snap.areas) return null;
-  return cacheSnapshot_(snap);
+  return snap && snap.areas ? snap : null;
+}
+
+/**
+ * The Drive file, split, and cached again by ONE request: when the cache runs out with many
+ * people online, the others just use what they read instead of all rewriting the cache at once
+ * (and wiping each other's copies). Null when there is no snapshot yet.
+ */
+function loadSnapshotFile_() {
+  var snap = readSnapshotFileObject_();
+  if (!snap) return null;
+  var lock = LockService.getScriptLock();
+  var got = false;
+  try { got = lock.tryLock(0); } catch (e) { got = false; }
+  if (!got) return splitSnapshot_(snap); // someone else is caching or saving right now
+  try {
+    // The file was read before the lock: if a save or scan wrote a newer one since (SNAP_HASH is
+    // set by every Drive write), or a different version is cached, don't put this older one back.
+    var key = PropertiesService.getScriptProperties().getProperty('SNAP_HASH');
+    if (key && key !== snap.hash + '|' + snap.refHash) return splitSnapshot_(snap);
+    var m = snapMeta_();
+    if (m && (m.hash !== snap.hash || m.refHash !== snap.refHash)) return splitSnapshot_(snap);
+    return cacheSnapshot_(snap);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * After a save that changed the snapshot (keywords, Requested Documents): write the Drive file
+ * FIRST, then the cache. The caller holds the script lock. Before, only the cache was updated,
+ * so when it ran out the old Drive file came back and the change seemed undone for a while.
+ */
+function persistPatchedSnapshot_(snap) {
+  setSnapshotHashes_(snap);
+  var props = PropertiesService.getScriptProperties();
+  var cfg = getConfig_();
+  try {
+    if (!cfg.snapshotFileId) throw new Error('No snapshot file.');
+    DriveApp.getFileById(cfg.snapshotFileId).setContent(JSON.stringify(snap));
+    props.setProperty('SNAP_HASH', snap.hash + '|' + snap.refHash); // the next scan skips an identical write
+  } catch (e) {
+    console.warn('Snapshot file not written (the next scan writes it): ' + e);
+    props.deleteProperty('SNAP_HASH');
+  }
+  cacheSnapshot_(snap);
 }
 
 /** The snapshot without Reference folders: { text, meta } or null. Cache first, then the Drive file. */
@@ -369,14 +425,20 @@ function readReference_() {
   return c ? { text: c.refText, refHash: c.meta.refHash } : null;
 }
 
-/** The whole snapshot as an object, Reference folders included (keyword saves). Null if none yet. */
+/**
+ * The whole snapshot as an object, Reference folders included, for a save that changes it (the
+ * caller holds the script lock and writes it back with persistPatchedSnapshot_). Cache first;
+ * if either part is missing, the Drive file is read once (not cached here: the save does that).
+ */
 function readFullSnapshot_() {
-  var c = readSnapshot_();
-  if (!c) return null;
-  var snap = JSON.parse(c.text);
-  var r = readReference_();
-  snap.reference = r ? JSON.parse(r.text) : [];
-  snap.generatedAt = c.meta.generatedAt || snap.generatedAt;
+  var m = snapMeta_();
+  var text = m ? cacheGetChunks_('snap', m) : null;
+  var rm = text !== null ? cacheMeta_('ref') : null;
+  var refText = rm && rm.hash === m.refHash ? cacheGetChunks_('ref', rm) : null;
+  if (text === null || refText === null) return readSnapshotFileObject_();
+  var snap = JSON.parse(text);
+  snap.reference = JSON.parse(refText);
+  snap.generatedAt = m.generatedAt || snap.generatedAt;
   delete snap.refCount;
   return snap;
 }
@@ -392,13 +454,11 @@ function readIssues_() {
 
 /**
  * After a keyword save: update the keywords of fileId in the cached snapshot (a full one, from
- * readFullSnapshot_; the caller holds the script lock). The next scan rewrites the Drive file.
+ * readFullSnapshot_; the caller holds the script lock), the Drive file first.
  */
 function patchSnapshotKeywords_(snap, fileId, keywords) {
   eachFileInSnapshot_(snap, function (f) { if (f.id === fileId) f.keywords = keywords; });
-  setSnapshotHashes_(snap);
-  cacheSnapshot_(snap);
-  PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
+  persistPatchedSnapshot_(snap);
 }
 
 /** Is this file id anywhere in the snapshot (program root files and Reference folders included)? */
@@ -584,15 +644,13 @@ function scanRequestFolder_(folderId, name) {
 
 /**
  * Put a freshly scanned Requested Documents section into the cached snapshot (the caller holds
- * the script lock). The next full scan rewrites the Drive file.
+ * the script lock), the Drive file first.
  */
 function patchSnapshotRequests_(snap, sec) {
   var old = requestSection_(snap);
   if (snap.stats) snap.stats.files += sec.files.length - (old ? old.files.length : 0);
   snap.sections = (snap.sections || []).filter(function (s) { return s.code !== REQUEST_SECTION; }).concat([sec]);
-  setSnapshotHashes_(snap);
-  cacheSnapshot_(snap);
-  PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
+  persistPatchedSnapshot_(snap);
 }
 
 // ── Drive helpers ────────────────────────────────────────────

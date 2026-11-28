@@ -457,9 +457,7 @@ function handleSaveRequestAccess_(body) {
     var before = snap.hash;
     file.for = names;
     if (desc) file.desc = desc; else delete file.desc;
-    setSnapshotHashes_(snap);
-    cacheSnapshot_(snap);
-    PropertiesService.getScriptProperties().deleteProperty('SNAP_HASH');
+    persistPatchedSnapshot_(snap);
   } finally {
     lock.releaseLock();
   }
